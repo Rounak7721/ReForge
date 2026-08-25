@@ -2,13 +2,13 @@
 
 **Read this first in every new session.** It is the fastest path back to full context.
 
-_Last updated: 2026-08-25 — Phase 0a complete (app scaffolded, lint+build green); deploy deferred to end_
+_Last updated: 2026-08-25 — Phase 1 complete (schema + RLS + auth, verified). Next: Phase 2, the analyzer._
 
 ---
 
 ## Where things stand
 
-**Phase:** Phase 0 not started. Planning, reference docs and tooling are complete. **No application code exists yet.**
+**Phase:** Phases 0 and 1 complete and verified. Next up is **Phase 2 — the analyzer**, the first phase that calls Gemini.
 
 **Deadline: 2026-08-27 ~13:42 IST — CONFIRMED by the user.** A complete, hosted, working MVP by then. Whether to add bonus features is decided *after* that bar is met.
 
@@ -16,7 +16,7 @@ _Last updated: 2026-08-25 — Phase 0a complete (app scaffolded, lint+build gree
 |---|---|
 | Production URL | **https://reforge-blond-two.vercel.app/** — live, serving the placeholder |
 | GitHub repo | `Rounak7721/ReForge` — pushed over SSH |
-| Supabase project | **created** — ref `zqyahkyigokbxmufpxpj`, schema still empty; MCP **connected and verified** |
+| Supabase project | ref `zqyahkyigokbxmufpxpj` — **schema applied** (`projects`, `refinements`, 7 RLS policies), MCP verified, advisors clean |
 | Vercel project | **created**, connected to the GitHub repo; auto-deploys on push to `main` |
 
 ---
@@ -25,38 +25,50 @@ _Last updated: 2026-08-25 — Phase 0a complete (app scaffolded, lint+build gree
 
 Supabase MCP is connected and verified (`list_tables` → `{"tables":[]}`). Skills `prompt-log` / `debug-log` / `deploy` / `wrap-up` are live, plus `frontend-design`, `code-review`, `security-review`, `run`; context7 and playwright are available.
 
-`.env` exists locally (git-ignored) with `GEMINI_API_KEY`, `LLM_PROVIDER=gemini`, `GEMINI_MODEL=gemini-3.1-flash-lite`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publishable key `sb_publishable_…`). **Only `SUPABASE_SERVICE_ROLE_KEY` is still blank.**
+`.env` is complete locally (git-ignored): every var in `.env.example` has a value.
+
+**`mailer_autoconfirm` was set to `true`** via the Management API on 2026-08-25 — email confirmation is off. This is load-bearing, not cosmetic: with it on, every signup sends an email, the free tier allows only a handful per hour, and signup then fails **project-wide** with `over_email_send_rate_limit`. We hit exactly that during testing. Do not turn it back on.
 
 ---
 
 ## What exists right now
 
 ```
-CLAUDE.md                    working agreement + conventions
-HANDOFF.md                   this file
-.mcp.json                    supabase MCP (token via ${SUPABASE_ACCESS_TOKEN})
-.claude/skills/              prompt-log, debug-log, deploy, wrap-up
-project_reference/           the original assignment PDF
-project_guidelines/          distilled reference — 10 docs, read README.md first
-  08-mvp-checklist.md        ← the live task tracker
-docs/
-  PROMPTS.md                 scaffolded, no entries yet
-  DEBUGGING.md               scaffolded, no entries yet
-  ARCHITECTURE.md            scaffolded, mostly TBD
+app/
+  (marketing)/page.tsx       branded placeholder — what the deployed URL serves
+  (auth)/login|signup        auth pages sharing components/auth/auth-form.tsx
+  (app)/dashboard/           protected shell: header, user email, logout, empty state
+  api/auth/{signup,login,logout}/route.ts
+lib/
+  env.ts                     zod-validated env access
+  safe-redirect.ts           same-origin guard for `next` params
+  supabase/                  browser · server · middleware · admin (service role)
+  api/                       errors · auth-schema · supabase-auth-error
+  types/database.ts          generated from the live schema — regenerate after migrations
+  llm/ prompts/              EMPTY — Phase 2
+middleware.ts                session refresh + /dashboard guard
+supabase/migrations/         0001 schema+RLS, 0002 set_updated_at hardening
+components/
+  auth/                      auth-form, logout-button
+  providers/theme-provider   light-only
+  ui/                        shadcn: button input textarea card label sonner skeleton
+docs/                        PROMPTS (1) · DEBUGGING (3) · ARCHITECTURE (current)
+project_guidelines/          08-mvp-checklist.md is the live tracker
 ```
 
-No `package.json`, no `app/`, no `lib/`. The repo is documentation and git history.
+**Graded deliverables so far:** `docs/PROMPTS.md` has 1 of the 5–10 needed.
+`docs/DEBUGGING.md` has 3 of the ≥2 needed — that requirement is met, keep
+logging as things break.
 
 ---
 
 ## Next actions, in order
 
-1. ~~Phase 0a — scaffold~~ **done**, committed on `phase-0/bootstrap` (`4e21805`). Lint and build green.
-2. **`SUPABASE_SERVICE_ROLE_KEY` is the only value still missing from `.env`.** URL and publishable key were pulled via MCP and are already set. The service-role key only comes from the dashboard (Settings → API Keys).
-3. **Turn off email confirmation** in Authentication → Providers → Email, before building auth. The grader signs up with their own account and a confirmation dead-end fails requirement 5.
-4. **Phase 1** — schema + RLS + auth. The DB is empty and waiting.
-5. Phases 2 → 6. Each push to `main` auto-deploys, so verify on the deployed URL as you go, not at the end.
-6. Optional, any time: point `reforge.rounak.co` at the Vercel deployment.
+1. ~~Phase 0 — scaffold + deploy~~ and ~~Phase 1 — schema, RLS, auth~~ **done**.
+2. **Set the Supabase env vars in Vercel before the next deploy.** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Phase 1 is the first code that reads env at runtime — production will **build fine and fail on first click** without them.
+3. **Phase 2 — the analyzer.** `lib/llm` provider layer, `lib/prompts/analyzer.ts`, server-side URL fetch, `POST /api/analyze`, results cached to `projects.analysis`. See the two measured Gemini traps under Decisions before writing the provider.
+4. Phases 3 → 6. Each push to `main` auto-deploys, so verify on the deployed URL as you go, not at the end.
+5. Optional, any time: point `reforge.rounak.co` at the Vercel deployment.
 
 **Env vars are NOT yet set in Vercel** — they are being added as each is first used. Anything reading an env var will build fine and fail at runtime in production until its var exists there. Check this before every deploy that introduces one.
 
@@ -75,6 +87,10 @@ Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.m
 - **Runtime model is `gemini-3.1-flash-lite`** — chosen on **daily quota**, not quality. AI Studio shows the 3.x Flash line capped at **20 requests/day**; one complete demo of the graded flow is 6 calls (1 analyze + 1 build + 4 refinements), so that is **3 demos per day** shared with the grader. flash-lite allows **500/day and 15 RPM**, and handles the real 7-field analyzer workload in ~2s with all fields populated. Also verified: `gemini-2.5-flash` is 404 for new keys, `gemini-3.7-flash` is UNAVAILABLE under load, `*-latest` aliases time out. Table in `03-tech-stack.md`.
 - **Two traps `lib/llm` must handle** (both measured, `docs/DEBUGGING.md` entry 2): `maxOutputTokens` caps *thinking + output combined*, so a lean budget returns HTTP 200 with `content: {}` and no `parts` array — the usual accessor throws. And `thinkingLevel` is **not portable**: flash-lite emits 0 thinking tokens with no config but 118 with `thinkingLevel: "low"`, the inverse of 3.6-flash. Enforce a token floor rather than trusting the parameter.
 - **Seeding a demo account is now required, not optional**, and 429 must distinguish per-minute from per-day exhaustion — a daily cap never clears on retry.
+- **Route Handlers, not Server Actions**, including for auth — Supabase's own examples use Server Actions; we deviate deliberately for one pattern everywhere.
+- **`getUser()`, not `getSession()` or `getClaims()`**, for every server-side session check. `getSession()` trusts the cookie; `getClaims()` needs asymmetric signing keys enabled.
+- **Redirects must carry rotated auth cookies.** `getUser()` can refresh tokens as a side effect; a bare `NextResponse.redirect` throws them away and silently logs the user out on the next request. `redirectPreservingCookies()` in `lib/supabase/middleware.ts` exists for this.
+- **`lib/safe-redirect.ts` guards every caller-supplied `next`.** `startsWith("/")` is not enough — `//evil.com` is protocol-relative and navigates off-origin. Found by `security-review`; 19 payloads tested.
 - **No subagents.** `code-review` skill covers the review gate; `playwright` + `run` cover QA.
 - **Deploy early, via GitHub → Vercel CI/CD** — settled 2026-08-25 (briefly deferred, then reversed the same session; the deferral is void). Repo is `Rounak7721/ReForge`, pushed over SSH. Vercel is connected to the repo, so **every push to `main` auto-deploys** and no manual `vercel` invocation is part of the normal loop. This is the ordering `04-execution-flows.md` wanted: build failures from environment differences surface against a placeholder on day one rather than against the whole app near the deadline.
 - **Cloudflare Tunnel / OCI is a fallback, not the plan.** If Vercel ever fights us, self-host on the OCI free tier behind a Cloudflare Tunnel. `reforge.rounak.co` can also simply point at the Vercel deployment. Either way: zero recurring cost, a public URL, requirement 7 satisfied.

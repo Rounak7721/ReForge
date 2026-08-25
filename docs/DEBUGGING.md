@@ -247,3 +247,84 @@ if (!parts?.length) {
 **Why this was worth catching now rather than in Phase 2:** every gate we have would have passed it. The HTTP status is 200. There is no error object. `tsconfig` has `noUncheckedIndexedAccess`, which forces the optional chaining above — but only if the code is written to expect absence, and no SDK example is. This would have shipped as an intermittent crash that appears only under a tight token budget, which is exactly the configuration the cost rules push us toward.
 
 **The general lesson, and it echoes entry 1:** the project's own constraint was the trigger. "Keep `maxOutputTokens` lean" is correct for cost and wrong for reasoning models, and nothing in the rule as written flags the interaction. Constraints inherited from an older model generation need re-testing against the model actually being used, not assumed forward.
+
+## 3. Signup returns 502 "Something went wrong" — and Supabase's email limit makes it worse
+
+**Phase:** Phase 1 (Database & Auth) · **Date:** 2026-08-25
+
+### Problem
+
+Driving the signup form with Playwright against `localhost:3000`, submitting a valid-looking email and an 17-character password:
+
+```
+POST /api/auth/signup  ->  502 Bad Gateway
+UI:  "Something went wrong. Please try again."
+```
+
+The generic message is the symptom, not the bug. Something upstream failed and our error mapper had no idea what it was, so it fell through to its catch-all. A user seeing this has no idea whether to fix their input, wait, or give up — and neither did I.
+
+### AI prompt
+
+The mapper was written from this instruction in `CLAUDE.md`:
+
+> Every API route: validate input, wrap the LLM call in try/catch, return typed error JSON with a proper status.
+
+I implemented `lib/api/supabase-auth-error.ts` to translate Supabase `AuthError`s into our own envelope, matching on lowercased message substrings — `"invalid login credentials"`, `"already registered"`, `"rate limit"` — with `upstream_error` (502) as the fallback.
+
+### Attempted solution
+
+The fallback looked like good defensive design: never leak an unrecognised upstream message to the browser, always return *something* typed. It passed review, passed the build, and passed lint.
+
+The flaw is that a catch-all fallback is indistinguishable from a bug. Every unmapped case silently becomes "502, something went wrong" — which is exactly what happened, and which tells the user and the developer nothing.
+
+### Debugging
+
+The UI could not say what went wrong, so I stopped reading our code and asked Supabase directly, bypassing the whole Next.js layer:
+
+```bash
+curl -X POST "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/signup" \
+  -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" -H "Content-Type: application/json" \
+  -d '{"email":"phase1-signup2@reforge.test","password":"reforge-test-8899"}'
+```
+
+```json
+{"code":400,"error_code":"email_address_invalid",
+ "msg":"Email address \"phase1-signup2@reforge.test\" is invalid"}
+```
+
+**First finding:** Supabase rejects `.test` domains outright. My test address was the problem — but our mapper turned a clear, actionable HTTP 400 ("that email is invalid") into an opaque HTTP 502 ("something went wrong"), which is a genuine defect in our code regardless of the test address.
+
+Retrying with a plausible domain to confirm the mapping theory produced something much worse:
+
+```json
+{"code":429,"error_code":"over_email_send_rate_limit",
+ "msg":"email rate limit exceeded"}
+```
+
+**Second finding, and the serious one.** Supabase's built-in email service is rate-limited to a handful of messages per hour on the free tier. With email confirmation enabled, **every signup sends an email**, so once that tiny limit is spent, signup stops working entirely for everyone — returning 429 with no path forward.
+
+`02-functional-requirements.md` notes the grader "will sign up with their **own** account". If they arrive after a few test signups have consumed the hourly allowance, the very first thing they touch fails. That is requirement 5 — sign up / login / logout — failing outright, on the graded deployment, for a reason invisible in our logs.
+
+Both findings share a root: `error_code` was sitting in the response the whole time. The mapper was matching on `message` substrings — brittle, locale-dependent, and blind to the machine-readable field right next to it.
+
+### Final solution
+
+Two changes, one to the code and one to project configuration.
+
+**1. Match on `error_code`, not message substrings.** `AuthApiError` carries a stable `code` field; the human-readable `message` is not an API contract. The mapper now switches on `error_code` first and falls back to substring matching only for older errors that lack it:
+
+```ts
+switch (error.code) {
+  case "email_address_invalid":    return apiError("invalid_input", "That email address isn't valid.");
+  case "over_email_send_rate_limit":
+  case "over_request_rate_limit":  return apiError("rate_limited", "…");
+  case "user_already_exists":      return apiError("email_taken", "…");
+  …
+}
+```
+
+**2. The catch-all now logs.** `console.error` with the code and status on every unmapped error, so the *next* unknown case is diagnosable from server logs instead of requiring a curl session against the upstream API. The user still gets a safe generic message; we get the detail.
+
+**3. Email confirmation must be off.** This was already on the checklist as a UX nicety — "avoid a confirmation dead end". It is not a nicety. With it on, the free tier's email allowance is a hard cap on how many people can ever sign up per hour, and it fails closed. Turning it off means `signUp` returns a session immediately, sends no email, and touches no rate limit.
+
+**What this changes about how I write error mappers:** a fallback branch that returns a generic message *and* logs nothing is a place where bugs go to hide. It converts a specific, fixable upstream error into an indistinguishable blob, and it does so silently — passing every gate we have. If a catch-all exists, it must record what it caught.

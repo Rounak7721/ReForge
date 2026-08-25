@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Every new session starts by reading `HANDOFF.md`.** It carries current status, the next actions, decisions already made, and open questions. It is maintained at the end of every session and is the fastest path back to full context.
 
-Then check `project_guidelines/08-mvp-checklist.md` for what is actually built. As of the last update, application code does not exist yet — the repo holds documentation and git history only. Do not assume any code path in this document exists; check first.
+Then check `project_guidelines/08-mvp-checklist.md` for what is actually built. Phases 0 and 1 are done: the app is scaffolded and deployed, and Supabase schema, RLS and auth are in place. `lib/llm/` and `lib/prompts/` are still empty. Do not assume any code path in this document exists; check first.
 
 ## Source of truth for requirements
 

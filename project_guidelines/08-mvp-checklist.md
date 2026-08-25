@@ -37,21 +37,21 @@ Covers requirement 4 (partially) and requirement 5 in full.
 
 **Backend**
 - [x] Supabase project created
-- [ ] Schema: `projects` table — `id`, `user_id`, `url`, `description`, `target_customer`, `analysis jsonb`, `concept jsonb`, `created_at`, `updated_at`
-- [ ] Schema: `refinements` table — `id`, `project_id`, `instruction`, `created_at` (chat history + an audit trail for the video)
-- [ ] RLS enabled on both tables; policies scoped to `auth.uid()`
-- [ ] `lib/supabase/browser.ts` (anon key) and `lib/supabase/server.ts` (service role, server-only)
-- [ ] Middleware guarding `/dashboard/*` → redirect to `/login`
+- [x] Schema: `projects` table — `id`, `user_id`, `url`, `description`, `target_customer`, `analysis jsonb`, `concept jsonb`, `created_at`, `updated_at` (+ `updated_at` trigger, `(user_id, created_at desc)` index)
+- [x] Schema: `refinements` table — `id`, `project_id`, `instruction`, `concept_after jsonb`, `created_at`. `concept_after` added beyond spec: makes undo a matter of restoring the previous row
+- [x] RLS enabled on both tables; 7 per-command policies scoped to `auth.uid()`. **Proven at the DB, not the UI** — A sees 0 of B's rows; A's update/delete of B's project match 0 rows; forged inserts raise `new row violates row-level security policy`
+- [x] `lib/supabase/browser.ts` (anon), `server.ts` (anon + cookies), `admin.ts` (service role, `import "server-only"`), `middleware.ts` (session refresh)
+- [x] Middleware guarding `/dashboard/*` → `/login`, preserving the deep link in `next`. Redirects carry rotated auth cookies forward
 
 **Frontend**
-- [ ] Sign up page
-- [ ] Login page
-- [ ] Logout control in dashboard chrome *(graded bullet — easy to forget)*
-- [ ] Protected dashboard shell renders for an authed user
+- [x] Sign up page
+- [x] Login page
+- [x] Logout control in dashboard chrome *(graded bullet)*
+- [x] Protected dashboard shell renders for an authed user, with empty state
 
 **Verify**
-- [ ] A brand-new user can sign up in incognito on the **deployed** URL with no email-confirmation dead end
-- [ ] User A cannot read User B's projects (test RLS directly, not just via UI)
+- [ ] A brand-new user can sign up in incognito on the **deployed** URL with no email-confirmation dead end — *verified locally; still to confirm on production once Vercel env vars are set*. `mailer_autoconfirm` is now `true`, so signup returns a session immediately and sends no email
+- [x] User A cannot read User B's projects — tested directly against Postgres with `set local role authenticated` + JWT claims, read **and** write paths
 
 ---
 

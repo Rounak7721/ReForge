@@ -75,3 +75,49 @@ I accepted the scope correction and locked the structured schema, then made thre
 3. Rejected the implied ordering. Building toward the preview bonus is only correct if it costs nothing now. I kept the constraint as "render as a pure function of the concept object, keep DB changes additive" and left every bonus behind the deployed-MVP gate in `05-bonus-features.md`. Cheap future-proofing is judgment; building for it at 48 hours is how the required flow ships late.
 
 The genuinely valuable output here was not the confirmation of the four steps I had right — it was the rejection of the one I had wrong. Step 4 as I described it is several days of work that the brief never asks for.
+
+## 2. Running the review gates on my own code, and acting on what they said
+
+**Phase:** Phase 1 (Database & Auth) · **Date:** 2026-08-25
+
+### What I asked
+
+Two skill invocations against the finished Phase 1 diff, per the working agreement in `CLAUDE.md` ("After a phase, run the `code-review` skill on your own diff and surface its findings"):
+
+> /security-review
+
+> /code-review medium
+
+### Why I structured it that way
+
+The interesting choice is *when*, not *what*. Both gates ran **after** the feature worked end to end in a browser but **before** the commit — the point where the code is complete enough to review honestly and still cheap to change. Running them earlier reviews a strawman; running them after commit turns findings into follow-up work that competes with the next phase.
+
+Splitting security from general review also matters. `security-review` is told to hunt exploitable vulnerabilities and suppress style noise; `code-review` is told to find correctness bugs. Asking one reviewer for both tends to produce a list sorted by *ease of spotting* rather than by *impact*. Run separately, the security pass surfaced an auth-adjacent issue that a general review would likely have filed under "minor input validation".
+
+### What the AI produced
+
+**`security-review`** found one genuine vulnerability I had written and not noticed — an open redirect in `components/auth/auth-form.tsx`:
+
+```ts
+router.replace(next && next.startsWith("/") ? next : "/dashboard");
+```
+
+`startsWith("/")` reads as "same-origin path only" and isn't. `//evil.com` starts with a slash and is a *protocol-relative URL*, so the browser navigates off-origin. The attack is nasty precisely because everything legitimate about it is real: the victim gets `https://<our-domain>/login?next=//evil.com`, authenticates successfully on the genuine site, and is then handed to an attacker page styled as our dashboard asking them to re-enter their password.
+
+**`code-review`** found four more, three in `lib/supabase/middleware.ts`:
+
+- Both redirect branches returned a fresh `NextResponse.redirect`, **discarding the rotated auth cookies** `getUser()` had just written. A user whose token refreshed while hitting `/login` would be silently logged out on their next request. The file's own header comment warned about this exact failure mode — and the code below it did the thing the comment warned against.
+- The unauthenticated branch never cleared `url.search`, so a deep link's own query string was lost across login.
+- The seven `create policy` statements were the only non-idempotent lines in an otherwise re-runnable migration; a re-apply would abort partway and leave later policies unapplied.
+
+### What I changed / fixed afterward
+
+All five fixed, but two decisions went beyond applying the suggestions.
+
+1. **I generalised the redirect fix rather than patching the reported string.** The review flagged `//evil.com`. I extracted `lib/safe-redirect.ts` covering the whole class — protocol-relative forms, backslash variants (`/\evil.com`, which browsers normalise to forward slashes), absolute URLs, `javascript:` schemes, and control-character smuggling (a tab or newline after the leading slash, which browsers strip before parsing) — then re-resolved through `new URL()` against a throwaway origin and asserted the origin hadn't changed. Then I wrote 19 test cases, including the legitimate paths that must still pass, and ran them. A fix for one payload is a patch; a fix for the class, with evidence, is a fix.
+
+2. **I applied it in a second place the review didn't mention.** `lib/supabase/middleware.ts` builds the `next` parameter from `request.nextUrl.pathname` — and a request to `https://host//evil.com` has pathname `//evil.com`. The sink was reported; the *other source feeding it* wasn't. Reviews find instances, not necessarily every reachable path to them.
+
+3. **On the migration, I went further than idempotency.** The reviewer noted `create policy` would fail on re-run. Fixing that exposed a worse latent problem: migration `0001` created `set_updated_at()` as `SECURITY DEFINER` (Supabase's own advisor had flagged it as anon-callable via `/rest/v1/rpc/`, and `0002` remediated the live project). Making `0001` re-runnable would have meant a file that is safe to replay *and* reintroduces a fixed vulnerability when replayed. So I corrected `0001` in place and documented why — accepting a small divergence from strict historical fidelity in exchange for a migration set that is safe to run from scratch.
+
+**What I'd take from this:** the most valuable finding was in code whose own comment described the bug it contained. I had written the warning about discarding rotated cookies, and then discarded them nine lines later. Self-review does not catch that — the comment reads as evidence the case is handled, so the eye moves on. An independent pass with a different objective does.
