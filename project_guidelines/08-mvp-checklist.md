@@ -2,7 +2,7 @@
 
 **This is the working tracker.** Update it as work happens — tick boxes the moment something is done and deployed, not when it's "basically done". Every other doc in this folder is reference; this one is state.
 
-**Deadline:** 48h from receipt. PDF generated 2026-08-25 13:42 IST ⇒ target **2026-08-27 ~13:42 IST**. Confirm actual receipt time.
+**Deadline: 2026-08-27 ~13:42 IST — CONFIRMED.** 48h from PDF generation (2026-08-25 13:42 IST). A complete, hosted, working MVP must exist by then. Bonus features are decided *after* that bar is met, not before.
 
 **Rule:** nothing in `05-bonus-features.md` starts until every box below is ticked **on the deployed URL**.
 
@@ -15,12 +15,12 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done & verified on deploy · `[
 Goal: a public URL exists before any feature does. Deployment is 10 points; get them banked early.
 
 **Repo & tooling**
-- [ ] `git init`, `.gitignore` (`.env*`, `.next`, `node_modules`)
-- [ ] `pnpm create next-app` — TypeScript, Tailwind, App Router, ESLint
-- [ ] `pnpm dlx shadcn@latest init`
-- [ ] `tsconfig` strict verified; `pnpm lint` + `pnpm build` green
-- [ ] `.env.example` created with every var from `03-tech-stack.md`
-- [ ] `docs/PROMPTS.md`, `docs/DEBUGGING.md`, `docs/ARCHITECTURE.md` scaffolded
+- [x] `git init`, `.gitignore` (`.env*`, `.next`, `node_modules`)
+- [x] `pnpm create next-app` — TypeScript, Tailwind v4, App Router, ESLint (Next 15.5.23, React 19.1.0)
+- [x] `pnpm dlx shadcn@latest init` — Radix base, `nova` preset; button/input/textarea/card/label/sonner/skeleton added
+- [x] `tsconfig` strict verified (+ `noUncheckedIndexedAccess`); `pnpm lint` + `pnpm build` green
+- [x] `.env.example` created with every var from `03-tech-stack.md`
+- [x] `docs/PROMPTS.md`, `docs/DEBUGGING.md`, `docs/ARCHITECTURE.md` scaffolded
 
 **Deploy**
 - [ ] Vercel project linked
@@ -35,7 +35,7 @@ Goal: a public URL exists before any feature does. Deployment is 10 points; get 
 Covers requirement 4 (partially) and requirement 5 in full.
 
 **Backend**
-- [ ] Supabase project created
+- [x] Supabase project created
 - [ ] Schema: `projects` table — `id`, `user_id`, `url`, `description`, `target_customer`, `analysis jsonb`, `concept jsonb`, `created_at`, `updated_at`
 - [ ] Schema: `refinements` table — `id`, `project_id`, `instruction`, `created_at` (chat history + an audit trail for the video)
 - [ ] RLS enabled on both tables; policies scoped to `auth.uid()`
@@ -91,7 +91,7 @@ Covers requirement 3.
 
 **Backend**
 - [ ] `lib/prompts/builder.ts`
-- [ ] Zod schema: exactly the 6 concept fields
+- [ ] Zod schema: exactly the 6 concept fields, **structured not prose** — see the `[OUR DECISION]` block in `02-functional-requirements.md` §3
 - [ ] `POST /api/build` — reads cached analysis by `projectId`, writes `projects.concept`
 - [ ] `lib/prompts/editor.ts`
 - [ ] `POST /api/refine` — `{projectId, instruction}` → **full** updated concept, persisted
@@ -100,7 +100,7 @@ Covers requirement 3.
 
 **Frontend**
 - [ ] "Build My Product" button + loading state
-- [ ] Concept view rendering all 6 fields
+- [ ] Concept view rendering all 6 fields — `<ConceptView concept={...} />`, a pure function of the concept object (so the preview bonus is a sibling component, not a refactor)
 - [ ] Chat/instruction input, **debounced**, max one in-flight request
 - [ ] Refinement history visible
 - [ ] Optimistic or clearly-signalled updating state

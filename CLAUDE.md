@@ -110,10 +110,9 @@ The 5-agent Research→Product→UI→QA pipeline is a **stretch bonus**. Don't 
 
 ## Commands
 
-Bootstrap (not yet run — this repo is empty and not a git repo):
+Bootstrap (not yet run — git is initialised, but there is no `package.json`):
 
 ```bash
-git init
 pnpm create next-app@latest . --typescript --tailwind --app --eslint
 pnpm dlx shadcn@latest init
 ```

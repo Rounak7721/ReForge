@@ -77,6 +77,21 @@ Then the user modifies it through **natural-language instructions**. Verbatim ex
 
 **[OUR DECISION]** These six fields are the exact `concept` zod schema. The Editor returns the **full updated concept object**, not a diff — idempotent and easy to persist.
 
+**[OUR DECISION] The concept schema is structured data, not prose.** `navigation`, `pages` and `uiDirection` are objects/arrays, never sentences. Approximate shape:
+
+```ts
+name:        string
+description: string
+features:    { name, description }[]
+navigation:  { label, path }[]
+pages:       { name, path, sections: { type, headline, body }[] }[]
+uiDirection: { style, mood, palette: { primary, surface, text }, typography }
+```
+
+**Why:** prose renders as a paragraph and nothing else, ever. Structured data renders as a nav list, a page outline and a swatch row in the MVP — which already looks better than a field dump — and makes the visual-preview bonus (`05-bonus-features.md` #2/#5) a *new component reading the same object*: no schema change, no migration, no route change.
+
+**The tradeoff:** deeper nested JSON is somewhat less reliable from Flash. Mitigated by zod validation + one stricter retry, which we're building regardless. Stop short of a full component tree in the MVP — moderate structure only.
+
 ---
 
 ## 4. Backend

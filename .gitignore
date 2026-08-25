@@ -9,10 +9,9 @@ out/
 build/
 dist/
 
-# env
-.env
-.env*.local
-.env.local
+# env — everything except the committed template
+.env*
+!.env.example
 
 # vercel
 .vercel
@@ -32,3 +31,6 @@ yarn-error.log*
 # editor
 .idea/
 *.swp
+
+# playwright mcp scratch output
+.playwright-mcp/

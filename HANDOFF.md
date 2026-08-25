@@ -2,7 +2,7 @@
 
 **Read this first in every new session.** It is the fastest path back to full context.
 
-_Last updated: 2026-08-25 — end of setup session (docs + tooling complete, no app code yet)_
+_Last updated: 2026-08-25 — scope clarified and decisions locked; Phase 0 starting_
 
 ---
 
@@ -10,7 +10,7 @@ _Last updated: 2026-08-25 — end of setup session (docs + tooling complete, no 
 
 **Phase:** Phase 0 not started. Planning, reference docs and tooling are complete. **No application code exists yet.**
 
-**Deadline:** 48h from receipt. PDF generated 2026-08-25 13:42 IST ⇒ target **2026-08-27 ~13:42 IST**. Still unconfirmed with the user.
+**Deadline: 2026-08-27 ~13:42 IST — CONFIRMED by the user.** A complete, hosted, working MVP by then. Whether to add bonus features is decided *after* that bar is met.
 
 | | Status |
 |---|---|
@@ -21,16 +21,15 @@ _Last updated: 2026-08-25 — end of setup session (docs + tooling complete, no 
 
 ---
 
-## First thing to do in this session
+## Known blocker — Supabase MCP is unauthorised
 
-The previous session created four project skills and the Supabase MCP config. Both were verified working but could not load mid-session. **Confirm they are live before doing anything else:**
+`list_tables` returns `Unauthorized`. **Cause:** `SUPABASE_ACCESS_TOKEN` is exported in `~/.bashrc`, but Claude Code was launched from the VSCode extension host, which never sourced it. `.mcp.json` interpolates `${SUPABASE_ACCESS_TOKEN}` from Claude Code's process env, so it resolves to empty and the server starts unauthenticated.
 
-1. Approve the `.mcp.json` supabase server if prompted at startup.
-2. Check the skills list contains `prompt-log`, `debug-log`, `deploy`, `wrap-up`.
-3. Check `/mcp` shows **supabase**, **context7** and **playwright** connected.
-4. Sanity-check the MCP with `list_tables` — expect `{"tables":[]}` until Phase 1 runs.
+**Fix:** relaunch Claude Code from a shell that has the token exported (`source ~/.bashrc && claude`), or export it into the VSCode launch environment. Claude cannot run the auth flow itself.
 
-If `frontend-design` or `playwright` are missing, re-enable them — `frontend-design` is needed for Phase 5, `playwright` for QA.
+This blocks **Phase 1** (schema + RLS). It does **not** block Phase 0.
+
+Everything else is live: skills `prompt-log` / `debug-log` / `deploy` / `wrap-up`, plus `frontend-design`, `code-review`, `security-review`, `run`; context7 and playwright tools available.
 
 ---
 
@@ -56,11 +55,9 @@ No `package.json`, no `app/`, no `lib/`. The repo is documentation and git histo
 
 ## Next actions, in order
 
-1. Verify skills + MCP are live (see above).
-2. Confirm the actual assignment receipt time with the user — it fixes the real deadline.
-3. Confirm the product name. "Reforge" is assumed throughout; settle it before Phase 5 builds a logo around it.
-4. **Start Phase 0** in `project_guidelines/08-mvp-checklist.md`: scaffold Next.js + shadcn, then deploy a placeholder to Vercel **the same day**. Deployment is 10 points — bank them early.
-5. Then Phase 1 (Supabase schema + RLS + auth). The DB is empty and waiting.
+1. **Phase 0** in `project_guidelines/08-mvp-checklist.md`: scaffold Next.js 15 + shadcn, get `pnpm lint` and `pnpm build` green, write `.env.example`, deploy a placeholder to Vercel **the same day**. Deployment is 10 points — bank them early.
+2. Fix the Supabase MCP token (see blocker above) before Phase 1.
+3. **Phase 1** — Supabase schema + RLS + auth. The DB is empty and waiting.
 
 Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.md`.
 
@@ -75,6 +72,25 @@ Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.m
 - **Multi-agent workflow is cut** for cost/rate-limit reasons → future scope, framed as a LangGraph fit. Belongs in README "Known limitations" and the video's "what's next" beat.
 - **Supabase MCP over the CLI fallback.** `.mcp.json` is committed; the token stays in the shell env, never in the file.
 - **No subagents.** `code-review` skill covers the review gate; `playwright` + `run` cover QA.
+- **Product name is `Reforge`** — confirmed by the user 2026-08-25. Phase 5 builds the logo around it.
+- **The MVP generates a structured product concept, not a codebase.** No code generation, no iframe preview, no export. Those are bonuses #2/#3/#5/#6 and are out of scope until the required flow is deployed. This was an explicit point of confusion — see the pipeline sketch below.
+- **The concept schema is structured data, not prose** — `navigation`, `pages` and `uiDirection` are arrays/objects. Locked so the visual-preview bonus is an additive component rather than a rewrite. Full rationale and shape: `02-functional-requirements.md` §3.
+- **Rendering is a pure function of the concept object.** `<ConceptView concept={...} />` in the MVP; a preview later is a sibling component on the same prop. DB stays additive — generated UI/code would be a new nullable column, never a migration of `projects.concept`.
+
+---
+
+## The MVP pipeline, in one block
+
+```
+inputs (url + description + target customer)
+   |  Call 1: ANALYZER  -> 7-field analysis  -> rendered, cached in projects.analysis
+   |  [user clicks "Build My Product"]
+   |  Call 2: BUILDER   -> 6-field concept   -> rendered, cached in projects.concept
+   |  [user types a natural-language instruction]
+   |  Call 3: EDITOR    -> FULL updated concept -> re-rendered, persisted
+```
+
+Two display gates, not one: the analysis is a finished artifact the user reads, and "Build My Product" is a separate action on top of it. The chat refines the **concept object** — it is an editing control, not a message stream. Building it as a chat transcript loses points on requirement 3.
 
 ---
 
@@ -90,8 +106,7 @@ Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.m
 
 ## Open questions for the user
 
-- Actual assignment receipt time? (fixes the real deadline)
-- Product name — is "Reforge" confirmed?
+- None outstanding. (Deadline and product name were both settled 2026-08-25.)
 
 ---
 

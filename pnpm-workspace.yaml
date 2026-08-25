@@ -1,0 +1,7 @@
+# Next.js does not need either of these built from source:
+# sharp — Next 15 bundles its own image optimiser; Vercel supplies sharp at build time.
+# unrs-resolver — prebuilt binaries ship for this platform.
+# Matches what create-next-app generates for pnpm.
+allowBuilds:
+  sharp: false
+  unrs-resolver: false

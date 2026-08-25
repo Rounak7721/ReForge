@@ -82,10 +82,9 @@ Rule of thumb: if a var is not prefixed `NEXT_PUBLIC_`, it must never be referen
 
 ## Bootstrap
 
-The repo is currently empty — not even a git repo.
+Git is already initialised (4 commits of docs). The repo has no `package.json` yet.
 
 ```bash
-git init
 pnpm create next-app@latest . --typescript --tailwind --app --eslint
 pnpm dlx shadcn@latest init
 ```
