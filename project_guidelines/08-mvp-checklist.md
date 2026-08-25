@@ -23,11 +23,11 @@ Goal: a public URL exists before any feature does. Deployment is 10 points; get 
 - [x] `docs/PROMPTS.md`, `docs/DEBUGGING.md`, `docs/ARCHITECTURE.md` scaffolded
 
 **Deploy** — **[OUR DECISION, 2026-08-25]** GitHub → Vercel CI/CD from the start, so every push to `main` auto-deploys and later phases are verified on the real URL rather than only on localhost. Fallback if Vercel fails: OCI free tier behind a Cloudflare Tunnel on `reforge.rounak.co`.
-- [ ] GitHub repo `Rounak7721/ReForge` pushed
-- [ ] Vercel project linked to the GitHub repo (auto-deploy on push to `main`)
-- [ ] Env vars set in Vercel (all of `.env.example`)
-- [ ] Placeholder page deployed and publicly reachable
-- [ ] Production URL recorded in `HANDOFF.md`
+- [x] GitHub repo `Rounak7721/ReForge` pushed
+- [x] Vercel project linked to the GitHub repo (auto-deploy on push to `main`)
+- [ ] Env vars set in Vercel (all of `.env.example`) — **deliberately deferred**, added as each is first used; re-check before any deploy that introduces one
+- [x] Placeholder page deployed and publicly reachable — https://reforge-blond-two.vercel.app/ (HTTP 200, correct title)
+- [x] Production URL recorded in `HANDOFF.md`
 
 ---
 
@@ -62,7 +62,7 @@ Covers requirement 2. See `04-execution-flows.md` for the flow and failure table
 **Backend**
 - [ ] `lib/llm/` — `getLLM`, `generateStructured`, `providers/gemini.ts`, `registry.ts`
 - [ ] `lib/llm/README.md` documenting the swap contract
-- [ ] Confirm current free Flash model ID in AI Studio; set `GEMINI_MODEL`
+- [x] Confirm current free Flash model ID; set `GEMINI_MODEL` — `gemini-3.6-flash`, verified against the live API, table in `03-tech-stack.md`
 - [ ] `lib/prompts/analyzer.ts`
 - [ ] Zod schema: exactly the 7 analysis fields from `02-functional-requirements.md`
 - [ ] Server-side URL fetch — timeout, size cap, HTML→text, truncate to token budget

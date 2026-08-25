@@ -149,3 +149,101 @@ Verified by computed style rather than by eye — `getComputedStyle(document.doc
 1. **A broken CSS variable is invisible to every gate we have.** Lint, type-check, build and console were all clean, because dropping an unresolvable declaration is specified behaviour, not an error. Only rendering the page and looking at it caught this. `pnpm build` passing is necessary, not sufficient — visual verification is now part of the phase checklist.
 2. **Two plausible fixes in a row can both be wrong.** Both of mine were coherent stories about variable *names*; neither was tested against what the browser had actually computed. Reading `getComputedStyle` at the start would have cost thirty seconds and skipped both dead ends. Inspect the runtime before theorising about the source.
 3. **When two scaffolding tools write into the same files, the seam is where the bugs live.** `shadcn init` overwrites `globals.css` and leaves `layout.tsx` untouched; neither tool knows the other ran. That seam deserves a deliberate check rather than a green build's benefit of the doubt.
+
+## 2. Gemini returns HTTP 200 with no content — thinking tokens eat the output budget
+
+**Phase:** Phase 2 prep (model selection) · **Date:** 2026-08-25
+
+### Problem
+
+Probing candidate models with a minimal structured-output call, two of them came back **HTTP 200 with an empty result**:
+
+```
+gemini-3.5-flash   http=200  bad payload: Expecting value: line 1 column 1 (char 0)
+gemini-3.6-flash   http=200  bad payload: Expecting value: line 1 column 1 (char 0)
+```
+
+No error status, no error message, no malformed JSON to catch. A 200 with nothing in it.
+
+Worse than the symptom is the shape of the response:
+
+```json
+{ "candidates": [ { "content": {}, "finishReason": "MAX_TOKENS", "index": 0 } ] }
+```
+
+`content` is an empty object — there is no `parts` array at all. The obvious accessor, `response.candidates[0].content.parts[0].text`, does not return `undefined` here; it throws `TypeError: Cannot read properties of undefined`. Every SDK example writes it exactly that way.
+
+### AI prompt
+
+Not a prompt to a coding model — this is a **project constraint colliding with model behaviour**. `CLAUDE.md` states, as a hard cost rule:
+
+> **Set `maxOutputTokens` on every call.** Keep prompts lean.
+
+The probe followed that rule literally, with a deliberately tight budget:
+
+```json
+"generationConfig": { "maxOutputTokens": 300, "responseMimeType": "application/json", "responseSchema": { ... } }
+```
+
+### Attempted solution
+
+The first read was that the schema was at fault — that `responseSchema` with a nested `ARRAY` of `STRING` was rejected, and the model returned nothing rather than violate it. Plausible: the same call against `gemini-2.5-flash` had failed a moment earlier, so "something about this request is malformed" was the live hypothesis.
+
+It was wrong, and it would have sent me to rewrite the schema — which is the part of the design we had just deliberately locked as *structured, not prose* (see `docs/PROMPTS.md` entry 1). A wrong diagnosis here would have unwound a good decision.
+
+### Debugging
+
+`finishReason: "MAX_TOKENS"` was the thread to pull. A schema rejection would not report a token limit. So the model hadn't refused — it had run out of room.
+
+But the budget was 300 tokens and the expected answer was roughly 20. Dumping the full response body explained it:
+
+```json
+"usageMetadata": {
+  "promptTokenCount": 14,
+  "totalTokenCount": 298,
+  "thoughtsTokenCount": 284
+}
+```
+
+**284 of the 300 tokens went to thinking.** Gemini 3.x flash models reason before answering, and `maxOutputTokens` is the ceiling on *thinking + output combined*, not on output alone. The model thought until it hit the cap, then had nothing left to emit — so it returned a candidate with no `parts`.
+
+Confirmed by controlled comparison, holding everything else fixed:
+
+| model | config | thoughts | output | result |
+|---|---|---|---|---|
+| `gemini-3.6-flash` | `max=300` | 284 | 0 | **empty** |
+| `gemini-3.6-flash` | `max=2000` | 291 | 21 | valid JSON |
+| `gemini-3.6-flash` | `max=300`, `thinkingLevel: "low"` | **0** | 16 | valid JSON |
+
+Two independent fixes, which confirms the diagnosis: raise the ceiling above the thinking cost, or stop the thinking.
+
+A useful negative result came out of the same sweep — `thinkingLevel: "low"` is **not** uniformly honoured:
+
+| model | `thinkingLevel: "low"` → thoughts |
+|---|---|
+| `gemini-3.6-flash` | 0 |
+| `gemini-3.5-flash` | 291 |
+| `gemini-3.1-flash-lite` | 101 |
+
+So the parameter cannot be treated as a portable "disable thinking" switch across the family. That matters directly for `lib/llm`, whose entire premise is that swapping the model is an env change: a budget that is safe on one Flash model silently returns nothing on its sibling.
+
+### Final solution
+
+Three changes, all in the provider layer rather than in feature code:
+
+1. **Pin `gemini-3.6-flash` with `thinkingConfig: { thinkingLevel: "low" }`.** Thinking goes to zero, so `maxOutputTokens` means what the cost rule assumes it means, and the budget can stay lean without risking an empty response.
+2. **Floor the token budget.** `generateStructured` enforces a minimum `maxOutputTokens` well above any plausible thinking cost, so that a future model swap that ignores `thinkingLevel` degrades to "slower and pricier" rather than "silently returns nothing".
+3. **Never index into `parts` blind.** The provider treats a missing `content.parts` as a typed error carrying `finishReason`, before zod ever sees the payload:
+
+```ts
+const parts = response.candidates?.[0]?.content?.parts;
+if (!parts?.length) {
+  throw new LLMEmptyResponseError(response.candidates?.[0]?.finishReason);
+}
+```
+
+`finishReason: "MAX_TOKENS"` then surfaces as a *distinct* error from a rate limit or a schema-validation failure, which is what makes it debuggable in production instead of a generic 500.
+
+**Why this was worth catching now rather than in Phase 2:** every gate we have would have passed it. The HTTP status is 200. There is no error object. `tsconfig` has `noUncheckedIndexedAccess`, which forces the optional chaining above — but only if the code is written to expect absence, and no SDK example is. This would have shipped as an intermittent crash that appears only under a tight token budget, which is exactly the configuration the cost rules push us toward.
+
+**The general lesson, and it echoes entry 1:** the project's own constraint was the trigger. "Keep `maxOutputTokens` lean" is correct for cost and wrong for reasoning models, and nothing in the rule as written flags the interaction. Constraints inherited from an older model generation need re-testing against the model actually being used, not assumed forward.

@@ -27,7 +27,7 @@ We follow the suggested stack almost exactly. Deviating costs time and buys noth
 | Backend | **Next.js Route Handlers** (`app/api/*`) | Suggested; keeps everything on Vercel. |
 | DB | **Supabase Postgres**, RLS on | Suggested; same service as auth. |
 | Auth | **Supabase Auth** | Suggested; one SDK for DB + auth, and OAuth providers are a dashboard toggle — relevant to the live-change final test. |
-| LLM | **Gemini Flash, free tier**, via `@google/genai` | Gemini is explicitly permitted. Free tier ⇒ zero recurring cost. |
+| LLM | **`gemini-3.6-flash`, free tier**, via `@google/genai` | Gemini is explicitly permitted. Free tier ⇒ zero recurring cost. Model ID verified against the live API 2026-08-25 — see below. |
 | Screenshots (bonus) | **microlink.io** free tier | Do not self-host Chromium on serverless. |
 | Hosting | **Vercel Hobby** | Suggested; free. |
 
@@ -58,6 +58,7 @@ The free tier is the binding constraint on the whole design.
 - **Set `maxOutputTokens` on every call.** Keep prompts lean.
 - **~10–15 RPM ceiling.** Debounce the chat-edit box, serialize requests, and handle 429s with a friendly "rate limited, retrying" state — never a crash. The grader will hit this.
 - **Validate every LLM response with zod.** Models return malformed JSON. An unvalidated `JSON.parse` is the most likely runtime failure in this app.
+- **`maxOutputTokens` caps thinking + output combined.** Verified 2026-08-25 against the live API: Gemini 3.x Flash reasons before answering, and a lean budget can be spent entirely on thinking — the call returns **HTTP 200 with `content: {}` and no `parts` array**, so the standard `candidates[0].content.parts[0].text` accessor *throws* rather than returning undefined. Mitigations, all in `lib/llm`: pin `thinkingConfig: { thinkingLevel: "low" }`, enforce a floor on `maxOutputTokens`, and treat a missing `parts` as a typed error carrying `finishReason`. Full trail in `docs/DEBUGGING.md` entry 2.
 
 ## Environment variables
 
@@ -67,7 +68,7 @@ Secrets live only in `.env.local` (git-ignored) and Vercel env vars. Never inlin
 # LLM (provider-agnostic layer)
 LLM_PROVIDER=gemini              # gemini | openai | anthropic
 GEMINI_API_KEY=
-GEMINI_MODEL=                    # confirm current free Flash model ID in AI Studio
+GEMINI_MODEL=gemini-3.6-flash    # verified against the live API 2026-08-25
 
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=
@@ -99,3 +100,21 @@ vercel       # deploy preview — ASK before running
 ```
 
 No test suite is planned for the MVP; verification is `build` + `lint` + walking the flows in `04-execution-flows.md`.
+
+
+## Model selection **[OUR DECISION]** — verified, not assumed
+
+`CLAUDE.md` says to confirm the current free Flash model ID rather than hardcode one from memory. Done on 2026-08-25 by listing models on the real key and probing each candidate with the exact structured-output call the pipeline will make.
+
+| Model | Result |
+|---|---|
+| `gemini-2.5-flash` | **404** — "no longer available to new users". The ID most documentation still names is dead for new keys. |
+| `gemini-3.7-flash` | **UNAVAILABLE** — "currently experiencing high demand". Newest, and congested. |
+| `gemini-flash-latest` | Timed out twice (aliases to 3.7). **Avoid `*-latest` aliases** — they float under you mid-project and turn a reproducible build into a moving target. |
+| `gemini-3.5-flash` | Works, but ignores `thinkingLevel: "low"` (291 thinking tokens anyway). |
+| `gemini-3.1-flash-lite` | Works, partially honours `thinkingLevel` (101 thinking tokens). |
+| **`gemini-3.6-flash`** | **Chosen.** Valid JSON, fast, and the only candidate where `thinkingLevel: "low"` actually drives thinking to **zero**. |
+
+Free-tier RPM is no longer published per-model in Google's docs — it is visible only in the AI Studio rate-limit dashboard for the specific key. Treat the ~10–15 RPM figure in this repo as an assumption to verify there, not a fact.
+
+Because `thinkingLevel` is honoured inconsistently across the Flash family, it cannot be treated as a portable switch. `lib/llm` therefore enforces a **floor** on `maxOutputTokens` as well, so that swapping to a model which ignores the setting degrades to "slower" rather than "silently returns nothing".

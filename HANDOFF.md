@@ -14,22 +14,18 @@ _Last updated: 2026-08-25 — Phase 0a complete (app scaffolded, lint+build gree
 
 | | Status |
 |---|---|
-| Production URL | pending — Vercel project to be created from the GitHub repo |
+| Production URL | **https://reforge-blond-two.vercel.app/** — live, serving the placeholder |
 | GitHub repo | `Rounak7721/ReForge` — pushed over SSH |
-| Supabase project | **created** — ref `zqyahkyigokbxmufpxpj`, schema empty |
-| Vercel project | to be created by the user from the GitHub repo; auto-deploys on push to `main` |
+| Supabase project | **created** — ref `zqyahkyigokbxmufpxpj`, schema still empty; MCP **connected and verified** |
+| Vercel project | **created**, connected to the GitHub repo; auto-deploys on push to `main` |
 
 ---
 
-## Known blocker — Supabase MCP is unauthorised
+## No blockers
 
-`list_tables` returns `Unauthorized`. **Cause:** `SUPABASE_ACCESS_TOKEN` is exported in `~/.bashrc`, but Claude Code was launched from the VSCode extension host, which never sourced it. `.mcp.json` interpolates `${SUPABASE_ACCESS_TOKEN}` from Claude Code's process env, so it resolves to empty and the server starts unauthenticated.
+Supabase MCP is connected and verified (`list_tables` → `{"tables":[]}`). Skills `prompt-log` / `debug-log` / `deploy` / `wrap-up` are live, plus `frontend-design`, `code-review`, `security-review`, `run`; context7 and playwright are available.
 
-**Fix:** relaunch Claude Code from a shell that has the token exported (`source ~/.bashrc && claude`), or export it into the VSCode launch environment. Claude cannot run the auth flow itself.
-
-This blocks **Phase 1** (schema + RLS). It does **not** block Phase 0.
-
-Everything else is live: skills `prompt-log` / `debug-log` / `deploy` / `wrap-up`, plus `frontend-design`, `code-review`, `security-review`, `run`; context7 and playwright tools available.
+`.env` exists locally (git-ignored) with `GEMINI_API_KEY`, `LLM_PROVIDER=gemini` and `GEMINI_MODEL=gemini-3.6-flash`. The three Supabase values are still blank — **Phase 1 needs them**.
 
 ---
 
@@ -56,10 +52,13 @@ No `package.json`, no `app/`, no `lib/`. The repo is documentation and git histo
 ## Next actions, in order
 
 1. ~~Phase 0a — scaffold~~ **done**, committed on `phase-0/bootstrap` (`4e21805`). Lint and build green.
-2. **Unblock Supabase** — see the blocker above. Phase 1 cannot start without the project URL and keys in `.env.local`.
-3. **Phase 1** — schema + RLS + auth. The DB is empty and waiting.
-4. Phases 2 → 6. Each push to `main` auto-deploys, so verify on the deployed URL as you go, not at the end.
-5. Optional, any time: point `reforge.rounak.co` at the Vercel deployment.
+2. **Fill the three Supabase values in `.env`** — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → API). The MCP can fetch the first two; the service-role key only comes from the dashboard.
+3. **Turn off email confirmation** in Authentication → Providers → Email, before building auth. The grader signs up with their own account and a confirmation dead-end fails requirement 5.
+4. **Phase 1** — schema + RLS + auth. The DB is empty and waiting.
+5. Phases 2 → 6. Each push to `main` auto-deploys, so verify on the deployed URL as you go, not at the end.
+6. Optional, any time: point `reforge.rounak.co` at the Vercel deployment.
+
+**Env vars are NOT yet set in Vercel** — they are being added as each is first used. Anything reading an env var will build fine and fail at runtime in production until its var exists there. Check this before every deploy that introduces one.
 
 Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.md`.
 
@@ -73,6 +72,7 @@ Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.m
 - **All model calls go through `lib/llm`.** Feature code never imports a vendor SDK. Swapping vendor = env change only.
 - **Multi-agent workflow is cut** for cost/rate-limit reasons → future scope, framed as a LangGraph fit. Belongs in README "Known limitations" and the video's "what's next" beat.
 - **Supabase MCP over the CLI fallback.** `.mcp.json` is committed; the token stays in the shell env, never in the file.
+- **Runtime model is `gemini-3.6-flash`**, pinned with `thinkingConfig: { thinkingLevel: "low" }`. Verified against the live API 2026-08-25: `gemini-2.5-flash` is 404 for new keys, `gemini-3.7-flash` is UNAVAILABLE under load, `*-latest` aliases time out, and 3.6 is the only candidate that actually honours `thinkingLevel`. Table in `03-tech-stack.md`; the empty-response trap is `docs/DEBUGGING.md` entry 2.
 - **No subagents.** `code-review` skill covers the review gate; `playwright` + `run` cover QA.
 - **Deploy early, via GitHub → Vercel CI/CD** — settled 2026-08-25 (briefly deferred, then reversed the same session; the deferral is void). Repo is `Rounak7721/ReForge`, pushed over SSH. Vercel is connected to the repo, so **every push to `main` auto-deploys** and no manual `vercel` invocation is part of the normal loop. This is the ordering `04-execution-flows.md` wanted: build failures from environment differences surface against a placeholder on day one rather than against the whole app near the deadline.
 - **Cloudflare Tunnel / OCI is a fallback, not the plan.** If Vercel ever fights us, self-host on the OCI free tier behind a Cloudflare Tunnel. `reforge.rounak.co` can also simply point at the Vercel deployment. Either way: zero recurring cost, a public URL, requirement 7 satisfied.
