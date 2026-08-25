@@ -124,7 +124,7 @@ Day to day:
 pnpm dev              # local dev server
 pnpm build            # must pass before any deploy
 pnpm lint             # must pass before commit
-vercel                # deploy preview (ASK before running)
+vercel                # deploy preview (ASK before running; use the `deploy` skill)
 ```
 
 There is no test suite and none is planned for the MVP. Verification is `pnpm build` + `pnpm lint` + manually walking the flows (or the `qa-tester` subagent driving Playwright). If you add tests, note the runner and single-test invocation here.
@@ -138,6 +138,7 @@ Full rationale in `project_guidelines/09-tooling.md`. Summary:
 - **supabase MCP** — not yet configured. Either add it or commit to the Supabase CLI + `supabase/migrations/`. Pick one, early.
 - **obsidian MCP** — enabled globally, unused here; disable it for this project.
 - **Skills to use:** `frontend-design` (landing page + UI), `code-review` (the review gate), `security-review` (before deploy and before submission), `run`.
+- **Project skills in `.claude/skills/`:** `prompt-log` and `debug-log` (fire automatically when material appears — see below), `deploy` (before any deploy), `wrap-up` (end of session).
 - **Subagents: none.** `code-review` replaces the `reviewer` subagent; `playwright` + `run` replace `qa-tester`. Don't build subagents for a 48h project.
 
 ## Documentation is Claude's job, not a later chore
@@ -146,7 +147,7 @@ Full rationale in `project_guidelines/09-tooling.md`. Summary:
 
 ### `docs/PROMPTS.md`
 
-When a prompt in this session is worth keeping — it unblocked something, shaped the architecture, or its failure taught something — append it immediately, in the same turn. At append time:
+Use the **`prompt-log`** skill. When a prompt in this session is worth keeping — it unblocked something, shaped the architecture, or its failure taught something — append it immediately, in the same turn. At append time:
 
 1. **Fix spelling and typos** in the prompt before recording it. Record the corrected version.
 2. **Answer all four required questions right then**: what was asked, why it was structured that way, what the AI produced, what was changed afterward.
@@ -156,7 +157,7 @@ Target 5–10 entries by submission. Quality over count.
 
 ### `docs/DEBUGGING.md`
 
-Log every real failure **at the moment it happens, before fixing it**, in Problem → AI prompt → Attempted solution → Debugging → Final solution format. Minimum 2 by submission; the brief calls this out as "important" and it's worth 10 points. A bug fixed silently is a lost point.
+Use the **`debug-log`** skill. Log every real failure **at the moment it happens, before fixing it**, in Problem → AI prompt → Attempted solution → Debugging → Final solution format. Minimum 2 by submission; the brief calls this out as "important" and it's worth 10 points. A bug fixed silently is a lost point.
 
 ### Keep current as you go
 
@@ -173,7 +174,7 @@ Maintain a proper history from the start.
 
 ## Session wrap-up
 
-When the user says to wrap up, update everything relevant and hand off — in this order:
+Use the **`wrap-up`** skill. When the user says to wrap up, update everything relevant and hand off — in this order:
 
 1. `project_guidelines/08-mvp-checklist.md` — tick only what is done **and verified on the deployed URL**
 2. `docs/PROMPTS.md` and `docs/DEBUGGING.md` — append anything from the session not yet logged

@@ -26,6 +26,7 @@ HANDOFF.md                   this file
 project_reference/           the original assignment PDF
 project_guidelines/          distilled reference — 10 docs, read README.md first
   08-mvp-checklist.md        ← the live task tracker
+.claude/skills/              prompt-log, debug-log, deploy, wrap-up
 docs/
   PROMPTS.md                 scaffolded, no entries yet
   DEBUGGING.md               scaffolded, no entries yet
@@ -65,7 +66,7 @@ Nothing else. No `package.json`, no `app/`, no `lib/`.
 
 ## Session wrap-up ritual
 
-When the user says to wrap up, update in this order, then commit:
+Run the **`wrap-up`** skill. It updates, in this order, then commits:
 
 1. `project_guidelines/08-mvp-checklist.md` — tick what's genuinely done **and verified on deploy**
 2. `docs/PROMPTS.md` / `docs/DEBUGGING.md` — append anything from the session not yet logged

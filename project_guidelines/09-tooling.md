@@ -49,16 +49,16 @@ If adding it proves fiddly, the fallback is the Supabase CLI plus SQL files comm
 
 `dataviz` (no charts), `claude-api` (we're on Gemini, not Anthropic, at runtime), `design`/`artifact-*` (deliverables are a repo and a video, not artifacts), `schedule`/`loop` (no recurring work), `keybindings-help`, `update-config` (only if MCP setup needs it).
 
-### Create — project-specific, worth the 10 minutes
+### Project-specific — created, in `.claude/skills/`
 
-These automate rituals that are otherwise easy to skip under deadline pressure, and three of them defend graded deliverables.
+These automate rituals that are otherwise easy to skip under deadline pressure, and three of them defend graded deliverables. All four are committed to the repo, so they travel with it.
 
-| Skill | Purpose |
-|---|---|
-| **`prompt-log`** | Append a prompt to `docs/PROMPTS.md`: fix typos, then answer all four required questions inline. Enforces the "nothing left for later manual review" rule. |
-| **`debug-log`** | Append a failure to `docs/DEBUGGING.md` in Problem → Prompt → Attempt → Debug → Fix format, at the moment it happens. |
-| **`wrap-up`** | End-of-session ritual: update the MVP checklist, docs, and `HANDOFF.md`; commit. |
-| **`deploy`** | Vercel + env-var checklist so no deploy ships with a missing variable. |
+| Skill | Purpose | Invoked |
+|---|---|---|
+| **`prompt-log`** | Append a prompt to `docs/PROMPTS.md`: fix typos, then answer all four required questions inline. Enforces the "nothing left for later manual review" rule. | Automatically when a prompt proves notable; or `/prompt-log` |
+| **`debug-log`** | Append a failure to `docs/DEBUGGING.md` in Problem → Prompt → Attempt → Debug → Fix format, **before** fixing it. | Automatically the moment AI-generated code fails; or `/debug-log` |
+| **`wrap-up`** | End-of-session ritual: checklist → logs → architecture → `HANDOFF.md` → commit. | When the user says to wrap up; or `/wrap-up` |
+| **`deploy`** | Preflight, env-var verification, and a production smoke test walked as a brand-new user in incognito. | Before any deploy; or `/deploy` |
 
 ---
 
@@ -74,5 +74,5 @@ These automate rituals that are otherwise easy to skip under deadline pressure, 
 - **Add:** supabase MCP (or commit to the CLI + migrations fallback)
 - **Disable:** obsidian
 - **Skills to use:** frontend-design, code-review, security-review, run
-- **Skills to create:** prompt-log, debug-log, wrap-up, deploy
+- **Skills created (in `.claude/skills/`):** prompt-log, debug-log, wrap-up, deploy
 - **Subagents:** none
