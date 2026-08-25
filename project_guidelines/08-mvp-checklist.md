@@ -62,7 +62,7 @@ Covers requirement 2. See `04-execution-flows.md` for the flow and failure table
 **Backend**
 - [ ] `lib/llm/` — `getLLM`, `generateStructured`, `providers/gemini.ts`, `registry.ts`
 - [ ] `lib/llm/README.md` documenting the swap contract
-- [x] Confirm current free Flash model ID; set `GEMINI_MODEL` — `gemini-3.6-flash`, verified against the live API, table in `03-tech-stack.md`
+- [x] Confirm current free Flash model ID; set `GEMINI_MODEL` — **`gemini-3.1-flash-lite`**, chosen on daily quota (500 RPD vs 20 for the 3.x Flash line); table in `03-tech-stack.md`
 - [ ] `lib/prompts/analyzer.ts`
 - [ ] Zod schema: exactly the 7 analysis fields from `02-functional-requirements.md`
 - [ ] Server-side URL fetch — timeout, size cap, HTML→text, truncate to token budget
@@ -70,7 +70,7 @@ Covers requirement 2. See `04-execution-flows.md` for the flow and failure table
 - [ ] Result cached to `projects.analysis`
 - [ ] `maxOutputTokens` set
 - [ ] Malformed-JSON path: zod fail → one stricter retry → typed error
-- [ ] 429 path returns a distinct rate-limited error code
+- [ ] 429 path returns a distinct rate-limited error code — **and distinguishes per-minute from per-day exhaustion** (a daily cap does not clear on retry)
 
 **Frontend**
 - [ ] Form: Website URL + Product description + Target customer (validated)
@@ -163,7 +163,7 @@ Covers requirement 7 and the remainder of requirement 4.
 - [ ] Service-role client provably absent from any Client Component
 - [ ] `pnpm lint` and `pnpm build` green
 - [ ] `security-review` run on the diff
-- [ ] Seed a demo account with one pre-analyzed project *(insurance against quota exhaustion during grading)*
+- [ ] **Seed a demo account with one pre-analyzed project** — now *required*, not optional: the free tier is 500 requests/day shared with the grader, and one full demo is 6 calls
 - [ ] Full flow smoke-tested in a fresh incognito window as a new user, on production
 
 ---

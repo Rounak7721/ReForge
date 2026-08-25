@@ -27,7 +27,7 @@ We follow the suggested stack almost exactly. Deviating costs time and buys noth
 | Backend | **Next.js Route Handlers** (`app/api/*`) | Suggested; keeps everything on Vercel. |
 | DB | **Supabase Postgres**, RLS on | Suggested; same service as auth. |
 | Auth | **Supabase Auth** | Suggested; one SDK for DB + auth, and OAuth providers are a dashboard toggle — relevant to the live-change final test. |
-| LLM | **`gemini-3.6-flash`, free tier**, via `@google/genai` | Gemini is explicitly permitted. Free tier ⇒ zero recurring cost. Model ID verified against the live API 2026-08-25 — see below. |
+| LLM | **`gemini-3.1-flash-lite`, free tier**, via `@google/genai` | Gemini is explicitly permitted. Free tier ⇒ zero recurring cost. Chosen on **daily quota**, not quality — see below. |
 | Screenshots (bonus) | **microlink.io** free tier | Do not self-host Chromium on serverless. |
 | Hosting | **Vercel Hobby** | Suggested; free. |
 
@@ -68,7 +68,7 @@ Secrets live only in `.env.local` (git-ignored) and Vercel env vars. Never inlin
 # LLM (provider-agnostic layer)
 LLM_PROVIDER=gemini              # gemini | openai | anthropic
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-3.6-flash    # verified against the live API 2026-08-25
+GEMINI_MODEL=gemini-3.1-flash-lite  # chosen on free-tier RPD; verified 2026-08-25
 
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=
@@ -102,19 +102,38 @@ vercel       # deploy preview — ASK before running
 No test suite is planned for the MVP; verification is `build` + `lint` + walking the flows in `04-execution-flows.md`.
 
 
-## Model selection **[OUR DECISION]** — verified, not assumed
+## Model selection **[OUR DECISION]** — decided by quota, verified not assumed
 
-`CLAUDE.md` says to confirm the current free Flash model ID rather than hardcode one from memory. Done on 2026-08-25 by listing models on the real key and probing each candidate with the exact structured-output call the pipeline will make.
+`CLAUDE.md` says to confirm the current free Flash model ID rather than hardcode one. Doing so on 2026-08-25 — by listing models on the real key, probing each with the exact structured-output call the pipeline makes, and then reading the AI Studio rate-limit dashboard — overturned two assumptions this repo was built on.
+
+### Availability
 
 | Model | Result |
 |---|---|
 | `gemini-2.5-flash` | **404** — "no longer available to new users". The ID most documentation still names is dead for new keys. |
-| `gemini-3.7-flash` | **UNAVAILABLE** — "currently experiencing high demand". Newest, and congested. |
-| `gemini-flash-latest` | Timed out twice (aliases to 3.7). **Avoid `*-latest` aliases** — they float under you mid-project and turn a reproducible build into a moving target. |
-| `gemini-3.5-flash` | Works, but ignores `thinkingLevel: "low"` (291 thinking tokens anyway). |
-| `gemini-3.1-flash-lite` | Works, partially honours `thinkingLevel` (101 thinking tokens). |
-| **`gemini-3.6-flash`** | **Chosen.** Valid JSON, fast, and the only candidate where `thinkingLevel: "low"` actually drives thinking to **zero**. |
+| `gemini-3.7-flash` | **UNAVAILABLE** — "currently experiencing high demand". |
+| `gemini-flash-latest` | Timed out twice (aliases to 3.7). **Avoid `*-latest` aliases** — they float under you mid-project. |
 
-Free-tier RPM is no longer published per-model in Google's docs — it is visible only in the AI Studio rate-limit dashboard for the specific key. Treat the ~10–15 RPM figure in this repo as an assumption to verify there, not a fact.
+### The binding constraint is requests per DAY, not RPM
 
-Because `thinkingLevel` is honoured inconsistently across the Flash family, it cannot be treated as a portable switch. `lib/llm` therefore enforces a **floor** on `maxOutputTokens` as well, so that swapping to a model which ignores the setting degrades to "slower" rather than "silently returns nothing".
+This repo assumed "~10–15 RPM" and never considered a daily cap. The actual free-tier limits are far tighter. A complete demo of the graded flow is **6 calls**: 1 analyze + 1 build + 4 refinements (the four instructions the brief names).
+
+| Model | RPM | TPM | RPD | Complete demos/day |
+|---|---|---|---|---|
+| `gemini-3.6-flash` | 5 | 250K | **20** | **3** |
+| `gemini-3.5-flash` | 5 | 250K | **20** | **3** |
+| `gemini-3.7-flash` | 5 | 250K | **20** | **3** |
+| **`gemini-3.1-flash-lite`** | **15** | 250K | **500** | **83** |
+
+Three demo runs per day is not a product — the grader consumes one, and any debugging that day consumes the rest. **`gemini-3.1-flash-lite` is the only viable runtime model**, at 25× the daily budget and 3× the RPM.
+
+### Is the quality good enough?
+
+Tested on a realistic analyzer workload (real marketing copy → the full 7-field schema), not a toy prompt: all seven fields populated, sensible content, **~2s** latency. Good enough by a clear margin for a concept generator. `gemini-3.6-flash` remains reachable via `GEMINI_MODEL` for a side-by-side, which is precisely what the swappable `lib/llm` layer is for.
+
+### Consequences that are now mandatory, not optional
+
+1. **Caching is survival, not just a cost rule.** Reopening a saved project must never re-call Gemini. Already required by requirement 6; now it also protects the daily quota.
+2. **Seed a demo account with a pre-analyzed project.** Previously "consider" in the checklist. With a hard daily ceiling and a grader sharing it, this is insurance the submission needs.
+3. **`thinkingLevel` is not portable.** `flash-lite` emits **0** thinking tokens with no `thinkingConfig`, but **118** when `thinkingLevel: "low"` is set — the inverse of `3.6-flash`. `lib/llm` must enforce a `maxOutputTokens` floor rather than trusting the parameter.
+4. **Handle 429 as a first-class state**, distinguishing per-minute from per-day exhaustion. A daily cap does not clear on retry, so "rate limited, retrying" is a *lie* after the 500th call — that path needs its own message.

@@ -25,7 +25,7 @@ _Last updated: 2026-08-25 — Phase 0a complete (app scaffolded, lint+build gree
 
 Supabase MCP is connected and verified (`list_tables` → `{"tables":[]}`). Skills `prompt-log` / `debug-log` / `deploy` / `wrap-up` are live, plus `frontend-design`, `code-review`, `security-review`, `run`; context7 and playwright are available.
 
-`.env` exists locally (git-ignored) with `GEMINI_API_KEY`, `LLM_PROVIDER=gemini` and `GEMINI_MODEL=gemini-3.6-flash`. The three Supabase values are still blank — **Phase 1 needs them**.
+`.env` exists locally (git-ignored) with `GEMINI_API_KEY`, `LLM_PROVIDER=gemini`, `GEMINI_MODEL=gemini-3.1-flash-lite`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publishable key `sb_publishable_…`). **Only `SUPABASE_SERVICE_ROLE_KEY` is still blank.**
 
 ---
 
@@ -52,7 +52,7 @@ No `package.json`, no `app/`, no `lib/`. The repo is documentation and git histo
 ## Next actions, in order
 
 1. ~~Phase 0a — scaffold~~ **done**, committed on `phase-0/bootstrap` (`4e21805`). Lint and build green.
-2. **Fill the three Supabase values in `.env`** — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (Settings → API). The MCP can fetch the first two; the service-role key only comes from the dashboard.
+2. **`SUPABASE_SERVICE_ROLE_KEY` is the only value still missing from `.env`.** URL and publishable key were pulled via MCP and are already set. The service-role key only comes from the dashboard (Settings → API Keys).
 3. **Turn off email confirmation** in Authentication → Providers → Email, before building auth. The grader signs up with their own account and a confirmation dead-end fails requirement 5.
 4. **Phase 1** — schema + RLS + auth. The DB is empty and waiting.
 5. Phases 2 → 6. Each push to `main` auto-deploys, so verify on the deployed URL as you go, not at the end.
@@ -72,7 +72,9 @@ Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.m
 - **All model calls go through `lib/llm`.** Feature code never imports a vendor SDK. Swapping vendor = env change only.
 - **Multi-agent workflow is cut** for cost/rate-limit reasons → future scope, framed as a LangGraph fit. Belongs in README "Known limitations" and the video's "what's next" beat.
 - **Supabase MCP over the CLI fallback.** `.mcp.json` is committed; the token stays in the shell env, never in the file.
-- **Runtime model is `gemini-3.6-flash`**, pinned with `thinkingConfig: { thinkingLevel: "low" }`. Verified against the live API 2026-08-25: `gemini-2.5-flash` is 404 for new keys, `gemini-3.7-flash` is UNAVAILABLE under load, `*-latest` aliases time out, and 3.6 is the only candidate that actually honours `thinkingLevel`. Table in `03-tech-stack.md`; the empty-response trap is `docs/DEBUGGING.md` entry 2.
+- **Runtime model is `gemini-3.1-flash-lite`** — chosen on **daily quota**, not quality. AI Studio shows the 3.x Flash line capped at **20 requests/day**; one complete demo of the graded flow is 6 calls (1 analyze + 1 build + 4 refinements), so that is **3 demos per day** shared with the grader. flash-lite allows **500/day and 15 RPM**, and handles the real 7-field analyzer workload in ~2s with all fields populated. Also verified: `gemini-2.5-flash` is 404 for new keys, `gemini-3.7-flash` is UNAVAILABLE under load, `*-latest` aliases time out. Table in `03-tech-stack.md`.
+- **Two traps `lib/llm` must handle** (both measured, `docs/DEBUGGING.md` entry 2): `maxOutputTokens` caps *thinking + output combined*, so a lean budget returns HTTP 200 with `content: {}` and no `parts` array — the usual accessor throws. And `thinkingLevel` is **not portable**: flash-lite emits 0 thinking tokens with no config but 118 with `thinkingLevel: "low"`, the inverse of 3.6-flash. Enforce a token floor rather than trusting the parameter.
+- **Seeding a demo account is now required, not optional**, and 429 must distinguish per-minute from per-day exhaustion — a daily cap never clears on retry.
 - **No subagents.** `code-review` skill covers the review gate; `playwright` + `run` cover QA.
 - **Deploy early, via GitHub → Vercel CI/CD** — settled 2026-08-25 (briefly deferred, then reversed the same session; the deferral is void). Repo is `Rounak7721/ReForge`, pushed over SSH. Vercel is connected to the repo, so **every push to `main` auto-deploys** and no manual `vercel` invocation is part of the normal loop. This is the ordering `04-execution-flows.md` wanted: build failures from environment differences surface against a placeholder on day one rather than against the whole app near the deadline.
 - **Cloudflare Tunnel / OCI is a fallback, not the plan.** If Vercel ever fights us, self-host on the OCI free tier behind a Cloudflare Tunnel. `reforge.rounak.co` can also simply point at the Vercel deployment. Either way: zero recurring cost, a public URL, requirement 7 satisfied.

@@ -45,7 +45,7 @@ This is a 48–72h brief being executed in ~24h. Optimize for a working, demoabl
 
 - **Framework:** Next.js 15 (App Router), TypeScript strict, Tailwind, shadcn/ui.
 - **DB + Auth:** Supabase (Postgres + Supabase Auth) — one service for both. Row Level Security on.
-- **Runtime LLM:** `gemini-3.6-flash`, **free tier**, via `@google/genai`. Do not use Anthropic or OpenAI at runtime — cost constraint. Model ID verified against the live API on 2026-08-25; `gemini-2.5-flash` is 404 for new keys and `*-latest` aliases are unstable. Rationale table in `project_guidelines/03-tech-stack.md`.
+- **Runtime LLM:** `gemini-3.1-flash-lite`, **free tier**, via `@google/genai`. Do not use Anthropic or OpenAI at runtime — cost constraint. Chosen on **daily quota**: the 3.x Flash models allow 20 requests/day, which is 3 complete demos; flash-lite allows 500. Verified 2026-08-25; `gemini-2.5-flash` is 404 for new keys and `*-latest` aliases are unstable. Table in `project_guidelines/03-tech-stack.md`.
 - **Screenshots (bonus only):** microlink.io free tier. Do not self-host Chromium on serverless.
 - **Hosting:** Vercel Hobby (free).
 - **Zero recurring cost is a requirement.** If a choice adds cost, stop and ask.
@@ -54,7 +54,8 @@ This is a 48–72h brief being executed in ~24h. Optimize for a working, demoabl
 
 - Cache every analysis/build result in Postgres. Reopening a saved project must render from the DB and **never** re-call Gemini.
 - Set `maxOutputTokens` on every Gemini call. Keep prompts lean — **but note it caps thinking + output combined.** Too lean and the model spends the whole budget reasoning and returns HTTP 200 with `content: {}` and no `parts` array, which makes the usual `parts[0].text` accessor throw. `lib/llm` pins `thinkingLevel: "low"`, enforces a token floor, and raises a typed error on missing `parts`. See `docs/DEBUGGING.md` entry 2.
-- Free tier is ~10–15 RPM. Debounce the chat-edit box and serialize requests; handle 429s with a friendly "rate limited, retrying" state, not a crash.
+- **Free tier is 15 RPM and 500 requests/DAY** (measured, not assumed). The daily cap is the real constraint: one complete demo is 6 calls. Debounce the chat-edit box and serialize requests; handle 429 as two distinct states — per-minute (retrying works) and **per-day (retrying never works, say so honestly)**.
+- **Seed a demo account with a pre-analyzed project.** With a hard daily ceiling shared with the grader, this is required insurance, not a nice-to-have.
 
 ## Architecture
 
