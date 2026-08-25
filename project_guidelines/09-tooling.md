@@ -15,13 +15,17 @@ Current state audited from `~/.claude/settings.json` and `~/.claude.json`.
 | **context7** | ✅ enabled (plugin) | Next.js 15 App Router, `supabase-js` v2, and `@google/genai` all have APIs that changed recently. Recalling signatures from memory is the single most likely source of wasted debugging time. Non-negotiable for this stack. |
 | **playwright** | ✅ enabled (plugin) | QA phase only — drive the **deployed** app to verify flows, and generate real material for `docs/DEBUGGING.md`. Also covers bonus #7 (Automated QA) nearly for free. |
 
-### Add — missing and genuinely useful
+### Added — configured and verified
 
 | Server | Status | Why |
 |---|---|---|
-| **supabase** | ❌ not configured | Schema, migrations, RLS policies, and seeding are a meaningful slice of Phases 1–4. Doing this through the MCP server rather than the dashboard keeps DB changes in the transcript, which feeds `docs/PROMPTS.md`. **Recommended.** Install: `claude mcp add supabase` (needs a Supabase access token). |
+| **supabase** | ✅ configured in `.mcp.json` | Schema, migrations, RLS policies and seeding are a meaningful slice of Phases 1–4. Doing this through the MCP rather than the dashboard keeps DB changes in the transcript, which feeds `docs/PROMPTS.md`. |
 
-If adding it proves fiddly, the fallback is the Supabase CLI plus SQL files committed under `supabase/migrations/` — arguably better for the "clean repo" deliverable anyway. Decide once, early; don't do both.
+Config: `@supabase/mcp-server-supabase` pinned to `--project-ref=zqyahkyigokbxmufpxpj`, token supplied as `${SUPABASE_ACCESS_TOKEN}` from the shell env — **never inline the token in `.mcp.json`**, which is committed. Verified working: 20 tools, authenticates, project schema currently empty.
+
+The CLI + `supabase/migrations/` fallback was considered and **not** taken. Don't run both.
+
+> ⚠️ `apply_migration` and `execute_sql` write directly to the remote project — there is no local or staging environment. `CLAUDE.md`'s "ask before any DB migration" rule is the only guard. Honour it.
 
 ### Disable for this project
 
