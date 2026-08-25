@@ -2,7 +2,7 @@
 
 **Read this first in every new session.** It is the fastest path back to full context.
 
-_Last updated: 2026-08-25 — scope clarified and decisions locked; Phase 0 starting_
+_Last updated: 2026-08-25 — Phase 0a complete (app scaffolded, lint+build green); deploy deferred to end_
 
 ---
 
@@ -14,10 +14,10 @@ _Last updated: 2026-08-25 — scope clarified and decisions locked; Phase 0 star
 
 | | Status |
 |---|---|
-| Production URL | not deployed |
+| Production URL | not deployed — **deliberately deferred to after the MVP works locally** |
 | GitHub repo | not pushed (local git only, 3 commits) |
 | Supabase project | **created** — ref `zqyahkyigokbxmufpxpj`, schema empty |
-| Vercel project | not created |
+| Vercel project | not created (fallback: OCI + Cloudflare Tunnel → `reforge.rounak.co`) |
 
 ---
 
@@ -55,9 +55,11 @@ No `package.json`, no `app/`, no `lib/`. The repo is documentation and git histo
 
 ## Next actions, in order
 
-1. **Phase 0** in `project_guidelines/08-mvp-checklist.md`: scaffold Next.js 15 + shadcn, get `pnpm lint` and `pnpm build` green, write `.env.example`, deploy a placeholder to Vercel **the same day**. Deployment is 10 points — bank them early.
-2. Fix the Supabase MCP token (see blocker above) before Phase 1.
-3. **Phase 1** — Supabase schema + RLS + auth. The DB is empty and waiting.
+1. ~~Phase 0a — scaffold~~ **done**, committed on `phase-0/bootstrap` (`4e21805`). Lint and build green.
+2. **Unblock Supabase** — see the blocker above. Phase 1 cannot start without the project URL and keys in `.env.local`.
+3. **Phase 1** — schema + RLS + auth. The DB is empty and waiting.
+4. Phases 2 → 6 locally.
+5. **Deploy last** (Vercel, fallback OCI + Cloudflare Tunnel). Budget real time for it; see the accepted risk under Decisions.
 
 Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.md`.
 
@@ -72,6 +74,8 @@ Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.m
 - **Multi-agent workflow is cut** for cost/rate-limit reasons → future scope, framed as a LangGraph fit. Belongs in README "Known limitations" and the video's "what's next" beat.
 - **Supabase MCP over the CLI fallback.** `.mcp.json` is committed; the token stays in the shell env, never in the file.
 - **No subagents.** `code-review` skill covers the review gate; `playwright` + `run` cover QA.
+- **Deploy is deferred until the MVP works locally** — user's call, 2026-08-25. The guidelines order deploy first (10 points, `04-execution-flows.md`); we are deliberately departing from that. **The risk we have accepted:** environment-difference build failures (env vars, Node version, native deps, CI-only `next build` behaviour) will now surface against the whole app near the deadline instead of against a placeholder on day one. Mitigation: run `pnpm build` after every phase, keep `.env.example` exact, and treat the first deploy as a scheduled task with real time budgeted — not a five-minute formality.
+- **Deploy fallback: OCI + Cloudflare Tunnel on `reforge.rounak.co`.** If Vercel fights us, self-host on the OCI free tier behind a Cloudflare Tunnel. Still zero recurring cost, still a publicly reachable URL, so requirement 7 is satisfied either way.
 - **Product name is `Reforge`** — confirmed by the user 2026-08-25. Phase 5 builds the logo around it.
 - **The MVP generates a structured product concept, not a codebase.** No code generation, no iframe preview, no export. Those are bonuses #2/#3/#5/#6 and are out of scope until the required flow is deployed. This was an explicit point of confusion — see the pipeline sketch below.
 - **The concept schema is structured data, not prose** — `navigation`, `pages` and `uiDirection` are arrays/objects. Locked so the visual-preview bonus is an additive component rather than a rewrite. Full rationale and shape: `02-functional-requirements.md` §3.

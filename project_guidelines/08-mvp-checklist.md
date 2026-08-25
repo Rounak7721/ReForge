@@ -22,7 +22,7 @@ Goal: a public URL exists before any feature does. Deployment is 10 points; get 
 - [x] `.env.example` created with every var from `03-tech-stack.md`
 - [x] `docs/PROMPTS.md`, `docs/DEBUGGING.md`, `docs/ARCHITECTURE.md` scaffolded
 
-**Deploy**
+**Deploy** — **[OUR DECISION, 2026-08-25]** deferred to after Phase 6, at the user's direction. This departs from the ordering in `04-execution-flows.md`; the accepted risk and its mitigation are recorded in `HANDOFF.md` under Decisions. Fallback target if Vercel fails: OCI free tier behind a Cloudflare Tunnel on `reforge.rounak.co`.
 - [ ] Vercel project linked
 - [ ] Env vars set in Vercel (all of `.env.example`)
 - [ ] Placeholder page deployed and publicly reachable
