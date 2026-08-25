@@ -25,7 +25,7 @@ Goal: a public URL exists before any feature does. Deployment is 10 points; get 
 **Deploy** — **[OUR DECISION, 2026-08-25]** GitHub → Vercel CI/CD from the start, so every push to `main` auto-deploys and later phases are verified on the real URL rather than only on localhost. Fallback if Vercel fails: OCI free tier behind a Cloudflare Tunnel on `reforge.rounak.co`.
 - [x] GitHub repo `Rounak7721/ReForge` pushed
 - [x] Vercel project linked to the GitHub repo (auto-deploy on push to `main`)
-- [ ] Env vars set in Vercel (all of `.env.example`) — **deliberately deferred**, added as each is first used; re-check before any deploy that introduces one
+- [x] Env vars set in Vercel (all of `.env.example`) — verified on production: `lib/env.ts` parses at module load, so a missing var would 500 the route; it returned a proper zod error instead
 - [x] Placeholder page deployed and publicly reachable — https://reforge-blond-two.vercel.app/ (HTTP 200, correct title)
 - [x] Production URL recorded in `HANDOFF.md`
 
@@ -50,7 +50,7 @@ Covers requirement 4 (partially) and requirement 5 in full.
 - [x] Protected dashboard shell renders for an authed user, with empty state
 
 **Verify**
-- [ ] A brand-new user can sign up in incognito on the **deployed** URL with no email-confirmation dead end — *verified locally; still to confirm on production once Vercel env vars are set*. `mailer_autoconfirm` is now `true`, so signup returns a session immediately and sends no email
+- [x] A brand-new user can sign up in incognito on the **deployed** URL with no email-confirmation dead end — verified on production: signup → dashboard → logout → login round-trip, console clean, test user removed. `mailer_autoconfirm` is `true`, so signup returns a session immediately and sends no email
 - [x] User A cannot read User B's projects — tested directly against Postgres with `set local role authenticated` + JWT claims, read **and** write paths
 
 ---

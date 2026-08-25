@@ -14,7 +14,7 @@ _Last updated: 2026-08-25 — Phase 1 complete (schema + RLS + auth, verified). 
 
 | | Status |
 |---|---|
-| Production URL | **https://reforge-blond-two.vercel.app/** — live, serving the placeholder |
+| Production URL | **https://reforge-blond-two.vercel.app/** — live with auth; signup/login/logout verified on production |
 | GitHub repo | `Rounak7721/ReForge` — pushed over SSH |
 | Supabase project | ref `zqyahkyigokbxmufpxpj` — **schema applied** (`projects`, `refinements`, 7 RLS policies), MCP verified, advisors clean |
 | Vercel project | **created**, connected to the GitHub repo; auto-deploys on push to `main` |
@@ -65,12 +65,12 @@ logging as things break.
 ## Next actions, in order
 
 1. ~~Phase 0 — scaffold + deploy~~ and ~~Phase 1 — schema, RLS, auth~~ **done**.
-2. **Set the Supabase env vars in Vercel before the next deploy.** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Phase 1 is the first code that reads env at runtime — production will **build fine and fail on first click** without them.
+2. ~~Set env vars in Vercel~~ **done** — all six set and verified against production.
 3. **Phase 2 — the analyzer.** `lib/llm` provider layer, `lib/prompts/analyzer.ts`, server-side URL fetch, `POST /api/analyze`, results cached to `projects.analysis`. See the two measured Gemini traps under Decisions before writing the provider.
 4. Phases 3 → 6. Each push to `main` auto-deploys, so verify on the deployed URL as you go, not at the end.
 5. Optional, any time: point `reforge.rounak.co` at the Vercel deployment.
 
-**Env vars are NOT yet set in Vercel** — they are being added as each is first used. Anything reading an env var will build fine and fail at runtime in production until its var exists there. Check this before every deploy that introduces one.
+**Env vars are set in Vercel** (all six, verified on production). Any *new* var added later must be added there too — code reading a missing var builds fine and fails at runtime. `lib/env.ts` parses at module load, so the failure is a named zod error rather than a silent `undefined`.
 
 Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.md`.
 
