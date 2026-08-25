@@ -14,10 +14,10 @@ _Last updated: 2026-08-25 — Phase 0a complete (app scaffolded, lint+build gree
 
 | | Status |
 |---|---|
-| Production URL | not deployed — **deliberately deferred to after the MVP works locally** |
-| GitHub repo | not pushed (local git only, 3 commits) |
+| Production URL | pending — Vercel project to be created from the GitHub repo |
+| GitHub repo | `Rounak7721/ReForge` — pushed over SSH |
 | Supabase project | **created** — ref `zqyahkyigokbxmufpxpj`, schema empty |
-| Vercel project | not created (fallback: OCI + Cloudflare Tunnel → `reforge.rounak.co`) |
+| Vercel project | to be created by the user from the GitHub repo; auto-deploys on push to `main` |
 
 ---
 
@@ -58,8 +58,8 @@ No `package.json`, no `app/`, no `lib/`. The repo is documentation and git histo
 1. ~~Phase 0a — scaffold~~ **done**, committed on `phase-0/bootstrap` (`4e21805`). Lint and build green.
 2. **Unblock Supabase** — see the blocker above. Phase 1 cannot start without the project URL and keys in `.env.local`.
 3. **Phase 1** — schema + RLS + auth. The DB is empty and waiting.
-4. Phases 2 → 6 locally.
-5. **Deploy last** (Vercel, fallback OCI + Cloudflare Tunnel). Budget real time for it; see the accepted risk under Decisions.
+4. Phases 2 → 6. Each push to `main` auto-deploys, so verify on the deployed URL as you go, not at the end.
+5. Optional, any time: point `reforge.rounak.co` at the Vercel deployment.
 
 Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.md`.
 
@@ -74,8 +74,8 @@ Plan mode first for anything non-trivial, per the working agreement in `CLAUDE.m
 - **Multi-agent workflow is cut** for cost/rate-limit reasons → future scope, framed as a LangGraph fit. Belongs in README "Known limitations" and the video's "what's next" beat.
 - **Supabase MCP over the CLI fallback.** `.mcp.json` is committed; the token stays in the shell env, never in the file.
 - **No subagents.** `code-review` skill covers the review gate; `playwright` + `run` cover QA.
-- **Deploy is deferred until the MVP works locally** — user's call, 2026-08-25. The guidelines order deploy first (10 points, `04-execution-flows.md`); we are deliberately departing from that. **The risk we have accepted:** environment-difference build failures (env vars, Node version, native deps, CI-only `next build` behaviour) will now surface against the whole app near the deadline instead of against a placeholder on day one. Mitigation: run `pnpm build` after every phase, keep `.env.example` exact, and treat the first deploy as a scheduled task with real time budgeted — not a five-minute formality.
-- **Deploy fallback: OCI + Cloudflare Tunnel on `reforge.rounak.co`.** If Vercel fights us, self-host on the OCI free tier behind a Cloudflare Tunnel. Still zero recurring cost, still a publicly reachable URL, so requirement 7 is satisfied either way.
+- **Deploy early, via GitHub → Vercel CI/CD** — settled 2026-08-25 (briefly deferred, then reversed the same session; the deferral is void). Repo is `Rounak7721/ReForge`, pushed over SSH. Vercel is connected to the repo, so **every push to `main` auto-deploys** and no manual `vercel` invocation is part of the normal loop. This is the ordering `04-execution-flows.md` wanted: build failures from environment differences surface against a placeholder on day one rather than against the whole app near the deadline.
+- **Cloudflare Tunnel / OCI is a fallback, not the plan.** If Vercel ever fights us, self-host on the OCI free tier behind a Cloudflare Tunnel. `reforge.rounak.co` can also simply point at the Vercel deployment. Either way: zero recurring cost, a public URL, requirement 7 satisfied.
 - **Product name is `Reforge`** — confirmed by the user 2026-08-25. Phase 5 builds the logo around it.
 - **The MVP generates a structured product concept, not a codebase.** No code generation, no iframe preview, no export. Those are bonuses #2/#3/#5/#6 and are out of scope until the required flow is deployed. This was an explicit point of confusion — see the pipeline sketch below.
 - **The concept schema is structured data, not prose** — `navigation`, `pages` and `uiDirection` are arrays/objects. Locked so the visual-preview bonus is an additive component rather than a rewrite. Full rationale and shape: `02-functional-requirements.md` §3.
