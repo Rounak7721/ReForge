@@ -13,6 +13,8 @@ Everything here is faithful to the PDF. Our own choices — decisions the brief 
 | [05-bonus-features.md](05-bonus-features.md) | All 7 bonuses with effort/verdict and a recommended order | Only after the required flow is deployed |
 | [06-deliverables.md](06-deliverables.md) | The 5 submissions + video script + pre-submission checklist | Day one (to start the logs), and at the end |
 | [07-scoring-map.md](07-scoring-map.md) | The 100-point rubric mapped to concrete actions; time allocation | Whenever two tasks compete for time |
+| [08-mvp-checklist.md](08-mvp-checklist.md) | **The live task tracker** — 7 phases, frontend + backend, ticked as work happens | Every session; this is state, everything else is reference |
+| [09-tooling.md](09-tooling.md) | MCP servers, skills and subagents this project needs — and what to disable | Session start; before installing anything |
 
 ## The three things most likely to be forgotten
 
