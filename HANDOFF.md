@@ -2,7 +2,12 @@
 
 **Read this first in every new session.** It is the fastest path back to full context.
 
-_Last updated: 2026-08-26, ~14:30 IST — end of session 3. Phases 0–6 complete and verified on production. Next: a frontend/UX refactor, then Phase 7 (docs + video)._
+_Last updated: 2026-08-26, ~14:45 IST — session 4 paused for a usage-limit reset,
+resuming ~15:45 IST. No code changed this session. Phases 0–6 remain complete and
+verified on production. The frontend refactor's **visual direction is now settled**
+(v0 / Lovable / Replit — see Next actions) and a pre-refactor defect baseline was
+captured in `docs/UI-AUDIT.md`. Next: build the refactor, then Phase 7 (docs +
+video)._
 
 ---
 
@@ -33,34 +38,76 @@ that cannot be rushed — reserve 2.5h for it and do not let the refactor eat th
 
 ## Next actions, in order
 
-### 1. Frontend / UX refactor — **the user's explicit next request**
+### 1. Frontend / UX refactor — **direction now settled, not yet started**
 
-> "we will do some refactoring for the frontend with new added skills … to give
-> a more natural feel to it"
+**The user picked the references on 2026-08-26: v0.dev, Lovable, Replit.**
 
-The user intends to add new skills before this. **Ask which skills are available
-before starting**, and treat this as a design task — they granted full autonomy
-for the last one and reviewing the artifact beat approving a plan.
+Their brief, verbatim in substance: the current UI is *"too simple"*; if this is
+meant to be a startup page it should *"look like an actual good startup page
+with all the UI enhancements, loaders, animations, to make it attractive and
+feel like a real product instead of just some plain old generic demo."*
+Explicitly asked for **background images, logos, gradients, stylish buttons**.
 
-Where the current UI is weakest, in priority order:
+**This reverses the existing design language.** The current `.marketing` system
+in `app/globals.css` is a flat editorial "spec sheet" — hairline rules, one
+accent, no gradients, no shadows. The three references are dark-first,
+gradient-heavy and motion-rich. Treat `--ink/--paper/--wash/--rule/--signal` as
+**the thing being replaced**, not a constraint to design within. Note also that
+`components/providers/theme-provider.tsx` pins `forcedTheme="light"` — going
+dark-first is a deliberate reversal of that, not an oversight.
+
+**Answers already given, do not re-ask:**
+
+| Question | Answer |
+|---|---|
+| Scope | **Everything, including the verified landing page** |
+| Refine UX | **Command bar + visual diff** (not a chat transcript — see Decisions) |
+| Aesthetic | v0 / Lovable / Replit |
+
+**Skills to use** (installed at `~/.agents/skills`, symlinked into
+`~/.claude/skills`; `web-design-guidelines` is project-scoped in
+`.claude/skills/` via `skills-lock.json`):
+
+- `high-end-visual-design` — the aesthetic driver. Matches the references
+  (depth, layered shadows, cinematic spacing, micro-interactions).
+  **Not `minimalist-ui`** — it explicitly bans gradients and heavy shadows,
+  which is the opposite of what was asked for.
+- `redesign-existing-projects` — audit-first process wrapper.
+- `web-design-guidelines` — the compliance gate at the end.
+- `design-taste-frontend` self-describes as *"not dashboards, not multi-step
+  product UI"*, so it is a poor fit for `/dashboard`. The `imagegen-*`,
+  `image-to-code` and `brandkit` skills need image generation, which was not
+  available in the session that surveyed them.
+
+Where the current UI is weakest, in priority order — **use this order if time
+runs short**, it is highest-graded-value first:
 
 1. **`/dashboard/[projectId]` is a long vertical dump.** Analysis (7 sections)
-   then concept (4 sections) stacked. It works but has no rhythm — this is the
-   page a grader spends the most time on and the one that would benefit most.
-2. **The refine box is functional, not conversational.** It sits above the
-   concept as a form. The brief calls this "modify through natural-language
-   instructions"; it currently reads as a control panel. *Careful:* a previous
-   decision (below) explicitly rejects building it as a chat transcript — the
-   goal is a more natural *feel*, not a message stream.
-3. **No visual diff after a refinement.** The concept silently changes. Showing
-   what changed would make the demo land far harder.
+   then concept (4 sections) stacked, every box an identical
+   `bg-card rounded-lg border p-5`. No rhythm, no hierarchy. This is the page a
+   grader spends the most time on.
+2. **The refine box is a form, not a command bar** — and the concept mutates
+   silently behind an `opacity-50` with no diff. Fixing both is what makes the
+   demo land.
+3. **The app shell uses stock shadcn neutrals** while marketing has a real
+   design language, so the two halves of the product look unrelated.
 4. **`/dashboard/new` is a plain form** on an otherwise designed product.
-5. Landing page is done and verified — leave it unless asked.
+5. **The landing page** — now in scope, but it already works, so it is the
+   safest thing to cut if the clock runs out.
 
-The design language is established: see `.marketing` in `app/globals.css`
-(`--ink`, `--paper`, `--wash`, `--rule`, `--dim`, `--signal: #1F4BE0`) and
-`components/marketing/`. Three type roles: Archivo display, Geist body, Geist
-Mono data.
+**Baseline defects are already catalogued in `docs/UI-AUDIT.md`** (run with
+`web-design-guidelines` before the refactor). Items tagged **[keep]** are real
+accessibility bugs that must not be re-introduced into the new components;
+items tagged **[folds in]** disappear when the surface is rebuilt. Do not re-run
+that audit from scratch — carry the [keep] list forward, then re-run the skill
+at the end as the gate.
+
+**Time risk, stated honestly:** this scope is much larger than the ~2h the
+previous session had penciled in for a UI pass. The video is a required
+deliverable worth real points and needs ~2.5h. If both cannot fit, the video
+wins — a slightly plainer app that is demonstrated well scores better than a
+beautiful one with no recording. Raise this with the user rather than silently
+letting the refactor consume the buffer.
 
 ### 2. Phase 7 — deliverables (the remaining 9 boxes)
 
@@ -218,15 +265,20 @@ precisely when it says what you hoped to hear. **Read the reason, not the verdic
 
 ## Open questions for the user
 
-1. **Which skills are being added for the frontend refactor?** The user said
-   "with new added skills" — ask before starting so the work uses them.
-2. **How much of the app shell should the refactor touch?** The landing page is
-   done and verified; the recommendation is to focus on
-   `/dashboard/[projectId]`, which is where a grader spends most time.
+1. **Dark-first or light-first?** v0, Lovable and Replit are all dark-first.
+   Going dark means reversing `forcedTheme="light"` in
+   `components/providers/theme-provider.tsx` and restyling every surface. Going
+   light keeps more of the existing work but drifts from the references. Ask
+   before committing — it is the single highest-leverage call in the refactor.
+2. **Where do background images and logos come from?** The user asked for both.
+   There is no image generation available and no asset pipeline in the repo.
+   Options: CSS-only gradients and noise (zero cost, zero new deps), inline SVG
+   patterns, or the user supplies files. **Zero recurring cost is a hard project
+   constraint**, so no CDN-hosted stock imagery.
 3. **Video: demo from the seeded account or a live analysis?** Live is more
-   impressive but spends quota and risks the two interpretive instructions
-   above. A hybrid — live analyze + build, then the seeded project for
-   refinements — is probably the strongest.
+   impressive but spends quota and risks the two interpretive instructions in
+   the Decisions section. A hybrid — live analyze + build, then the seeded
+   project for refinements — is probably the strongest.
 
 ---
 
