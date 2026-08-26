@@ -31,6 +31,29 @@ import type { Analysis } from "@/lib/prompts/analyzer";
  * rows keep validating, and render them behind a presence check in ConceptView.
  */
 
+/**
+ * One colour in the product's palette.
+ *
+ * `role` exists so the UI can still paint a realistic mock — it needs to know
+ * which colour is the page and which is the type — without constraining how
+ * many colours there are. Exactly one surface and one text are expected;
+ * everything beyond primary is an accent, and there can be as many as the
+ * product calls for.
+ */
+const paletteEntrySchema = z.object({
+  name: z
+    .string()
+    .min(1)
+    .describe("What this colour is called, e.g. 'Deep Crimson' or 'Antique Gold'."),
+  hex: z.string().min(1).describe("The colour as a hex code, e.g. '#8C1C2B'."),
+  role: z
+    .enum(["primary", "surface", "text", "accent"])
+    .describe(
+      "'surface' is the page background, 'text' is body copy, 'primary' is the main " +
+        "brand colour. Every additional colour is an 'accent'.",
+    ),
+});
+
 const featureSchema = z.object({
   name: z.string().min(1).describe("Short feature name, 2-4 words. No marketing adjectives."),
   description: z
@@ -101,21 +124,64 @@ export const conceptSchema = z.object({
       .string()
       .min(1)
       .describe("Concrete typeface direction, e.g. 'Instrument Serif headings, Inter body'."),
-    palette: z.object({
-      primary: z.string().min(1).describe("Brand/accent colour as a hex code, e.g. '#2F6F4E'."),
-      surface: z.string().min(1).describe("Page background as a hex code."),
-      text: z.string().min(1).describe("Body text colour as a hex code."),
-    }),
+    palette: z
+      .array(paletteEntrySchema)
+      .min(1)
+      .max(10)
+      .describe(
+        "The product's colours. Include at least a surface, a text and a primary; " +
+          "add as many accents as the product genuinely needs. If the user names " +
+          "specific colours, return one entry for EVERY colour they named.",
+      ),
   }),
 });
 
 export type Concept = z.infer<typeof conceptSchema>;
+export type PaletteEntry = z.infer<typeof paletteEntrySchema>;
+
+/**
+ * Reader for a `concept` column, tolerant of the pre-2026-08-26 palette.
+ *
+ * The palette used to be a fixed `{primary, surface, text}` object, which meant
+ * the *schema itself* capped the product at three colours — asking for "red,
+ * gold, black and white" could not succeed no matter how the prompt was worded.
+ * It is now an open list.
+ *
+ * Rows written before that change still hold the old object, and the demo seed
+ * is one of them. This upgrades them on read rather than migrating the table:
+ * `concept` is `jsonb` with no schema to alter, a migration would rewrite rows
+ * we can regenerate for free, and a read-time shim keeps working for any row
+ * restored from an old backup later.
+ *
+ * Kept separate from `conceptSchema` on purpose. `conceptSchema` is converted
+ * to JSON Schema and sent to Gemini on the wire, so it has to stay a clean
+ * single shape — a union or a preprocess there would either fail to convert or
+ * describe two contradictory formats to the model.
+ */
+const legacyPaletteSchema = z.object({
+  primary: z.string().min(1),
+  surface: z.string().min(1),
+  text: z.string().min(1),
+});
+
+export const storedConceptSchema = conceptSchema.extend({
+  uiDirection: conceptSchema.shape.uiDirection.extend({
+    palette: z.union([
+      z.array(paletteEntrySchema).min(1).max(10),
+      legacyPaletteSchema.transform((old): PaletteEntry[] => [
+        { name: "Primary", hex: old.primary, role: "primary" },
+        { name: "Surface", hex: old.surface, role: "surface" },
+        { name: "Text", hex: old.text, role: "text" },
+      ]),
+    ]),
+  }),
+});
 
 const SYSTEM = [
   "You are a senior product designer turning a competitive analysis into a concrete, buildable product concept.",
   "Be specific and opinionated. Name real sections with real copy, not placeholders.",
   "Keep pages and navigation consistent: every navigation item must point at a page you defined, and every page should be reachable from the navigation.",
-  "Use realistic hex colours that work together.",
+  "Use realistic hex colours that work together. Choose as many as the product actually needs — a restrained brand may want three, a richer one six or more. Never trim a palette to hit a number.",
   "Respond with a single JSON object matching the schema. No prose outside it.",
 ].join(" ");
 

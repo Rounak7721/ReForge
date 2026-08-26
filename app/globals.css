@@ -349,6 +349,14 @@
     border-color 0.5s var(--ease-expo);
 }
 
+/* The grain is a full-page rasterised SVG. Printing it bloats the PDF by
+   megabytes and lays a grey wash over white paper. */
+@media print {
+  .grain::after {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .plate-interactive:hover {
     transform: translateY(-2px);

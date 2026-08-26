@@ -21,6 +21,11 @@ const SYSTEM = [
   // entry behind, which renders as a broken link. Cross-field consistency is not
   // inferred, it has to be stated.
   "Keep pages and navigation consistent. If you add a page, add its navigation entry. If you remove a page, remove its navigation entry.",
+  // The palette used to be a fixed three-key object, so "use red, gold, black
+  // and white" was unsatisfiable by construction. It is an open list now, and
+  // the model has to be told that the incoming length is not a budget —
+  // otherwise it mirrors whatever count it was handed.
+  "The palette is a list of any length. If the instruction names colours, return one entry for EVERY colour named, adding entries as needed. Never drop a requested colour to keep the list the size it was.",
   "If the instruction is vague, make a confident, specific choice rather than a generic one.",
   "Respond with a single JSON object matching the schema. No prose outside it.",
 ].join(" ");

@@ -33,7 +33,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="z-nav sticky top-0 pt-[env(safe-area-inset-top)]">
+      {/* print:hidden — the export route lives under this layout, and app chrome
+          has no business on a printed brief. */}
+      <header className="z-nav sticky top-0 pt-[env(safe-area-inset-top)] print:hidden">
         <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">
           <div className="border-hairline bg-shell/70 flex items-center gap-3 rounded-full border p-2 shadow-(--shadow-ambient) backdrop-blur-xl">
             <Link
@@ -60,8 +62,8 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      <main id="main" className="flex-1 px-4 pt-10 pb-24 sm:px-6">
-        <div className="mx-auto w-full max-w-6xl">{children}</div>
+      <main id="main" className="flex-1 px-4 pt-10 pb-24 sm:px-6 print:p-0">
+        <div className="mx-auto w-full max-w-6xl print:max-w-none">{children}</div>
       </main>
     </div>
   );

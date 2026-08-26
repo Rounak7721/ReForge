@@ -289,15 +289,25 @@ export function ProductStudio({
           object; it is deliberately NOT a message transcript — the artifact on
           screen stays the product, not the conversation. */}
       <div className="sticky bottom-4 z-30 pt-2 pb-[env(safe-area-inset-bottom)]">
+        {/* Ember border, ember glow and an explicit label.
+            Previously this was a neutral hairline on a translucent shell,
+            which read as another content card and users did not notice the
+            product's headline capability was sitting right there. It is the
+            one place on the page that accepts input, so it is now the one
+            place carrying the accent colour. */}
         <form
           onSubmit={onRefine}
-          className="border-hairline bg-shell/85 rounded-[1.75rem] border p-2.5 shadow-(--shadow-lifted) backdrop-blur-xl"
+          className="border-ember/35 bg-shell/95 rounded-[1.75rem] border-2 p-3 shadow-[var(--shadow-lifted),0_0_0_1px_var(--ember-soft),0_12px_40px_-16px_var(--ember)] backdrop-blur-xl"
         >
-          <div className="flex items-center gap-2">
-            <label htmlFor="instruction" className="sr-only">
-              Describe a change to the product concept
-            </label>
+          <label
+            htmlFor="instruction"
+            className="text-ember eyebrow mb-2.5 flex items-center gap-2 pl-1"
+          >
+            <Spark className="size-3.5" />
+            Refine in plain English
+          </label>
 
+          <div className="border-hairline bg-core flex items-center gap-2 rounded-2xl border px-1 shadow-(--inner-highlight)">
             <span aria-hidden className="text-ember pl-2.5 font-mono text-sm">
               ↳
             </span>

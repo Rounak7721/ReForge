@@ -1,7 +1,7 @@
 import "server-only";
 
 import { analysisSchema, type Analysis } from "@/lib/prompts/analyzer";
-import { conceptSchema, type Concept } from "@/lib/prompts/builder";
+import { storedConceptSchema, type Concept } from "@/lib/prompts/builder";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -51,7 +51,11 @@ export async function loadProject(projectId: string): Promise<LoadResult> {
   // jsonb comes back as `Json`. Validate rather than cast: a row written by an
   // older schema should degrade predictably instead of crashing downstream.
   const analysis = analysisSchema.safeParse(data.analysis);
-  const concept = conceptSchema.safeParse(data.concept);
+  // storedConceptSchema, not conceptSchema: this reads a row that may predate
+  // the open-list palette, and the refine route feeds the result straight back
+  // to the Editor. Parsing with the wire schema would reject every legacy row
+  // and make old projects unrefinable.
+  const concept = storedConceptSchema.safeParse(data.concept);
 
   return {
     ok: true,

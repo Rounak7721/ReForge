@@ -263,6 +263,16 @@ export function History(props: IconProps) {
   );
 }
 
+export function Download(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3.5v11" />
+      <path d="m7.5 10 4.5 4.5 4.5-4.5" />
+      <path d="M4.5 16.5V18a2.5 2.5 0 0 0 2.5 2.5h10a2.5 2.5 0 0 0 2.5-2.5v-1.5" />
+    </Icon>
+  );
+}
+
 export function Link(props: IconProps) {
   return (
     <Icon {...props}>

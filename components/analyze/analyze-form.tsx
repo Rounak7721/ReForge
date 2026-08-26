@@ -128,6 +128,7 @@ export function AnalyzeForm() {
           code: payload.error?.code ?? "internal_error",
           message: payload.error?.message ?? "Something went wrong.",
         });
+        setPending(false);
         return;
       }
 
@@ -138,12 +139,21 @@ export function AnalyzeForm() {
       setDirty(false);
       router.replace(`/dashboard/${projectId}`);
       router.refresh();
+
+      // Deliberately NO setPending(false) here, and no `finally`.
+      //
+      // router.replace() returns as soon as the navigation is *queued*, not
+      // when the new route has rendered. Clearing `pending` at that point
+      // un-hid the form and tore down the skeleton for the few hundred ms the
+      // RSC payload was still in flight — so the user watched their filled-in
+      // form reappear and read it as "the analysis failed", then saw it
+      // succeed anyway. Staying pending until this component is unmounted by
+      // the navigation keeps the skeleton on screen right up to the swap.
     } catch {
       setFailure({
         code: "internal_error",
         message: "Couldn’t reach the server. Check your connection and try again.",
       });
-    } finally {
       setPending(false);
     }
   }

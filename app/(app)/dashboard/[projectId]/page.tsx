@@ -8,10 +8,11 @@ import {
   type RefinementEntry,
 } from "@/components/concept/product-studio";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Spark } from "@/components/ui/icons";
+import { ArrowLeft, Download, ExternalLink, Spark } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/motion";
+import { ProjectView } from "@/components/project/project-view";
 import { analysisSchema } from "@/lib/prompts/analyzer";
-import { conceptSchema } from "@/lib/prompts/builder";
+import { storedConceptSchema } from "@/lib/prompts/builder";
 import { createClient } from "@/lib/supabase/server";
 import { safeHostname } from "@/lib/utils";
 
@@ -26,10 +27,13 @@ export const metadata: Metadata = { title: "Project" };
  */
 export default async function ProjectPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const { projectId } = await params;
+  const { view } = await searchParams;
 
   const supabase = await createClient();
   // RLS scopes this to the current user, so a valid id belonging to someone
@@ -49,7 +53,7 @@ export default async function ProjectPage({
   // The columns are `jsonb`, so their type is `Json` — validate rather than
   // cast. A row written by an older schema should degrade, not crash the page.
   const analysis = analysisSchema.safeParse(project.analysis);
-  const concept = conceptSchema.safeParse(project.concept);
+  const concept = storedConceptSchema.safeParse(project.concept);
 
   // Refinement history. Ordered newest-first so the studio can prepend without
   // re-sorting. RLS on `refinements` is scoped through the parent project.
@@ -116,31 +120,33 @@ export default async function ProjectPage({
               ) : null}
             </div>
           </div>
+
+          {/* Export only appears once there is a concept to export. A button
+              that produces an empty document is worse than no button. */}
+          {concept.success ? (
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/${project.id}/export`} target="_blank" rel="noopener">
+                <Download />
+                Download PDF
+              </Link>
+            </Button>
+          ) : null}
         </div>
       </Reveal>
 
       {analysis.success ? (
-        <>
-          <AnalysisView analysis={analysis.data} />
-
-          <section aria-labelledby="product-heading" className="border-hairline border-t pt-12">
-            <Reveal className="flex items-center gap-3">
-              <Spark className="text-ember size-4" />
-              <h2 id="product-heading" className="eyebrow text-faint">
-                {concept.success ? "Your product" : "Next step"}
-              </h2>
-              <span aria-hidden className="bg-hairline h-px flex-1" />
-            </Reveal>
-
-            <div className="mt-6">
-              <ProductStudio
-                projectId={project.id}
-                initialConcept={concept.success ? concept.data : null}
-                initialRefinements={refinements}
-              />
-            </div>
-          </section>
-        </>
+        <ProjectView
+          initialTab={view === "product" ? "product" : "teardown"}
+          built={concept.success}
+          teardown={<AnalysisView analysis={analysis.data} />}
+          product={
+            <ProductStudio
+              projectId={project.id}
+              initialConcept={concept.success ? concept.data : null}
+              initialRefinements={refinements}
+            />
+          }
+        />
       ) : (
         <div
           role="alert"

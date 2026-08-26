@@ -22,6 +22,17 @@ function hex(value: string, fallback: string): string {
   return HEX.test(trimmed) ? trimmed : fallback;
 }
 
+/**
+ * First colour carrying `role`, else the fallback.
+ *
+ * The palette is an open list now, so nothing guarantees a surface or a text
+ * exists — the user can refine it down to two accents. The mock has to render
+ * regardless, so every lookup has a literal fallback.
+ */
+function byRole(palette: Concept["uiDirection"]["palette"], role: string, fallback: string) {
+  return hex(palette.find((entry) => entry.role === role)?.hex ?? "", fallback);
+}
+
 function Cell({
   title,
   icon: Icon,
@@ -59,9 +70,11 @@ function Cell({
  * the only question the user has.
  */
 function PalettePreview({ concept }: { concept: Concept }) {
-  const primary = hex(concept.uiDirection.palette.primary, "#E4562A");
-  const surface = hex(concept.uiDirection.palette.surface, "#FBFAF8");
-  const text = hex(concept.uiDirection.palette.text, "#1A1815");
+  const palette = concept.uiDirection.palette;
+  const primary = byRole(palette, "primary", "#E4562A");
+  const surface = byRole(palette, "surface", "#FBFAF8");
+  const text = byRole(palette, "text", "#1A1815");
+  const accents = palette.filter((entry) => entry.role === "accent");
 
   return (
     <div
@@ -92,24 +105,45 @@ function PalettePreview({ concept }: { concept: Concept }) {
       <div className="space-y-2 px-3 py-3">
         <span aria-hidden className="block h-1.5 w-3/4 rounded-full" style={{ backgroundColor: `${text}26` }} />
         <span aria-hidden className="block h-1.5 w-1/2 rounded-full" style={{ backgroundColor: `${text}14` }} />
-        <span aria-hidden className="block h-1.5 w-2/3 rounded-full" style={{ backgroundColor: `${text}14` }} />
+
+        {/* Accents shown in the mock rather than only in the swatch list — a
+            palette of six is a claim about the product, and it should be
+            visible that they actually sit together. */}
+        {accents.length > 0 ? (
+          <span aria-hidden className="flex gap-1 pt-1">
+            {accents.slice(0, 6).map((entry, index) => (
+              <span
+                key={`${entry.hex}-${index}`}
+                className="h-1.5 flex-1 rounded-full"
+                style={{ backgroundColor: hex(entry.hex, text) }}
+              />
+            ))}
+          </span>
+        ) : (
+          <span aria-hidden className="block h-1.5 w-2/3 rounded-full" style={{ backgroundColor: `${text}14` }} />
+        )}
       </div>
     </div>
   );
 }
 
-function Swatch({ label, value }: { label: string; value: string }) {
+function Swatch({ label, value, role }: { label: string; value: string; role?: string }) {
   const isHex = HEX.test(value.trim());
   return (
     <div className="flex items-center gap-2.5">
       <span
         aria-hidden
-        className="border-hairline-strong size-8 shrink-0 rounded-lg border shadow-(--inner-highlight)"
+        className="border-hairline-strong size-9 shrink-0 rounded-lg border shadow-(--inner-highlight)"
         style={isHex ? { backgroundColor: value.trim() } : undefined}
       />
       <div className="min-w-0">
-        <p className="text-xs font-medium">{label}</p>
-        <p className="text-faint truncate font-mono text-[11px]">{value}</p>
+        <p className="truncate text-xs font-medium">{label}</p>
+        <p className="text-faint truncate font-mono text-[11px]">
+          {value}
+          {role !== undefined && role !== "accent" ? (
+            <span className="text-faint/70"> · {role}</span>
+          ) : null}
+        </p>
       </div>
     </div>
   );
@@ -246,11 +280,26 @@ export function ConceptView({ concept }: { concept: Concept }) {
         </div>
       </Cell>
 
-      <Cell title="Palette" icon={Palette} className="md:col-span-6" delay={220}>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Swatch label="Primary" value={concept.uiDirection.palette.primary} />
-          <Swatch label="Surface" value={concept.uiDirection.palette.surface} />
-          <Swatch label="Text" value={concept.uiDirection.palette.text} />
+      <Cell
+        title="Palette"
+        icon={Palette}
+        hint={`${concept.uiDirection.palette.length}`}
+        className="md:col-span-6"
+        delay={220}
+      >
+        {/* Wraps to however many colours the concept actually has. The old
+            three-column grid was hardcoded to primary/surface/text, which is
+            what made a four-colour request impossible to display even once the
+            model could return one. */}
+        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {concept.uiDirection.palette.map((entry, index) => (
+            <Swatch
+              key={`${entry.hex}-${entry.name}-${index}`}
+              label={entry.name}
+              role={entry.role}
+              value={entry.hex}
+            />
+          ))}
         </div>
       </Cell>
     </div>

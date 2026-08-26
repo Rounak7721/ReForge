@@ -24,7 +24,7 @@ export type ChangeKind = "added" | "removed" | "changed";
 export type Change = {
   kind: ChangeKind;
   /** Which part of the concept moved. */
-  area: "Name" | "Description" | "Feature" | "Page" | "Navigation" | "UI direction";
+  area: "Name" | "Description" | "Feature" | "Page" | "Navigation" | "UI direction" | "Palette";
   label: string;
   /** Present on `changed` entries where showing the old value is useful. */
   from?: string;
@@ -126,14 +126,40 @@ export function diffConcepts(before: Concept, after: Concept): ConceptDiff {
     ["Style", before.uiDirection.style, after.uiDirection.style],
     ["Mood", before.uiDirection.mood, after.uiDirection.mood],
     ["Typography", before.uiDirection.typography, after.uiDirection.typography],
-    ["Primary", before.uiDirection.palette.primary, after.uiDirection.palette.primary],
-    ["Surface", before.uiDirection.palette.surface, after.uiDirection.palette.surface],
-    ["Text colour", before.uiDirection.palette.text, after.uiDirection.palette.text],
   ] as const;
 
   for (const [label, from, to] of ui) {
     if (from !== to) {
       changes.push({ kind: "changed", area: "UI direction", label, from, to });
+    }
+  }
+
+  // Palette is an open list, so colours are added and removed as well as
+  // recoloured. Keyed by role+name rather than by hex: re-tinting "Antique
+  // Gold" is a change to one colour, not a removal plus an addition.
+  changes.push(
+    ...diffKeyed(
+      before.uiDirection.palette,
+      after.uiDirection.palette,
+      (c) => `${c.role}:${c.name.trim().toLowerCase()}`,
+      (c) => `${c.name} (${c.hex})`,
+      "Palette",
+    ),
+  );
+
+  const beforeColours = new Map(
+    before.uiDirection.palette.map((c) => [`${c.role}:${c.name.trim().toLowerCase()}`, c]),
+  );
+  for (const colour of after.uiDirection.palette) {
+    const previous = beforeColours.get(`${colour.role}:${colour.name.trim().toLowerCase()}`);
+    if (previous !== undefined && previous.hex !== colour.hex) {
+      changes.push({
+        kind: "changed",
+        area: "Palette",
+        label: colour.name,
+        from: previous.hex,
+        to: colour.hex,
+      });
     }
   }
 

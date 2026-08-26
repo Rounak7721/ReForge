@@ -153,11 +153,13 @@ export const DEMO_CONCEPT: Concept = {
     "style": "Editorial and spacious with generous whitespace",
     "mood": "Sophisticated, serene, and intentional",
     "typography": "Instrument Serif for headings, Inter for UI text",
-    "palette": {
-      "primary": "#1C1C1C",
-      "surface": "#FFFFFF",
-      "text": "#333333"
-    }
+    "palette": [
+        { "name": "Ink Black", "hex": "#1C1C1C", "role": "primary" },
+        { "name": "Paper White", "hex": "#FFFFFF", "role": "surface" },
+        { "name": "Graphite", "hex": "#333333", "role": "text" },
+        { "name": "Signal Amber", "hex": "#C8801F", "role": "accent" },
+        { "name": "Quiet Sage", "hex": "#6E7F6A", "role": "accent" }
+      ]
   }
 };
 
@@ -253,11 +255,13 @@ export const DEMO_REFINEMENTS: { instruction: string; conceptAfter: Concept }[] 
         "style": "Editorial and spacious with generous whitespace",
         "mood": "Sophisticated, serene, and intentional",
         "typography": "Instrument Serif for headings, Inter for UI text",
-        "palette": {
-          "primary": "#1C1C1C",
-          "surface": "#FFFFFF",
-          "text": "#333333"
-        }
+        "palette": [
+            { "name": "Ink Black", "hex": "#1C1C1C", "role": "primary" },
+            { "name": "Paper White", "hex": "#FFFFFF", "role": "surface" },
+            { "name": "Graphite", "hex": "#333333", "role": "text" },
+            { "name": "Signal Amber", "hex": "#C8801F", "role": "accent" },
+            { "name": "Quiet Sage", "hex": "#6E7F6A", "role": "accent" }
+          ]
       }
     }
   },
@@ -366,11 +370,13 @@ export const DEMO_REFINEMENTS: { instruction: string; conceptAfter: Concept }[] 
         "style": "Editorial and spacious with generous whitespace",
         "mood": "Sophisticated, serene, and intentional",
         "typography": "Instrument Serif for headings, Inter for UI text",
-        "palette": {
-          "primary": "#1C1C1C",
-          "surface": "#FFFFFF",
-          "text": "#333333"
-        }
+        "palette": [
+            { "name": "Ink Black", "hex": "#1C1C1C", "role": "primary" },
+            { "name": "Paper White", "hex": "#FFFFFF", "role": "surface" },
+            { "name": "Graphite", "hex": "#333333", "role": "text" },
+            { "name": "Signal Amber", "hex": "#C8801F", "role": "accent" },
+            { "name": "Quiet Sage", "hex": "#6E7F6A", "role": "accent" }
+          ]
       }
     }
   }
