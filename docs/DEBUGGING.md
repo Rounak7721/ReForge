@@ -884,3 +884,302 @@ thing that actually needs a slot is a *state* — "nav" and "nav while its overl
 is open" are two different layers wearing the same name. And a screenshot cannot
 tell "invisible" from "covered": only hit-testing distinguishes an element that
 is not drawn from one that is drawn and unclickable.
+
+---
+
+## 9. Gemini started rejecting our concept schema — `/api/build` and `/api/refine` were down in production
+
+**Phase:** Bonus phases · **Date:** 2026-08-27
+
+### Problem
+
+A routine regression walk after the bonus work: open the demo project, click
+"Remove the pricing page." The request failed.
+
+```
+[refine] upstream failure {
+  status: 400,
+  cause: {"error":{"code":400,"message":"Request contains an invalid argument.","status":"INVALID_ARGUMENT"}}
+}
+POST /api/refine 502 in 2864ms
+```
+
+Every refine failed. Every build would too — both routes send `conceptSchema`.
+The last session had verified refine working on production and nothing about
+it had been deployed since.
+
+Two things made this worse than it looked. The message names **neither the
+offending keyword nor its path** — "an invalid argument" is the entire
+diagnostic. And it arrived in the middle of a diff that had touched
+`lib/llm/types.ts` and `lib/llm/providers/gemini.ts`, so the obvious hypothesis
+was that the new optional `image` field had broken the request builder.
+
+### AI prompt
+
+No prompt caused this, and that was the first thing worth establishing rather
+than assuming. The question asked was deliberately narrow:
+
+> Did I break this, or was it already broken? Test the same schema against the
+> commit before any of tonight's work.
+
+```bash
+git worktree add /tmp/.../pre a2c9dc5
+# same probe, pre-phase code, same API key
+PRE-PHASE conceptSchema: FAILED {"error":{"code":400,...,"status":"INVALID_ARGUMENT"}}
+```
+
+Identical failure on untouched code. **Google had tightened
+`responseJsonSchema` validation server-side.** Code that was verified working
+on production had stopped working with no deploy, no commit, and no warning.
+
+### Attempted solution
+
+The first four hypotheses were all wrong, and each was disproved cheaply:
+
+1. *The new `image` branch in the request builder.* Disproved by the worktree.
+2. *Schema size.* `analysisSchema` passed and `conceptSchema` failed, so size
+   looked plausible — until trimming every field description from 3748 chars
+   down to 1574 still failed. Not size.
+3. *`propertyOrdering` being an unsupported key.* Removing it changed nothing.
+4. *`responseJsonSchema` being the wrong field.* The older `responseSchema`
+   was rejected identically.
+
+A fifth round — probing individual fields — produced **inconsistent** results:
+the same three-string schema failed once and passed three times in a row later.
+That looked like non-determinism and nearly sent the investigation toward
+"flaky API". It was not flaky. Those probes were rebuilding sub-schemas with
+fresh `z.object({...})` calls, which emit different JSON than slicing the real
+schema, so "the same" test was not the same test twice.
+
+### Debugging
+
+The mistake in rounds 2-5 was probing instead of looking. The step that worked
+was dumping every JSON Schema keyword the emitted document actually contains,
+then removing them a group at a time:
+
+```
+drop[nothing]              FAILED
+drop[minItems,maxItems]    OK
+drop[minLength]            FAILED
+drop[enum]                 OK
+drop[all constraints]      OK
+```
+
+Two keywords each "fix" it alone, which is the whole shape of the bug:
+
+**Gemini rejects `minItems`/`maxItems` when the same schema also contains an
+`enum`.** Either keyword alone is accepted. Together they are not.
+
+That is exactly why `analysisSchema` kept passing while `conceptSchema` kept
+failing, and why the difference looked like size: the analysis has bounded
+arrays but no enum, while the concept has both — `palette[].role` is an enum
+and nearly every array is bounded. The one structural difference between the
+two schemas was invisible unless you were looking for a *pair*.
+
+Re-run against the full concept, five times: 0 ok / 5 failed. Deterministic
+after all.
+
+### Final solution
+
+Strip `minItems` and `maxItems` from the wire schema. Keep the enum.
+
+```ts
+if (key === "$schema" || key === "additionalProperties" ||
+    key === "minItems" || key === "maxItems") continue;
+```
+
+The enum is worth keeping — it constrains the model to valid `role` values.
+The bounds cost nothing to drop, because they were never the thing enforcing
+them: `generateStructured` validates every response against the **full** zod
+schema afterwards, bounds included, with a stricter retry when it does not
+match. The wire schema shapes the model's output; zod decides whether the
+output is acceptable. Only zod was ever load-bearing.
+
+Verified: refine succeeds 3/3 and removes the pricing page; analysis still
+succeeds and still omits `visualImpression` when there is no screenshot.
+
+`pnpm check` now asserts the sanitiser strips both keywords and keeps `enum`,
+`minLength` and `propertyOrdering`. A unit check cannot ask Google what its
+dialect is — but it fails loudly when someone tidies the keywords back in,
+which is the realistic way this regresses, and which no type check or lint
+would catch.
+
+**The generalisable lesson:** a dependency you do not deploy can still break
+you. "Verified working on production" has an expiry date when the verification
+depends on someone else's server-side validation. And when a failure looks
+non-deterministic, suspect the test before the system — three of the five
+probing rounds here were measuring something other than what they claimed to.
+
+---
+
+## 10. Three different ways a free-tier code generator returns a broken page
+
+**Phase:** Bonus phase 2 (code generation) · **Date:** 2026-08-27
+
+### Problem
+
+Three separate failures in one feature, each of which produced *something* that
+looked like success.
+
+**(a)** The first generation request died instantly:
+
+```
+groq request failed with status 413: Request too large for model
+`qwen/qwen3.8-27b` ... on tokens per minute (TPM): Limit 8000, Requested 8894
+```
+
+Nothing had been generated. The request was rejected for exceeding a budget it
+had not spent.
+
+**(b)** With the budget fixed, generation returned HTTP 200 and a page that
+rendered — until you scrolled. The stored document ended:
+
+```
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href
+```
+
+Cut off mid-attribute, at exactly **10240 characters**, with
+`finish_reason: "stop"`. Valid JSON, valid database row, broken page.
+
+**(c)** Editing a working page returned:
+
+```
+groq request failed with status 400: Failed to generate JSON.
+Please adjust your prompt.
+```
+
+Which names nothing at all.
+
+### AI prompt
+
+The prompt that mattered was not to the code generator but the framing of the
+investigation, after (b) was mistakenly attributed to the model "deciding to
+stop":
+
+> `finish_reason` says stop and the character count is exactly 10240. That is
+> 10 × 1024 — too round to be a model choice. Test whether other models on the
+> same tier truncate at the same number.
+
+### Attempted solution
+
+For (b), the first fix was to instruct the model: *"Keep the entire document
+under 11000 characters."* This made it **worse** — the model spent its budget
+and stopped mid-tag when it ran out, rather than planning a shorter page. A cap
+phrased as a limit produced a longer broken page; the instruction that worked
+was *"the last characters you write must be the closing `</html>` tag."*
+
+For (c), the instinct was to raise the token budget. That was the right family
+of fix for the wrong reason, and would have masked the cause.
+
+### Debugging
+
+Each one came down to measuring rather than reasoning.
+
+**(a) Groq reserves `max_completion_tokens` up front.** Prompt tokens *plus*
+the requested output ceiling are both charged against one 8000-tokens-per-minute
+bucket before generation starts. Asking for 8192 output on a 700-token prompt
+is an instant 413. Budgets are now sized from measured need, and 413 is mapped
+to `LLMRateLimitError` rather than an upstream error — it is a rate limit
+wearing a different status code, and calling it a malformed request would send
+the reader somewhere useless.
+
+**(b) The 10240 is a platform cap, not a model choice.** Comparing three models
+on the same tier with the same prompt:
+
+```
+qwen/qwen3.8-27b     out_tok=3338  chars=10240  ends_with_</html>=false
+openai/gpt-oss-20b   out_tok=3000  chars=2979   ends_with_</html>=true
+openai/gpt-oss-120b  out_tok=2390  chars=3757   ends_with_</html>=true
+```
+
+Groq's JSON-schema decoder caps a string value at 10240 characters, closes the
+JSON cleanly around the stump, and still reports `finish_reason: "stop"`. Every
+downstream check passes: valid JSON, valid string, non-empty, schema-conformant.
+The truncation is invisible to everything except a human scrolling the page.
+
+**(c) `gpt-oss` are reasoning models, and reasoning bills to
+`max_completion_tokens`.** Probing the same request with and without a
+reasoning cap:
+
+```
+current      HTTP 400 Failed to generate JSON
+low-effort   out=1918  reasoning=70  finish=stop
+```
+
+This is **the same trap as entry 2 in this file**, in a different vendor's
+clothing. Gemini's `maxOutputTokens` caps thinking + output combined; Groq's
+`max_completion_tokens` does the same. In entry 2 the symptom was HTTP 200 with
+an empty `parts` array. Here it is HTTP 400 "Failed to generate JSON", because
+the constrained decoder ran out of budget mid-document and could not close the
+object. Different symptom, identical cause.
+
+### Final solution
+
+Three changes, one per failure:
+
+1. Budgets sized from measured output rather than from the ceiling, and 413
+   mapped to a rate limit.
+2. `openai/gpt-oss-120b` pinned as the code generation model — it returns
+   complete documents in a third of qwen's output tokens, which also leaves
+   room for an edit inside the same per-minute budget. And, because a model
+   choice is not a guarantee, `generatedSiteSchema` now *requires* the closing
+   tag:
+
+   ```ts
+   .refine((html) => html.trimEnd().endsWith("</html>"), {
+     message: "The document is incomplete — it must end with a closing </html> tag.",
+   })
+   ```
+
+   A truncated page now fails validation instead of being persisted silently.
+3. `reasoning_effort: "low"` for reasoning models, gated on the model name
+   because non-reasoning models reject the parameter outright.
+
+**The generalisable lesson:** every one of these returned a success-shaped
+result. A 413 before any work, a valid JSON string containing half a document,
+and a 400 whose text describes the symptom rather than the cause. The check
+that caught (b) was not a status code or a schema — it was asking whether the
+artifact *ends the way that kind of artifact ends*. For anything generated in
+one shot, assert on the closing condition, because every other signal will
+tell you it worked.
+
+---
+
+## 11. A backtick in a CSS comment turned a stylesheet into JavaScript
+
+**Phase:** Bonus phase 1 (concept preview) · **Date:** 2026-08-27
+
+### Problem
+
+`lib/preview/render-concept.ts` builds a whole HTML document inside a template
+literal. Adding an explanatory comment to the CSS produced:
+
+```
+TypeError: esc(...)fontLinks(...)theme.surfacetheme.text...stack(...).lede is not a function
+```
+
+### AI prompt
+
+None — this was a self-inflicted edit while documenting a layout fix. The
+comment read ``/* `.lede` is centred for the hero... */``, and the backticks
+around `.lede` were the ordinary markdown habit of quoting a CSS selector.
+
+### Attempted solution
+
+None needed. The error message names the cause once you notice it is a
+concatenation of every interpolated expression in the template — the backtick
+had terminated the string, and everything after it was being parsed as JS.
+
+### Final solution
+
+No backticks inside the CSS block; the comment says `.lede` unquoted.
+
+Worth recording for one reason: the failure was caught in under five seconds by
+`pnpm check`, on the check's **first ever run**, before the file was opened in a
+browser. The self-check was written to protect the escaping and hex-guard logic
+and it caught something entirely unrelated — a syntax error in a documentation
+comment. A test that only ever catches what it was written for is not earning
+much.

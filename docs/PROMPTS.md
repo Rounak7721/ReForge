@@ -572,3 +572,139 @@ worst case 4.69.
 **The lesson, restated:** a broken checker does not fail loudly — it produces
 *plausible* numbers. The defence is not more checks, it is asking "what would
 this look like if the checker itself were wrong?" before acting on a result.
+
+---
+
+## 9. "Did I break this, or was it already broken?"
+
+**Phase:** Bonus phases · **Date:** 2026-08-27
+
+### What I asked
+
+After a refine request started failing during a routine regression walk, in the
+middle of a diff that had touched the Gemini provider:
+
+> Before debugging this: did I break it, or was it already broken? Check out the
+> commit before tonight's work in a separate worktree and run the same probe
+> against the same API key. Tell me which.
+
+### Why I phrased it that way
+
+The failing request was `400 Request contains an invalid argument` — a message
+that names neither the offending field nor its path. The diff in flight had
+edited exactly the file that builds that request, adding an optional `image`
+part. Every instinct, mine and the model's, pointed at the new code.
+
+The prompt exists to **refuse the plausible explanation until it is tested**.
+"Did I break this" is a cheap question with a binary answer, and answering it
+wrong costs an hour of debugging the wrong file. A git worktree makes the test
+almost free: the previous commit is still on disk, the API key is the same, and
+the probe is ten lines.
+
+The phrasing matters in one more way. It does not ask "is my change correct" —
+which invites the model to review the diff and find something plausible to
+blame. It asks for a *measurement against a control*.
+
+### What the AI produced
+
+A worktree at `a2c9dc5`, symlinked `node_modules`, the same probe:
+
+```
+PRE-PHASE conceptSchema: FAILED {"error":{"code":400,...,"status":"INVALID_ARGUMENT"}}
+```
+
+Identical failure on code that predated every line written that night. The new
+`image` branch was innocent. Google had tightened `responseJsonSchema`
+validation server-side, so `/api/build` and `/api/refine` had been broken in
+production for hours with no deploy, no commit, and no alert.
+
+### What I changed and why
+
+Nothing about the answer — but the investigation that followed had to be
+redirected twice more, and both redirects came from the same instinct.
+
+The next four hypotheses (schema size, `propertyOrdering`, the wrong response
+field, API flakiness) were all wrong, and the fifth round produced *apparently
+inconsistent* results: the same trivial schema failed once and then passed three
+times. That looked like a flaky API and nearly ended the investigation there.
+
+It was not flaky. The probes were rebuilding sub-schemas with fresh
+`z.object({...})` calls, which emit different JSON than slicing the real schema
+— so "the same test twice" never was. **When results look non-deterministic,
+suspect the test before the system** is now written into `HANDOFF.md` next to
+the older lesson it rhymes with.
+
+What finally worked was abandoning hypotheses entirely and enumerating: dump
+every JSON Schema keyword actually present, then remove them a group at a time.
+Two keywords each "fixed" it alone, which is the whole shape of the bug —
+Gemini rejects `minItems`/`maxItems` **when the same schema also contains an
+`enum`**. Full trail in `docs/DEBUGGING.md` entry 9.
+
+---
+
+## 10. Rejecting the model's own explanation because a number was too round
+
+**Phase:** Bonus phase 2 (code generation) · **Date:** 2026-08-27
+
+### What I asked
+
+A generated page rendered fine and then ended mid-attribute. The first
+explanation offered was that the model had simply stopped — `finish_reason` did
+say `"stop"`. The prompt that broke it open:
+
+> `finish_reason` says stop and the document is exactly 10240 characters. That
+> is 10 × 1024 — too round to be a model choice. Test whether other models on
+> the same tier truncate at the same number, with the same prompt.
+
+### Why I phrased it that way
+
+The evidence genuinely supported the wrong conclusion. HTTP 200, valid JSON, a
+schema-conformant string, `finish_reason: "stop"` — every signal available said
+the request succeeded and the model chose to end there. Accepting that would
+have led to prompt tuning, which is exactly what I tried first and which made
+things *worse*: instructing "keep the document under 11000 characters" produced
+a longer broken page, because a cap phrased as a limit makes the model spend its
+budget and stop mid-tag.
+
+`10240` is what refused to fit. Models do not stop on power-of-two boundaries;
+buffers do. The prompt names the specific observation that contradicts the
+explanation, and then asks for a **comparison across models** rather than an
+opinion — because if it is a platform cap, other models on the same platform
+will hit the same wall, and if it is a model choice, they will not.
+
+### What the AI produced
+
+```
+qwen/qwen3.8-27b     out_tok=3338  chars=10240  ends_with_</html>=false
+openai/gpt-oss-20b   out_tok=3000  chars=2979   ends_with_</html>=true
+openai/gpt-oss-120b  out_tok=2390  chars=3757   ends_with_</html>=true
+```
+
+Groq's JSON-schema decoder caps a string value at 10240 characters, closes the
+JSON cleanly around the stump, and still reports `"stop"`. A platform limit
+wearing a model's clothes.
+
+### What I changed and why
+
+Two things, because the model choice alone would have been a fix that expires.
+
+Pinned `openai/gpt-oss-120b` — complete documents in a third of the output
+tokens, which also leaves room for an edit inside the same per-minute budget.
+
+But a model choice is not a guarantee, so the *schema* now enforces the
+property that was silently violated:
+
+```ts
+.refine((html) => html.trimEnd().endsWith("</html>"), {
+  message: "The document is incomplete — it must end with a closing </html> tag.",
+})
+```
+
+A truncated page now fails validation and routes into the existing stricter
+retry rather than being persisted. The generalisable rule, and the reason this
+entry is here: **for anything generated in one shot, assert on the closing
+condition** — every other signal will tell you it worked.
+
+The instruction changed too, from a character cap to *"the last characters you
+write must be the closing `</html>` tag"*. Asking for a shorter page produced a
+longer broken one; asking for a finished page produced a shorter complete one.

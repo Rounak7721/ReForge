@@ -217,9 +217,10 @@ These are 35 of 100 points. See `06-deliverables.md`. Written continuously, fina
 - [x] Root `README.md` with all 9 required sections — verified 2026-08-26; the
   stale "light theme only" limitation was corrected after the redesign
 - [x] `docs/PROMPTS.md` — **8** entries, each with all 4 required parts
-- [x] `docs/DEBUGGING.md` — **8** full Problem→Prompt→Attempt→Debug→Fix trails
+- [x] `docs/DEBUGGING.md` — **11** full Problem→Prompt→Attempt→Debug→Fix trails
 - [x] `docs/ARCHITECTURE.md` current — includes the Design system section
-- [ ] AI development process narrative (blank folder → deployed)
+- [x] AI development process narrative (blank folder → deployed) —
+      `docs/PROCESS.md`, written 2026-08-27 from the real commit timeline
 - [x] Clean commit history, pushed to GitHub — 29 commits, no secrets
 - [x] Vercel connected to GitHub for CI/CD auto-deploy — verified by asset-hash
       comparison, not by a 200 (middleware makes any /dashboard path answer 307)
@@ -229,6 +230,40 @@ These are 35 of 100 points. See `06-deliverables.md`. Written continuously, fina
 
 **Deliberately last:** the video is being recorded after the bonus work so the
 new features appear in it.
+
+---
+
+## Bonus phases — built 2026-08-27, NOT YET ON PRODUCTION
+
+**Everything below is verified locally only.** `git push` is blocked by a
+permission gate in this environment, so none of it has been deployed. Per the
+rule at the top of this file, nothing here is ticked `[x]` — that requires the
+deployed URL. **Push, then re-verify, then tick.** See `HANDOFF.md`.
+
+- [~] **#2 Generate actual UI** — the concept renders as a real web page from
+      its own copy, palette and typeface direction. Pure function of data
+      already in Postgres: **zero model calls**, so it works with the daily
+      quota fully spent
+- [~] **#5 Live preview** — sandboxed iframe (`allow-scripts` WITHOUT
+      `allow-same-origin`), page switcher across every page in the concept, and
+      it repaints live when a refinement changes the concept on another tab
+- [~] **#1 Screenshot analysis** — microlink PNG attached to the analyzer call
+      that was already happening, so vision costs **no extra quota**. Adds a
+      "Visual impression" cell (style / layout density / colour). Degrades
+      silently to text-only when microlink is slow or rate-limits, and the
+      field is omitted rather than invented
+- [~] **#3 Code generation** — a complete self-contained HTML page from the
+      concept, on Groq + `openai/gpt-oss-120b` (free tier), so it cannot
+      exhaust the Gemini quota the pipeline needs. Downloadable
+- [~] **#6 Iterative AI development** — natural-language edits to the generated
+      page, through the same command bar as concept refinement
+- [x] **Provider layer proven swappable** — `gemini | openai | groq`, selected
+      by env var alone. Groq and Gemini run side by side in production code;
+      OpenAI is wired and verified against the live endpoint (correct typed 401
+      with a bad key) plus a fixture check for schema translation
+- [-] **#4 Agent workflow** — stays cut, see below
+- [-] **#7 Automated QA** — done as *process*, not as a product feature. Claim
+      it as process only; saying otherwise in the video would be a false claim
 
 ---
 
