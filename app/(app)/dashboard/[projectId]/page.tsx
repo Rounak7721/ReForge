@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AnalysisView } from "@/components/analysis/analysis-view";
+import { ConceptProvider } from "@/components/concept/concept-store";
 import {
   ProductStudio,
   type RefinementEntry,
@@ -10,7 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, ExternalLink, Spark } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/motion";
-import { ProjectView } from "@/components/project/project-view";
+import { PreviewPanel } from "@/components/preview/preview-panel";
+import { ProjectView, type TabId } from "@/components/project/project-view";
 import { analysisSchema } from "@/lib/prompts/analyzer";
 import { storedConceptSchema } from "@/lib/prompts/builder";
 import { createClient } from "@/lib/supabase/server";
@@ -135,18 +137,18 @@ export default async function ProjectPage({
       </Reveal>
 
       {analysis.success ? (
-        <ProjectView
-          initialTab={view === "product" ? "product" : "teardown"}
-          built={concept.success}
-          teardown={<AnalysisView analysis={analysis.data} />}
-          product={
-            <ProductStudio
-              projectId={project.id}
-              initialConcept={concept.success ? concept.data : null}
-              initialRefinements={refinements}
-            />
-          }
-        />
+        <ConceptProvider initialConcept={concept.success ? concept.data : null}>
+          <ProjectView
+            initialTab={
+              view === "product" || view === "preview" ? (view as TabId) : "teardown"
+            }
+            teardown={<AnalysisView analysis={analysis.data} />}
+            product={
+              <ProductStudio projectId={project.id} initialRefinements={refinements} />
+            }
+            preview={<PreviewPanel />}
+          />
+        </ConceptProvider>
       ) : (
         <div
           role="alert"

@@ -41,3 +41,8 @@ yarn-error.log*
 # Logo-creator working directory: iterations and the HTML preview harness.
 # The approved mark lives in components/marketing/wordmark.tsx and app/icon.svg.
 /.skill-archive/
+
+# editor state — .vscode/ here holds a local browse database, not shared config
+/.vscode/
+# screenshots captured by the playwright MCP server during QA
+/.playwright-mcp/

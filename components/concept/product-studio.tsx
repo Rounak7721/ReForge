@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 
 import { ConceptDiffPanel } from "@/components/concept/concept-diff";
+import { useConcept } from "@/components/concept/concept-store";
 import { ConceptView } from "@/components/concept/concept-view";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { ArrowUp, History, Spark } from "@/components/ui/icons";
@@ -49,15 +50,16 @@ function title(code: ApiErrorCode): string {
 
 export function ProductStudio({
   projectId,
-  initialConcept,
   initialRefinements,
 }: {
   projectId: string;
-  initialConcept: Concept | null;
   initialRefinements: RefinementEntry[];
 }) {
   const router = useRouter();
-  const [concept, setConcept] = useState<Concept | null>(initialConcept);
+  // The concept lives in ConceptProvider, not here: the Preview tab renders the
+  // same object, so a refinement has to repaint both. Everything below this
+  // line is still local — nothing else reads it.
+  const { concept, setConcept } = useConcept();
   const [history, setHistory] = useState<RefinementEntry[]>(initialRefinements);
   const [busy, setBusy] = useState<null | "build" | "refine">(null);
   const [failure, setFailure] = useState<Failure | null>(null);
@@ -100,8 +102,9 @@ export function ProductStudio({
     const result = await post<{ concept: Concept }>("/api/build", { projectId });
     if (result !== null) {
       setConcept(result.concept);
-      // The server component holds `initialConcept`. Without this, navigating
-      // away and back replays a stale RSC payload and the build looks lost.
+      // ConceptProvider is seeded by the server component. Without this,
+      // navigating away and back replays a stale RSC payload and the build
+      // looks lost.
       router.refresh();
     }
     setBusy(null);
