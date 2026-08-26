@@ -4,7 +4,7 @@ import type { z } from "zod";
 
 import { LLMInvalidOutputError } from "@/lib/llm/errors";
 import { getLLM } from "@/lib/llm/registry";
-import type { StructuredRequest } from "@/lib/llm/types";
+import type { LLMProviderName, StructuredRequest } from "@/lib/llm/types";
 
 /**
  * The one entry point feature code uses to talk to a model.
@@ -38,6 +38,15 @@ const STRICT_RETRY_PREAMBLE = [
 
 export type GenerateStructuredOptions<T> = Omit<StructuredRequest<T>, "maxOutputTokens"> & {
   maxOutputTokens?: number;
+  /**
+   * Run on a specific provider instead of `LLM_PROVIDER`.
+   *
+   * Exists for one real case, not for symmetry: code generation runs on Groq
+   * while analysis, build and refine stay on Gemini. Keeping the two on
+   * separate vendors keeps their daily quotas separate, so generating pages
+   * cannot exhaust the budget the rest of the pipeline depends on.
+   */
+  provider?: LLMProviderName;
 };
 
 /**
@@ -49,10 +58,14 @@ export type GenerateStructuredOptions<T> = Omit<StructuredRequest<T>, "maxOutput
 export async function generateStructured<T>(
   options: GenerateStructuredOptions<T>,
 ): Promise<T> {
-  const provider = getLLM();
+  const provider = getLLM(options.provider);
   const maxOutputTokens = Math.max(options.maxOutputTokens ?? 0, MIN_OUTPUT_TOKENS);
 
-  const request: StructuredRequest<T> = { ...options, maxOutputTokens };
+  // `provider` selects the vendor; it is not part of the wire request, so it
+  // is stripped rather than passed on to `generateJson`.
+  const wire = { ...options };
+  delete wire.provider;
+  const request: StructuredRequest<T> = { ...wire, maxOutputTokens };
 
   const first = await attempt(provider.generateJson.bind(provider), request, options.schema);
   if (first.ok) return first.value;
@@ -60,6 +73,16 @@ export async function generateStructured<T>(
   // One retry only. Each attempt spends a request from a 500/day budget shared
   // with whoever is evaluating this, so a retry loop is a real cost, not a
   // free safety net.
+  //
+  // ponytail: on Groq the retry usually cannot succeed. That tier reserves
+  // prompt + max_completion_tokens against a single 8000 tokens-per-minute
+  // bucket, and the first attempt has already spent most of it, so a second
+  // request in the same minute is rejected with 413 — surfaced to the user as
+  // a rate limit. The behaviour is still SAFE: the truncation guard in
+  // `generatedSiteSchema` refuses to persist a half-written page either way,
+  // and retrying a minute later works. Fixing it properly means either
+  // per-call "don't retry" opt-out or waiting out the bucket inside the
+  // request, and neither is worth it while one attempt succeeds in practice.
   const retryRequest: StructuredRequest<T> = {
     ...request,
     prompt: [

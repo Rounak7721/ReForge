@@ -24,6 +24,7 @@ export type Database = {
           concept: Json | null
           created_at: string
           description: string
+          generated_html: string | null
           id: string
           target_customer: string
           updated_at: string
@@ -35,6 +36,7 @@ export type Database = {
           concept?: Json | null
           created_at?: string
           description: string
+          generated_html?: string | null
           id?: string
           target_customer: string
           updated_at?: string
@@ -46,6 +48,7 @@ export type Database = {
           concept?: Json | null
           created_at?: string
           description?: string
+          generated_html?: string | null
           id?: string
           target_customer?: string
           updated_at?: string

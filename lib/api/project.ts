@@ -18,6 +18,8 @@ export type LoadedProject = {
   targetCustomer: string;
   analysis: Analysis | null;
   concept: Concept | null;
+  /** The cached starter site, when one has been generated. */
+  generatedHtml: string | null;
 };
 
 export type LoadResult =
@@ -36,7 +38,7 @@ export async function loadProject(projectId: string): Promise<LoadResult> {
   // and is indistinguishable from a typo — which is the behaviour we want.
   const { data, error } = await supabase
     .from("projects")
-    .select("id, description, target_customer, analysis, concept")
+    .select("id, description, target_customer, analysis, concept, generated_html")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -65,6 +67,7 @@ export async function loadProject(projectId: string): Promise<LoadResult> {
       targetCustomer: data.target_customer,
       analysis: analysis.success ? analysis.data : null,
       concept: concept.success ? concept.data : null,
+      generatedHtml: data.generated_html,
     },
   };
 }

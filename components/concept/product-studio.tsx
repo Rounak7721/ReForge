@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState } from "react";
 
 import { ConceptDiffPanel } from "@/components/concept/concept-diff";
 import { useConcept } from "@/components/concept/concept-store";
 import { ConceptView } from "@/components/concept/concept-view";
 import { Button, ButtonIcon } from "@/components/ui/button";
-import { ArrowUp, History, Spark } from "@/components/ui/icons";
+import { CommandBar } from "@/components/ui/command-bar";
+import { History, Spark } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ApiError, ApiErrorCode } from "@/lib/api/errors";
@@ -35,8 +36,6 @@ const SUGGESTIONS = [
  */
 const MIN_INTERVAL_MS = 1500;
 
-const MIN_LENGTH = 3;
-
 const TONE: Partial<Record<ApiErrorCode, string>> = {
   rate_limited: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
   quota_exhausted: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
@@ -63,12 +62,9 @@ export function ProductStudio({
   const [history, setHistory] = useState<RefinementEntry[]>(initialRefinements);
   const [busy, setBusy] = useState<null | "build" | "refine">(null);
   const [failure, setFailure] = useState<Failure | null>(null);
-  const [instruction, setInstruction] = useState("");
-  const [invalid, setInvalid] = useState(false);
   const [coolingDown, setCoolingDown] = useState(false);
   const [diff, setDiff] = useState<{ diff: ConceptDiff; instruction: string } | null>(null);
   const lastSentAt = useRef(0);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   async function post<T>(url: string, body: unknown): Promise<T | null> {
     setFailure(null);
@@ -110,20 +106,10 @@ export function ProductStudio({
     setBusy(null);
   }
 
-  async function onRefine(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (busy !== null) return;
-
-    const text = instruction.trim();
-
-    // Validate on submit rather than disabling the button. A dead button gives
-    // the user nothing to act on; an inline message and focus does.
-    if (text.length < MIN_LENGTH) {
-      setInvalid(true);
-      inputRef.current?.focus();
-      return;
-    }
-    setInvalid(false);
+  // Draft state, validation and focus live in CommandBar; by the time this
+  // runs the instruction is already trimmed and long enough.
+  async function onRefine(text: string): Promise<boolean> {
+    if (busy !== null) return false;
 
     // Don't silently swallow the click — an unexplained dead button reads as a
     // broken app. Say why, and let the state show it is temporary.
@@ -131,7 +117,7 @@ export function ProductStudio({
     if (since < MIN_INTERVAL_MS) {
       setCoolingDown(true);
       window.setTimeout(() => setCoolingDown(false), MIN_INTERVAL_MS - since);
-      return;
+      return false;
     }
     lastSentAt.current = Date.now();
 
@@ -160,10 +146,11 @@ export function ProductStudio({
           ...prev,
         ]);
       }
-      setInstruction("");
       router.refresh();
     }
     setBusy(null);
+    // Keep the draft when the request failed, so the user can retry it.
+    return result !== null;
   }
 
   const errorBlock = failure ? (
@@ -286,105 +273,17 @@ export function ProductStudio({
         </details>
       ) : null}
 
-      {/* ---------------- Command bar ----------------
-          Sticky to the bottom of the viewport so the instruction box is always
-          within reach while scrolling a long concept. It edits the concept
-          object; it is deliberately NOT a message transcript — the artifact on
-          screen stays the product, not the conversation. */}
-      <div className="sticky bottom-4 z-30 pt-2 pb-[env(safe-area-inset-bottom)]">
-        {/* Ember border, ember glow and an explicit label.
-            Previously this was a neutral hairline on a translucent shell,
-            which read as another content card and users did not notice the
-            product's headline capability was sitting right there. It is the
-            one place on the page that accepts input, so it is now the one
-            place carrying the accent colour. */}
-        <form
-          onSubmit={onRefine}
-          className="border-ember/35 bg-shell/95 rounded-[1.75rem] border-2 p-3 shadow-[var(--shadow-lifted),0_0_0_1px_var(--ember-soft),0_12px_40px_-16px_var(--ember)] backdrop-blur-xl"
-        >
-          <label
-            htmlFor="instruction"
-            className="text-ember eyebrow mb-2.5 flex items-center gap-2 pl-1"
-          >
-            <Spark className="size-3.5" />
-            Refine in plain English
-          </label>
-
-          <div className="border-hairline bg-core flex items-center gap-2 rounded-2xl border px-1 shadow-(--inner-highlight)">
-            <span aria-hidden className="text-ember pl-2.5 font-mono text-sm">
-              ↳
-            </span>
-
-            <input
-              ref={inputRef}
-              id="instruction"
-              name="instruction"
-              type="text"
-              value={instruction}
-              onChange={(event) => {
-                setInstruction(event.target.value);
-                if (invalid) setInvalid(false);
-              }}
-              placeholder="Make it suitable for enterprise customers…"
-              maxLength={500}
-              disabled={busyRefining}
-              autoComplete="off"
-              spellCheck={false}
-              aria-invalid={invalid}
-              aria-describedby={invalid ? "instruction-error" : undefined}
-              className="placeholder:text-faint/80 min-w-0 flex-1 bg-transparent py-2.5 text-[15px] outline-none disabled:opacity-50"
-            />
-
-            <Button
-              type="submit"
-              size="icon"
-              // Stays enabled until the request actually starts; length is
-              // validated on submit instead.
-              disabled={busyRefining || coolingDown}
-              aria-label={busyRefining ? "Updating…" : "Apply change"}
-            >
-              {busyRefining ? (
-                <span
-                  aria-hidden
-                  className="spin-slow size-4 rounded-full border-2 border-current border-t-transparent"
-                />
-              ) : (
-                <ArrowUp />
-              )}
-            </Button>
-          </div>
-
-          {invalid ? (
-            <p id="instruction-error" role="alert" className="text-destructive px-4 pt-2 text-xs">
-              Describe the change in a few more words — “Add a dashboard”, say.
-            </p>
-          ) : null}
-
-          {coolingDown ? (
-            <p role="status" className="text-faint px-4 pt-2 text-xs">
-              One change at a time — the free AI tier allows 15 requests a minute.
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap gap-1.5 px-1 pt-2.5">
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => {
-                  setInstruction(suggestion);
-                  setInvalid(false);
-                  inputRef.current?.focus();
-                }}
-                disabled={busyRefining}
-                className="border-hairline text-dim hover:border-ember/40 hover:text-ink rounded-full border px-3 py-1.5 text-xs transition-colors duration-300 disabled:opacity-50"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </form>
-      </div>
+      <CommandBar
+        id="instruction"
+        label="Refine in plain English"
+        placeholder="Make it suitable for enterprise customers…"
+        suggestions={SUGGESTIONS}
+        busy={busyRefining}
+        coolingDown={coolingDown}
+        coolingDownHint="One change at a time — the free AI tier allows 15 requests a minute."
+        invalidHint="Describe the change in a few more words — “Add a dashboard”, say."
+        onSubmit={onRefine}
+      />
     </div>
   );
 }

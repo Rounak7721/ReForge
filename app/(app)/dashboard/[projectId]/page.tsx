@@ -42,7 +42,7 @@ export default async function ProjectPage({
   // else returns no row and falls through to notFound() — same as a typo.
   const { data: project, error } = await supabase
     .from("projects")
-    .select("id, url, description, target_customer, analysis, concept, created_at")
+    .select("id, url, description, target_customer, analysis, concept, generated_html, created_at")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -146,7 +146,12 @@ export default async function ProjectPage({
             product={
               <ProductStudio projectId={project.id} initialRefinements={refinements} />
             }
-            preview={<PreviewPanel />}
+            preview={
+              <PreviewPanel
+                projectId={project.id}
+                initialGeneratedHtml={project.generated_html}
+              />
+            }
           />
         </ConceptProvider>
       ) : (

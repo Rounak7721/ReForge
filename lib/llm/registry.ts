@@ -3,44 +3,56 @@ import "server-only";
 import { llmEnv } from "@/lib/env";
 import { LLMUpstreamError } from "@/lib/llm/errors";
 import { createGeminiProvider } from "@/lib/llm/providers/gemini";
+import { createOpenAICompatibleProvider } from "@/lib/llm/providers/openai-compatible";
 import type { LLMProvider, LLMProviderName } from "@/lib/llm/types";
 
 /**
  * Provider selection. Switching vendor or model is an env change only —
  * `LLM_PROVIDER` plus that vendor's `*_API_KEY` / `*_MODEL` — with zero edits
- * to the analyzer, builder or editor.
+ * to the analyzer, builder, editor or code generator.
  *
- * Adding a vendor is one new file in `providers/` and one line below.
+ * Adding a vendor is one new file in `providers/` and one line below. Groq and
+ * OpenAI share a file because Groq serves the OpenAI Chat Completions API
+ * verbatim, base URL aside.
  *
- * `gemini` is the only provider that is enabled: the project's cost rule says
- * runtime inference is free-tier Gemini. The other two entries are deliberate —
- * they keep the swap contract honest and make the missing piece a single
- * `createXProvider` call rather than a refactor.
+ * Anthropic was considered and deliberately left out: the brief asks for one
+ * runtime model, the cost rule says free tier, and a fourth provider with no
+ * key behind it would be scaffolding rather than proof. The layer's
+ * swappability is demonstrated by Groq and Gemini actually running side by
+ * side in production, not by the length of this table.
  */
-const FACTORIES: Record<LLMProviderName, () => LLMProvider> = {
-  gemini: () => {
-    const env = llmEnv();
-    return createGeminiProvider(env.GEMINI_API_KEY, env.GEMINI_MODEL);
-  },
-  openai: () => {
-    throw new LLMUpstreamError(
-      "LLM_PROVIDER=openai is not enabled. Add lib/llm/providers/openai.ts and wire it here.",
-    );
-  },
-  anthropic: () => {
-    throw new LLMUpstreamError(
-      "LLM_PROVIDER=anthropic is not enabled. Add lib/llm/providers/anthropic.ts and wire it here.",
-    );
-  },
+const FACTORIES: Record<LLMProviderName, (apiKey: string, model: string) => LLMProvider> = {
+  gemini: createGeminiProvider,
+  openai: (apiKey, model) => createOpenAICompatibleProvider("openai", apiKey, model),
+  groq: (apiKey, model) => createOpenAICompatibleProvider("groq", apiKey, model),
 };
 
-let cached: LLMProvider | undefined;
-
 /**
- * The active provider, memoised for the lifetime of the server process so the
- * vendor client is constructed once rather than per request.
+ * Memoised per provider, so the vendor client is constructed once per process
+ * rather than per request — and so that code generation running on Groq does
+ * not evict the Gemini instance the rest of the pipeline is using.
  */
-export function getLLM(): LLMProvider {
-  cached ??= FACTORIES[llmEnv().LLM_PROVIDER]();
-  return cached;
+const cache = new Map<LLMProviderName, LLMProvider>();
+
+export function getLLM(which?: LLMProviderName): LLMProvider {
+  // A missing or malformed key throws a raw ZodError out of `llmEnv`, which
+  // reaches `fromPipelineError` as an unrecognised exception and becomes an
+  // anonymous 500. Misconfiguration is an upstream problem and should say so —
+  // and the zod message already names the exact variable.
+  let config;
+  try {
+    config = llmEnv(which);
+  } catch (cause) {
+    throw new LLMUpstreamError(
+      cause instanceof Error ? cause.message : "The model provider is not configured.",
+      undefined,
+      { cause },
+    );
+  }
+  const existing = cache.get(config.provider);
+  if (existing !== undefined) return existing;
+
+  const provider = FACTORIES[config.provider](config.apiKey, config.model);
+  cache.set(config.provider, provider);
+  return provider;
 }

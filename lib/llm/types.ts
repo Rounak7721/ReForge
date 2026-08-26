@@ -1,3 +1,4 @@
+import type { LLMProviderName } from "@/lib/env";
 import type { z } from "zod";
 
 /**
@@ -9,7 +10,13 @@ import type { z } from "zod";
  * one line in `registry.ts`, with zero edits to the analyzer/builder/editor.
  */
 
-export type LLMProviderName = "gemini" | "openai" | "anthropic";
+/**
+ * Sourced from `lib/env` rather than declared here: the env schema parses
+ * `LLM_PROVIDER` with a zod enum, and two hand-maintained lists of the same
+ * names would drift the first time one was edited alone. Re-exported so
+ * `@/lib/llm` stays the single import surface for feature code.
+ */
+export type { LLMProviderName };
 
 export type StructuredRequest<T> = {
   /**

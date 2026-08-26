@@ -44,26 +44,98 @@ export function serverEnv() {
 
 /**
  * LLM config, parsed separately from `serverEnv` on purpose: merging them would
- * make the Supabase admin client fail to construct whenever a Gemini key is
+ * make the Supabase admin client fail to construct whenever a model key is
  * absent, which is a confusing failure for an unrelated feature.
  *
- * Defaults mirror `.env.example`. The model is pinned by daily quota — the 3.x
- * Flash line allows 20 requests/day, flash-lite allows 500. See
+ * **Only the ACTIVE provider's variables are required.** This used to demand
+ * `GEMINI_API_KEY` unconditionally, which quietly broke the swap the whole
+ * `lib/llm` abstraction exists to provide: setting `LLM_PROVIDER=groq` on a
+ * machine with no Gemini key threw at module load, before any request ran. It
+ * also means the unused providers can sit in `.env.example` as empty
+ * placeholders without crashing the app.
+ *
+ * Defaults mirror `.env.example`. Gemini's model is pinned by daily quota — the
+ * 3.x Flash line allows 20 requests/day, flash-lite allows 500. See
  * `project_guidelines/03-tech-stack.md`.
  */
-const llmSchema = z.object({
-  LLM_PROVIDER: z.enum(["gemini", "openai", "anthropic"]).default("gemini"),
-  GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is missing"),
-  GEMINI_MODEL: z.string().min(1).default("gemini-3.1-flash-lite"),
-});
+const PROVIDER_DEFAULT_MODELS: Record<LLMProviderName, string> = {
+  gemini: "gemini-3.1-flash-lite",
+  // Chosen by measurement, not reputation. On Groq's free tier every model
+  // shares 1000 requests/day and 8000 tokens/minute, so the differentiator is
+  // whether the model returns a COMPLETE document: qwen3.8-27b consistently ran
+  // to exactly 10240 characters and stopped mid-tag, while gpt-oss-120b
+  // finished the page in a third of the output tokens — which also leaves room
+  // for an edit inside the same per-minute budget. See docs/DEBUGGING.md.
+  groq: "openai/gpt-oss-120b",
+  openai: "gpt-4o-mini",
+};
 
-let cachedLlmEnv: z.infer<typeof llmSchema> | undefined;
+/** The env var names each provider reads. Adding a vendor adds one row. */
+const PROVIDER_ENV: Record<LLMProviderName, { key: string; model: string }> = {
+  gemini: { key: "GEMINI_API_KEY", model: "GEMINI_MODEL" },
+  groq: { key: "GROQ_API_KEY", model: "GROQ_MODEL" },
+  openai: { key: "OPENAI_API_KEY", model: "OPENAI_MODEL" },
+};
 
-export function llmEnv() {
-  cachedLlmEnv ??= llmSchema.parse({
-    LLM_PROVIDER: process.env.LLM_PROVIDER,
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    GEMINI_MODEL: process.env.GEMINI_MODEL,
-  });
-  return cachedLlmEnv;
+const providerSchema = z.enum(["gemini", "openai", "groq"]);
+
+export type LLMProviderName = z.infer<typeof providerSchema>;
+
+export type LLMConfig = {
+  provider: LLMProviderName;
+  apiKey: string;
+  model: string;
+};
+
+const cachedLlmEnv = new Map<LLMProviderName, LLMConfig>();
+
+/**
+ * Config for a provider — the one named by `LLM_PROVIDER` unless asked for a
+ * specific one.
+ *
+ * The override exists for a real case, not for symmetry: code generation runs
+ * on a different provider from the rest of the pipeline, so `CODEGEN_PROVIDER`
+ * can point at Groq while analysis and refinement stay on Gemini.
+ */
+export function llmEnv(which?: LLMProviderName): LLMConfig {
+  const provider =
+    which ??
+    providerSchema.parse(process.env.LLM_PROVIDER ?? "gemini");
+
+  const cached = cachedLlmEnv.get(provider);
+  if (cached !== undefined) return cached;
+
+  const names = PROVIDER_ENV[provider];
+  const config: LLMConfig = {
+    provider,
+    apiKey: z
+      .string()
+      .min(1, `${names.key} is missing (LLM_PROVIDER=${provider})`)
+      .parse(process.env[names.key]),
+    model: z
+      .string()
+      .min(1)
+      .catch(PROVIDER_DEFAULT_MODELS[provider])
+      .parse(process.env[names.model]),
+  };
+
+  cachedLlmEnv.set(provider, config);
+  return config;
+}
+
+/**
+ * The provider used for code generation, which is allowed to differ from the
+ * rest of the pipeline.
+ *
+ * Defaults to `LLM_PROVIDER` so an unset variable changes nothing. Groq is not
+ * permitted to become load-bearing: if its free tier changes or the model is
+ * withdrawn, unsetting `CODEGEN_PROVIDER` moves codegen back onto Gemini with
+ * no code change.
+ */
+export function codegenProvider(): LLMProviderName {
+  const raw = process.env.CODEGEN_PROVIDER;
+  if (raw === undefined || raw.trim() === "") {
+    return providerSchema.parse(process.env.LLM_PROVIDER ?? "gemini");
+  }
+  return providerSchema.parse(raw);
 }
