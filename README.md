@@ -27,6 +27,11 @@ teardown, with all seven analysis fields, all six concept fields and two
 refinements in its history. It deliberately ships with a `/pricing` page, so
 typing *"Remove the pricing page."* into the refine box shows a real edit.
 
+Once inside, the project splits into two tabs — **Teardown** and **Your
+product** — and the concept can be exported as a formatted brief with
+**Download PDF**. The colour palette is an open list, so a refinement naming
+five colours returns five.
+
 These credentials are intentionally public. Re-seed at any time with
 `pnpm seed:demo`, which makes zero model calls.
 
@@ -363,8 +368,15 @@ Fallback if Vercel fails: OCI free tier behind a Cloudflare Tunnel on
   on the free tier — after which signup fails project-wide with
   `over_email_send_rate_limit`. We hit exactly that during testing. The
   trade-off is that email addresses are unverified.
-- **Light theme only.** `ThemeProvider` is mounted with `forcedTheme="light"` so
-  there is one surface to design and QA. Enabling dark mode is a props change.
+- **No server-rendered theme preference.** Light/dark/system is resolved on the
+  client by `next-themes` from a blocking inline script, so first paint is
+  correct but the server never knows the theme. Fine here; it would matter if a
+  Server Component needed to branch on it.
+- **Export is a print stylesheet, not a generated PDF.** "Download PDF" opens
+  the browser's print dialog on a paper-styled route. That avoids a PDF
+  dependency and a rendering service, and the browser's own engine breaks pages
+  and embeds fonts better than a hand-rolled layout would — but the exact output
+  depends on the user's browser and paper size.
 - **No automated test suite.** Verification is lint, type-check, build,
   Playwright walkthroughs and direct SQL assertions against RLS.
 - **The multi-agent workflow (Research → Product → UI → Coding → QA) is cut.**
