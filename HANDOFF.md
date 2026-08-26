@@ -13,9 +13,11 @@ Nothing is deployed: `git push` is blocked in this environment and needs you.**_
 ### 1. Push — everything is committed locally and nothing is on production
 
 `git push` is refused by the harness permission classifier, regardless of the
-authorisation given verbally. Four commits are sitting on local `main`:
+authorisation given verbally. Six commits are sitting on local `main`:
 
 ```
+77f22f8  docs: correct the commit list in HANDOFF after the docs commit
+c9f3463  docs: process narrative, three debugging entries, two prompts, handoff
 0e595d8  fix(llm): Gemini rejects minItems/maxItems alongside enum — build and refine were down
 12c2dad  feat(codegen): generate and iterate on a real page (bonuses #3, #6)
 8c1df9a  feat(analyze): read a screenshot of the target site (bonus #1)
@@ -63,7 +65,7 @@ deliberately. `.env.example` documents all of them.
 |---|---|
 | Production URL | https://reforge-blond-two.vercel.app/ — **build/refine broken until `0e595d8` ships** |
 | Demo login | `demo@reforge.app` / `reforge-demo-2026` |
-| GitHub repo | `Rounak7721/ReForge` — local `main` is **4 commits ahead** |
+| GitHub repo | `Rounak7721/ReForge` — local `main` is **6 commits ahead** |
 | Supabase | `zqyahkyigokbxmufpxpj` — migration 0003 applied to production |
 | Working tree | Clean, on `main` |
 | Gemini quota | ~45 of 500 used (mostly schema bisection). Resets 12:30 IST today |
