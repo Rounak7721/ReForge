@@ -578,3 +578,125 @@ copy claimed a behaviour the structure could not deliver, and only driving the
 failure path in a browser and reading the resulting DOM caught it. Testing the
 happy path would never have found this, because on success the form is
 discarded anyway.
+
+## 6. `.gitignore` silently swallowed an entire API route
+
+**Phase:** Phase 3 (builder & editor) · **Date:** 2026-08-26
+
+### Problem
+
+Phase 3 was finished and verified in a browser — analyze, build, four
+refinements, persistence, all working. Staging the diff:
+
+```
+$ git add -A && git status --short
+M  app/(app)/dashboard/[projectId]/page.tsx
+A  app/api/refine/route.ts
+A  components/concept/concept-view.tsx
+A  components/concept/product-studio.tsx
+A  lib/api/project.ts
+A  lib/prompts/builder.ts
+A  lib/prompts/editor.ts
+```
+
+`app/api/refine/route.ts` is there. **`app/api/build/route.ts` is not.** The file
+exists on disk, is 2873 bytes, compiles, and had just served a working request
+seven minutes earlier.
+
+Had this been committed and pushed, the deploy would have gone out **without the
+build endpoint**. "Build My Product" — the single action requirement 3 is named
+after — would have returned 404 in production, on a URL a grader opens cold.
+
+### AI prompt
+
+No prompt produced this. The route was created with a plain `mkdir -p
+app/api/build app/api/refine`, which is correct, and the file was written
+correctly. The bug predates Phase 3 entirely: it was installed in Phase 0 by
+`create-next-app`, which generates a `.gitignore` containing
+
+```
+build/
+```
+
+That line has been in the repo since the first commit and had never mattered,
+because no directory named `build` existed until now.
+
+### Attempted solution
+
+The instinct was that `git add -A` had raced something, or that the file was
+written after staging. Both wrong — `ls -la` showed the file present with an
+earlier mtime than the `git add`.
+
+The second instinct, that it was a permissions or encoding problem, was also
+wrong and would have wasted real time. Neither hypothesis explains why the
+*sibling* route staged fine from the same command.
+
+### Debugging
+
+The sibling was the clue. `refine` staged, `build` did not, and the only
+difference between them is the directory name. That reframes the question from
+"what is wrong with this file" to "what is special about the word *build*".
+
+```
+$ git check-ignore -v app/api/build/route.ts
+.gitignore:9:build/	app/api/build/route.ts
+```
+
+A gitignore pattern containing no slash, or a trailing slash only, is matched
+against **every path component at every depth** — not anchored to the repository
+root. So `build/` means "any directory named build, anywhere", and
+`app/api/build/` is a direct hit. `/build/` would have meant the root-level
+directory the rule was actually written for.
+
+The genuinely dangerous property is that **every gate this project has would
+have passed it.** `tsc --noEmit` reads the filesystem, not the index, so it type
+checks. `pnpm lint` passes. `pnpm build` compiles the route and prints
+`ƒ /api/build` in the route table. The browser test passes because dev serves
+from disk. `git status` does not list ignored files, so nothing appears missing —
+the absence is only visible if you know which files you expect and count them.
+
+Auditing the rest of the file for the same class of error:
+
+```
+$ find app lib components -type f \( -name "*.ts" -o -name "*.tsx" \) \
+    | while read f; do git check-ignore -q "$f" && echo "IGNORED: $f"; done
+IGNORED: app/api/build/route.ts
+```
+
+One file today. But `out/` and `dist/` on lines 8 and 10 are unanchored in
+exactly the same way, so `app/api/out/` or `lib/dist/` would vanish just as
+quietly in future.
+
+### Final solution
+
+Anchor the three build-output patterns to the repository root, which is what
+they were always meant to mean:
+
+```diff
+-.next/
+-out/
+-build/
+-dist/
++/.next/
++/out/
++/build/
++/dist/
+```
+
+`node_modules/` is deliberately left unanchored — a nested `node_modules`
+genuinely should be ignored at any depth. The distinction is whether the name
+describes *generated output at the project root* or *a kind of directory*.
+
+Then `git add -f` was **not** used. Forcing the add would have committed the file
+while leaving the rule that hides it in place, so the next `build` directory —
+or a fresh clone running `git add -A` — would reintroduce the same gap. Fixing
+the pattern fixes every future instance; forcing the add fixes one file and
+leaves a trap.
+
+**The lesson, and it is about verification rather than gitignore:** every check
+in this project reads the working tree, and the thing being shipped is the
+*index*. Those are different objects, and nothing in lint, typecheck, build or a
+browser test compares them. The only reason this was caught is that I read the
+staged file list and noticed a name I expected was missing — which is a habit,
+not a gate. Worth adding a real one: comparing the route directories on disk
+against the routes in the commit is a five-line check.

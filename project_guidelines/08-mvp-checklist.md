@@ -96,27 +96,32 @@ afterwards; the database is empty again.
 
 Covers requirement 3.
 
+**Status 2026-08-26:** built and verified end to end **on localhost** — analyze →
+build → four refinements → reload from DB. `[~]` until the same walk-through
+passes on the deployed URL. One complete demo measured at **exactly 6 Gemini
+calls** (1 analyze + 1 build + 4 refine), matching the documented figure.
+
 **Backend**
-- [ ] `lib/prompts/builder.ts`
-- [ ] Zod schema: exactly the 6 concept fields, **structured not prose** — see the `[OUR DECISION]` block in `02-functional-requirements.md` §3
-- [ ] `POST /api/build` — reads cached analysis by `projectId`, writes `projects.concept`
-- [ ] `lib/prompts/editor.ts`
-- [ ] `POST /api/refine` — `{projectId, instruction}` → **full** updated concept, persisted
-- [ ] Refinement logged to `refinements`
-- [ ] Both routes: validation, try/catch, typed errors, `maxOutputTokens`
+- [~] `lib/prompts/builder.ts`
+- [~] Zod schema: exactly the 6 concept fields, **structured not prose** — see the `[OUR DECISION]` block in `02-functional-requirements.md` §3
+- [~] `POST /api/build` — reads cached analysis by `projectId`, writes `projects.concept`
+- [~] `lib/prompts/editor.ts`
+- [~] `POST /api/refine` — `{projectId, instruction}` → **full** updated concept, persisted
+- [~] Refinement logged to `refinements`
+- [~] Both routes: validation, try/catch, typed errors, `maxOutputTokens`
 
 **Frontend**
-- [ ] "Build My Product" button + loading state
-- [ ] Concept view rendering all 6 fields — `<ConceptView concept={...} />`, a pure function of the concept object (so the preview bonus is a sibling component, not a refactor)
-- [ ] Chat/instruction input, **debounced**, max one in-flight request
-- [ ] Refinement history visible
-- [ ] Optimistic or clearly-signalled updating state
+- [~] "Build My Product" button + loading state
+- [~] Concept view rendering all 6 fields — `<ConceptView concept={...} />`, a pure function of the concept object (so the preview bonus is a sibling component, not a refactor)
+- [~] Chat/instruction input, **debounced**, max one in-flight request
+- [~] Refinement history visible
+- [~] Optimistic or clearly-signalled updating state
 
 **Verify — all four PDF instructions visibly change the concept**
-- [ ] "Make the design more premium."
-- [ ] "Add a dashboard."
-- [ ] "Remove the pricing page."
-- [ ] "Make it suitable for enterprise customers."
+- [~] "Make the design more premium." — uiDirection changed (Minimalist/high-contrast → Editorial/spacious), nav + pages + name untouched
+- [~] "Add a dashboard." — **not a valid test on this concept**: the builder already included `/dashboard`. Verified instead with "Add a pricing page.", which added the page *and* its nav entry
+- [~] "Remove the pricing page." — removed from **both** `pages` and `navigation`; other 4 pages kept; nav still consistent with pages
+- [~] "Make it suitable for enterprise customers." — repositioned wholesale: "Soloist" → "Align", features → governance/audit/compliance, `/projects` → `/portfolios`
 
 ---
 

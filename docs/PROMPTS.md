@@ -121,3 +121,233 @@ All five fixed, but two decisions went beyond applying the suggestions.
 3. **On the migration, I went further than idempotency.** The reviewer noted `create policy` would fail on re-run. Fixing that exposed a worse latent problem: migration `0001` created `set_updated_at()` as `SECURITY DEFINER` (Supabase's own advisor had flagged it as anon-callable via `/rest/v1/rpc/`, and `0002` remediated the live project). Making `0001` re-runnable would have meant a file that is safe to replay *and* reintroduces a fixed vulnerability when replayed. So I corrected `0001` in place and documented why — accepting a small divergence from strict historical fidelity in exchange for a migration set that is safe to run from scratch.
 
 **What I'd take from this:** the most valuable finding was in code whose own comment described the bug it contained. I had written the warning about discarding rotated cookies, and then discarded them nine lines later. Self-review does not catch that — the comment reads as evidence the case is handled, so the eye moves on. An independent pass with a different objective does.
+
+## 3. Testing three output formats before committing to one
+
+**Phase:** Phase 3 (builder/editor) · **Date:** 2026-08-26
+
+### What I asked
+
+> Before starting Phase 3, tell me what you have planned in simple flow diagrams
+> and important details. Tell me what it takes in, what it does and what it
+> should output exactly. Then stop for my confirmation.
+
+and then, after reviewing it:
+
+> 1. Test if we get a proper, reliable nested JSON response from Flash.
+> 2. Also try out XML outputs, see if XML parsing performs better than JSON. If not —
+> 3. Use the string-based method.
+> Run the tests first, then give me the results. I will confirm which one to move
+> forward with.
+>
+> NOTE: Keep in mind we are likely to add actual starter code and visuals later
+> on if time permits, so keep it modular and easy to add on.
+
+### Why I structured it that way
+
+Two separate pieces of leverage, and the second is the one that mattered.
+
+**Demanding the I/O contract before any code.** "What it takes in, what it does,
+what it should output exactly" is a request for the interface, not the
+implementation. Interfaces are where the expensive mistakes live — if
+`/api/refine` returned a patch instead of the full concept, that decision would
+have propagated into the route, the persistence, the undo story and the render
+path before anyone noticed. Reviewing three short contracts costs minutes;
+reversing them costs a phase.
+
+**Refusing to accept a guess as an answer.** I had flagged deep nesting as the
+main risk and offered to probe it. The instruction came back as a *ranked
+fallback chain* — nested JSON, else XML, else flat strings — with the explicit
+sequencing "run the tests first, then give me the results". That framing is what
+made the outcome useful: it converted an architectural coin-flip into an
+experiment with a pre-declared decision rule, so the result could not be
+rationalised after the fact.
+
+The trailing NOTE about starter code and visuals looked incidental and turned
+out to be decisive. See below.
+
+### What the AI produced
+
+A three-variant harness (`.probe/`) holding model, temperature, thinking level,
+token budget, prompt and zod validation constant, varying only the wire format.
+Two rounds, 42 live calls.
+
+**Round 1 produced a false pass.** All three variants scored 2/2 on "remove the
+pricing page" — but the diagnostic line read `hadPricing=false`. The generated
+concepts had never contained a pricing page, so the instruction removed nothing
+and the check passed vacuously. A green summary row was measuring nothing at all.
+
+Round 2 fixed it by seeding a fixture concept that definitely contained a pricing
+page and nav item, and added the additive case ("add a dashboard") plus a
+depth-stress build. Final result: **42/42, no failures, no format distinguishable
+on correctness.**
+
+### What I changed / fixed afterward
+
+**Caught and re-ran the vacuous test.** This is the part worth keeping. The
+harness reported success, and the reported number was true — 2/2 trials passed.
+It was the *test* that was wrong, not the result, and nothing in a pass rate can
+tell you that. Only the `hadPricing=false` field printed alongside it could.
+Round 1's structural numbers were discarded.
+
+**The decision moved off the measured axis entirely.** The experiment was
+designed to find a reliability difference and found none. Rather than declaring
+the tie meaningless, the tiebreak came from the NOTE about future starter code
+and visuals: nested `sections: {type, headline, body}[]` renders directly as
+visual blocks and maps onto generated components, whereas flat `sections:
+string[]` would need re-parsing or a schema migration to do the same. XML was
+eliminated on a different ground — Gemini enforces `responseJsonSchema` on the
+wire and offers no equivalent for XML, so its clean sweep was unguarded luck
+rather than a guarantee, and it emitted 2.2x the characters of flat JSON.
+
+**One real caveat surfaced and was not smoothed over:** under depth stress the
+nested variant returned 5 pages where XML and flat returned 7. n=1, so it is a
+signal rather than a finding, and it is fixable in the prompt — but it is the
+only asymmetry in 42 calls and it argued *against* the recommendation, so it went
+into the report rather than being dropped.
+
+## 4. Ordering the review before the code that would depend on it
+
+**Phase:** Phase 2 (analyzer) · **Date:** 2026-08-26
+
+### What I asked
+
+After the analyzer's server half was built and I had offered either to review it
+or to carry straight on to the UI:
+
+> Run code review first, then move towards the frontend.
+
+### Why I structured it that way
+
+The whole content of this prompt is the word **first**, and it overrides the
+option I had leaned toward.
+
+The server half was the load-bearing part: `lib/llm`, the site fetcher and
+`/api/analyze`. The frontend was about to be written against all three. Reviewing
+after the UI existed would mean any structural finding — a changed error shape, a
+different route contract — invalidates work that already depends on it. Reviewing
+at the seam means findings are still free.
+
+There is a second reason specific to this diff, and it is the one that paid off.
+The site fetcher takes an arbitrary user-supplied URL and requests it from inside
+our own infrastructure. That is the highest-risk code in the project, and it is
+the kind of risk that does not announce itself in a passing test — the feature
+works perfectly whether or not the guard is correct.
+
+### What the AI produced
+
+Seven findings, all real. Two were genuine security holes:
+
+- **`redirect: "follow"` defeated the SSRF guard entirely.** `assertPublicUrl`
+  validated only the URL the user typed; `fetch` then followed a 302 anywhere it
+  liked. A public URL redirecting to `169.254.169.254` would have been fetched,
+  sent to Gemini and persisted.
+- **The private-range check only matched dotted-quad IPv4.** `http://2130706433/`,
+  `http://127.1/` and `http://0x7f000001/` are all 127.0.0.1 and all passed.
+
+Plus five correctness bugs, including a `maxDuration` of 60s sitting below the
+handler's own 78s worst case, and a `name === "TimeoutError"` branch that was
+dead code because the Gemini SDK aborts with no reason.
+
+### What I changed / fixed afterward
+
+All seven fixed — but the part worth recording happened while **verifying** the
+fixes, not while applying them.
+
+I rewrote the guard to resolve the hostname and check the resolved addresses
+rather than pattern-match the literal, then re-ran the attack list. Every case
+came back `BLOCK`. It would have been entirely reasonable to stop there.
+
+Reading the *reasons* rather than the verdicts, one line did not fit:
+
+```
+BLOCK v4-mapped v6 metadata
+      That site took too long to respond.
+```
+
+Every other case said `That host can't be analyzed.` — the guard's message. This
+one said the fetch had timed out, which meant **the request had actually gone
+out**. The guard had failed and a network timeout was impersonating a block.
+
+The cause: the WHATWG URL parser canonicalises `::ffff:169.254.169.254` into hex
+as `::ffff:a9fe:a9fe`, so the dotted-quad regex I had written for v4-mapped
+addresses never matched. I replaced spelling-matching with an actual IPv6
+byte-parser, which removed the entire class rather than that one encoding.
+
+I then added a case the review had not raised and my own list had missed: a
+**public hostname whose DNS resolves to a private address** (`169.254.169.254.nip.io`).
+That is the realistic version of this attack, and only the resolve-then-check
+design catches it. It passes now.
+
+**Two things I would carry forward.** First, a fix is not verified by the fixes
+passing — it is verified by the *right thing* causing them to pass, and only the
+failure reason distinguishes those. A pass rate cannot tell you that a block was
+really a timeout. Second, the residual gap got written into the source rather
+than quietly left: this is resolve-then-fetch, not resolve-then-pin, so DNS
+rebinding is still open, and closing it needs a pinned-IP connection that `fetch`
+does not expose. An honest comment about a known limit is worth more than silence
+that reads like full coverage.
+
+## 5. "Keep nothing from testing" — cleanup as a first-class instruction
+
+**Phase:** Phase 2 → 3 boundary · **Date:** 2026-08-26
+
+### What I asked
+
+> OK push it. Also we will create a demo account later on, no need to keep
+> anything from testing right now. What's the next step?
+
+### Why I structured it that way
+
+Three instructions compressed into two lines, and the middle one is the
+interesting one.
+
+It is a *pre-authorisation for a destructive action* — deleting live rows from
+the production database — issued before the action came up, which is exactly
+when such permission is cheap to grant and safe to reason about. It also settles
+a question I had raised the turn before (whether to promote the test account into
+the required demo account) by deciding the opposite: build the demo account
+deliberately later, don't inherit one by accident. Test data that survives into a
+graded submission looks like carelessness even when it is harmless.
+
+### What the AI produced
+
+A push to `main`, an auto-deploy, and a production smoke test as a brand-new
+user: signup → analyze → seven fields → reopen with zero `/api/` calls → logout →
+deep-link redirect preserving `next`.
+
+Two things went wrong on the way, and neither was in the application code.
+
+**A probe of mine reported a deploy that it had not actually verified.** I polled
+`/dashboard/new` expecting a redirect to prove the new route existed. It printed
+`DEPLOY LIVE` after 15 seconds — but middleware guards `/dashboard/*` and
+redirects whether or not the page exists, so the probe would have said the same
+thing against the old build. I discarded it and confirmed the deploy from the
+browser instead, where the old code was distinguishable by a disabled button.
+
+**Two Playwright screenshots had been committed to the repo root.** 365KB of test
+artifacts in a repo whose cleanliness is itself graded. They surfaced only
+because `security-review` prints the file list of the diff it is reviewing, and
+`loading.png` and `project.png` were sitting in it.
+
+### What I changed / fixed afterward
+
+**I enumerated before deleting.** Rather than issuing the `delete` the
+instruction authorised, I first listed every account with its project count. Two
+rows, both mine, one project each, no third-party data. Only then did the delete
+run, and it was followed by a count query confirming `users 0, projects 0,
+refinements 0` — proving the cascade had worked rather than assuming it. Blanket
+permission to delete is not permission to delete without looking; the enumeration
+is what makes the deletion safe rather than merely authorised.
+
+**I removed the screenshots and closed the hole that let them in.** `.playwright-mcp/`
+was already git-ignored, but I had passed bare filenames to the screenshot tool,
+so they landed in the working directory instead. Deleting them fixes today; a
+`/*.png` ignore rule fixes the next time, since the same mistake is easy to
+repeat.
+
+**The lesson is about my own instrumentation.** Both failures were in code I
+wrote to *check* things, not in the thing being checked — a probe that measured
+the wrong signal and a screenshot call that wrote to the wrong place. Verification
+tooling gets no review and no tests, and it is trusted precisely when it says
+what you were hoping to hear.

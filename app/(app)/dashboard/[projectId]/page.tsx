@@ -3,7 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AnalysisView } from "@/components/analysis/analysis-view";
+import {
+  ProductStudio,
+  type RefinementEntry,
+} from "@/components/concept/product-studio";
 import { analysisSchema } from "@/lib/prompts/analyzer";
+import { conceptSchema } from "@/lib/prompts/builder";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Project — Reforge" };
@@ -27,7 +32,7 @@ export default async function ProjectPage({
   // else returns no row and falls through to notFound() — same as a typo.
   const { data: project, error } = await supabase
     .from("projects")
-    .select("id, url, description, target_customer, analysis, created_at")
+    .select("id, url, description, target_customer, analysis, concept, created_at")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -37,9 +42,33 @@ export default async function ProjectPage({
   }
   if (project === null) notFound();
 
-  // The column is `jsonb`, so its type is `Json` — validate rather than cast.
-  // A row written by an older schema should degrade, not crash the page.
+  // The columns are `jsonb`, so their type is `Json` — validate rather than
+  // cast. A row written by an older schema should degrade, not crash the page.
   const analysis = analysisSchema.safeParse(project.analysis);
+  const concept = conceptSchema.safeParse(project.concept);
+
+  // Refinement history. Ordered newest-first so the studio can prepend without
+  // re-sorting. RLS on `refinements` is scoped through the parent project.
+  const { data: refinementRows, error: refinementsError } = await supabase
+    .from("refinements")
+    .select("id, instruction, created_at")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false });
+
+  if (refinementsError !== null) {
+    // Non-fatal — the concept still renders — but a silent empty history is
+    // indistinguishable from "no refinements yet", so it must be logged.
+    console.error("[project] failed to load refinements", {
+      code: refinementsError.code,
+      message: refinementsError.message,
+    });
+  }
+
+  const refinements: RefinementEntry[] = (refinementRows ?? []).map((row) => ({
+    id: row.id,
+    instruction: row.instruction,
+    createdAt: row.created_at,
+  }));
 
   return (
     <div className="space-y-8">
@@ -71,7 +100,26 @@ export default async function ProjectPage({
       </div>
 
       {analysis.success ? (
-        <AnalysisView analysis={analysis.data} />
+        <>
+          <AnalysisView analysis={analysis.data} />
+
+          <div className="space-y-4 border-t pt-8">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold tracking-tight">Your product</h2>
+              <p className="text-muted-foreground text-sm">
+                {concept.success
+                  ? "Refine it with an instruction — the whole concept updates."
+                  : "The analysis is done. Now turn it into something to build."}
+              </p>
+            </div>
+
+            <ProductStudio
+              projectId={project.id}
+              initialConcept={concept.success ? concept.data : null}
+              initialRefinements={refinements}
+            />
+          </div>
+        </>
       ) : (
         <div
           role="alert"
