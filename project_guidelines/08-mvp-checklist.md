@@ -159,8 +159,9 @@ Covers requirement 6.
 
 Covers requirement 1.
 
-**Status 2026-08-26:** built and verified on localhost at 375 / 768 / 1440. `[~]`
-until confirmed on the deployed URL.
+**Status 2026-08-26:** verified on **production**. All nine required sections
+present, console clean, zero horizontal overflow, heading order H1 → H2 → H3.
+Internal links only (`/`, `/signup`, `/login`, `#how`, `#pricing`).
 
 **Direction — a spec sheet.** The product emits typed, labelled, structured data,
 so the page is built the same way: mono keys, visible rules, one accent
@@ -172,17 +173,17 @@ Archivo; body Geist; data Geist Mono. Three roles, no more.
 real output in the product's real shape (a linear.app teardown becoming a solo
 issue tracker), which also satisfies the required "product demo / mockup". Worth a large share of the 15 product-quality points, and it's the grader's first impression. Use the `frontend-design` skill.
 
-- [~] Product name / logo
-- [~] Clear value proposition
-- [~] Hero section
-- [~] Product demo / mockup — the teardown panel; the product's actual output, not an illustration
-- [~] Features
-- [~] How it works
-- [~] CTA (→ sign up)
-- [~] Pricing (sample tiers) — three tiers, and the footer says plainly that they are illustrative and there is no billing
-- [~] Footer
-- [~] Responsive at 375 / 768 / 1440 — no horizontal overflow at any width; pricing labels, prices and CTAs align to the pixel
-- [~] Reads like a startup, not an assignment
+- [x] Product name / logo
+- [x] Clear value proposition
+- [x] Hero section
+- [x] Product demo / mockup — the teardown panel; the product's actual output, not an illustration
+- [x] Features
+- [x] How it works
+- [x] CTA (→ sign up)
+- [x] Pricing (sample tiers) — three tiers, and the footer says plainly that they are illustrative and there is no billing
+- [x] Footer
+- [x] Responsive at 375 / 768 / 1440 — no horizontal overflow at any width; pricing labels, prices and CTAs align to the pixel
+- [x] Reads like a startup, not an assignment
 
 ---
 
