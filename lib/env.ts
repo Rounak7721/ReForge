@@ -41,3 +41,29 @@ export function serverEnv() {
   });
   return cachedServerEnv;
 }
+
+/**
+ * LLM config, parsed separately from `serverEnv` on purpose: merging them would
+ * make the Supabase admin client fail to construct whenever a Gemini key is
+ * absent, which is a confusing failure for an unrelated feature.
+ *
+ * Defaults mirror `.env.example`. The model is pinned by daily quota — the 3.x
+ * Flash line allows 20 requests/day, flash-lite allows 500. See
+ * `project_guidelines/03-tech-stack.md`.
+ */
+const llmSchema = z.object({
+  LLM_PROVIDER: z.enum(["gemini", "openai", "anthropic"]).default("gemini"),
+  GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is missing"),
+  GEMINI_MODEL: z.string().min(1).default("gemini-3.1-flash-lite"),
+});
+
+let cachedLlmEnv: z.infer<typeof llmSchema> | undefined;
+
+export function llmEnv() {
+  cachedLlmEnv ??= llmSchema.parse({
+    LLM_PROVIDER: process.env.LLM_PROVIDER,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    GEMINI_MODEL: process.env.GEMINI_MODEL,
+  });
+  return cachedLlmEnv;
+}

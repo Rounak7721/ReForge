@@ -1,7 +1,13 @@
-# Next.js does not need either of these built from source:
+# None of these need to run build/install scripts here:
 # sharp — Next 15 bundles its own image optimiser; Vercel supplies sharp at build time.
 # unrs-resolver — prebuilt binaries ship for this platform.
-# Matches what create-next-app generates for pnpm.
+# @google/genai — its only install script is a literal `echo 'preinstall: no-op'`.
+# protobufjs — postinstall is a CLI convenience step; nothing we import needs it.
+# Leaving any of these unset makes `pnpm install` exit 1, which breaks every script.
 allowBuilds:
+  '@google/genai': false
+  protobufjs: false
   sharp: false
   unrs-resolver: false
+minimumReleaseAgeExclude:
+  - '@google/genai@2.19.0'

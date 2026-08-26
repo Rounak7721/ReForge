@@ -13,6 +13,9 @@ export type ApiErrorCode =
   | "email_taken"
   | "weak_password"
   | "rate_limited"
+  | "quota_exhausted"
+  | "site_unreachable"
+  | "not_found"
   | "unauthorized"
   | "upstream_error"
   | "internal_error";
@@ -28,6 +31,11 @@ const STATUS: Record<ApiErrorCode, number> = {
   email_taken: 409,
   weak_password: 422,
   rate_limited: 429,
+  // Same status, deliberately a different code: the per-minute limit clears on
+  // retry and the daily one does not, so the UI must render them differently.
+  quota_exhausted: 429,
+  site_unreachable: 422,
+  not_found: 404,
   upstream_error: 502,
   internal_error: 500,
 };

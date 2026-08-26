@@ -328,3 +328,134 @@ switch (error.code) {
 **3. Email confirmation must be off.** This was already on the checklist as a UX nicety — "avoid a confirmation dead end". It is not a nicety. With it on, the free tier's email allowance is a hard cap on how many people can ever sign up per hour, and it fails closed. Turning it off means `signUp` returns a session immediately, sends no email, and touches no rate limit.
 
 **What this changes about how I write error mappers:** a fallback branch that returns a generic message *and* logs nothing is a place where bugs go to hide. It converts a specific, fixable upstream error into an indistinguishable blob, and it does so silently — passing every gate we have. If a catch-all exists, it must record what it caught.
+
+## 4. Installing the Gemini SDK broke `pnpm lint` and `pnpm build` — and would have broken the deploy
+
+**Phase:** Phase 2 (analyzer) · **Date:** 2026-08-26
+
+### Problem
+
+The first command of Phase 2 was `pnpm add @google/genai node-html-parser`. It
+reported success:
+
+```
+dependencies:
++ @google/genai 2.19.0
++ node-html-parser 9.0.1
+```
+
+and then, four lines later:
+
+```
+[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: @google/genai@2.19.0, protobufjs@7.6.5
+Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+```
+
+The packages were installed and importable, so this read as advisory. It was
+not. Every subsequent script died before running:
+
+```
+$ pnpm lint
+[ERROR] Command failed with exit code 1: ... pnpm.mjs install
+pnpm: Command failed with exit code 1
+```
+
+`pnpm` runs a dependency-status check before any script, that check re-runs
+`install`, and `install` exits 1 while an ignored build is undeclared. So
+`pnpm lint` and `pnpm build` were both dead — and the same would have happened
+inside Vercel's build step, turning a green local session into a failed deploy.
+
+### AI prompt
+
+No prompt produced this. It came from the approved plan's own dependency line:
+
+> `pnpm add @google/genai@^2.19.0 node-html-parser@^9.0.1`
+
+which is the failure worth recording: the plan specified the *right* packages
+and said nothing about the package manager's policy gate, because nothing in
+the previous phases had tripped it. `create-next-app` had pre-declared `sharp`
+and `unrs-resolver` in `pnpm-workspace.yaml`, so the mechanism existed from day
+one and had simply never been exercised by a hand-added dependency.
+
+### Attempted solution
+
+The obvious move is the one the error message names: `pnpm approve-builds`.
+That is wrong here for two reasons, neither visible from the error text.
+
+It is interactive — a TUI checklist — so it cannot run in this environment at
+all. And more importantly it decides the question by clicking rather than by
+looking: it would have approved both scripts sight-unseen, which is exactly the
+posture a supply-chain gate exists to prevent. "Make the error go away" and
+"decide whether this package should execute code on my machine" are different
+tasks, and the CLI's suggested fix conflates them.
+
+`pnpm` had also already written placeholders into `pnpm-workspace.yaml`:
+
+```yaml
+allowBuilds:
+  '@google/genai': set this to true or false
+  protobufjs: set this to true or false
+```
+
+That literal string is not a boolean, so the file stayed in a failing state
+until answered — the gate is deliberately un-ignorable.
+
+### Debugging
+
+The first hypothesis was that the two packages genuinely needed their build
+steps and that `false` would break them at runtime — `protobufjs` in particular
+sounds like something that compiles. Guessing either way was unacceptable, so
+the question became: *what do these scripts actually do?*
+
+Reading them directly was harder than expected. `require('@google/genai/package.json')`
+throws `ERR_PACKAGE_PATH_NOT_EXPORTED` — the package's `exports` map does not
+expose its own manifest — and `protobufjs` is a transitive dependency, so it has
+no top-level `node_modules` entry either; it lives under
+`node_modules/.pnpm/protobufjs@7.6.5/`. Reading the files off disk by path
+rather than through the module resolver:
+
+```
+@google/genai   {'preinstall': "echo 'preinstall: no-op'"}
+protobufjs      {'postinstall': 'node scripts/postinstall'}
+```
+
+The Gemini SDK's script is a literal no-op — an `echo`. It exists to satisfy
+tooling, and blocking it changes nothing. `protobufjs`'s postinstall is its CLI
+convenience step, which matters for `pbjs`/`pbts` codegen; nothing in this
+project imports either, and the runtime library works without it.
+
+So the hypothesis was inverted: the risk was never that `false` breaks these
+packages, it was that reflexively approving them normalises running arbitrary
+install-time code to silence an error.
+
+### Final solution
+
+Declare both explicitly as `false` in `pnpm-workspace.yaml`, with the reasoning
+recorded next to the decision rather than in a commit message:
+
+```yaml
+# @google/genai — its only install script is a literal `echo 'preinstall: no-op'`.
+# protobufjs — postinstall is a CLI convenience step; nothing we import needs it.
+# Leaving any of these unset makes `pnpm install` exit 1, which breaks every script.
+allowBuilds:
+  '@google/genai': false
+  protobufjs: false
+  sharp: false
+  unrs-resolver: false
+```
+
+`pnpm lint` and `pnpm build` went green immediately.
+
+**Why this works rather than merely passing:** the gate is not asking whether
+the package is trustworthy, it is asking whether its *install script* is load-
+bearing. For a library consumed only through its runtime API, the answer is
+almost always no, and `false` is both the safer and the correct answer — not a
+workaround for it.
+
+**The lesson, and it is a deploy lesson more than a dependency one:** a warning
+printed *after* a success line is easy to read as advisory, and this one silently
+disabled the two commands that gate every commit. The tell was that `pnpm lint`
+failed with an error about `install`, not about ESLint. When a script fails
+citing a different command than the one invoked, the problem is upstream of the
+script — and here that upstream sits between a green local session and a failing
+Vercel build.
