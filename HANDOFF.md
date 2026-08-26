@@ -2,10 +2,10 @@
 
 **Read this first in every new session.** It is the fastest path back to full context.
 
-_Last updated: 2026-08-26, ~17:55 IST — session 4. **The frontend redesign is
-built, verified locally and committed (`79db0ea`), but NOT yet pushed or
-deployed.** Phases 0–6 remain complete. Next: push + deploy, then Phase 7 (docs
-+ video)._
+_Last updated: 2026-08-26, ~18:05 IST — session 4. **The frontend redesign is
+built, pushed and live on production** (`cbde344`). Phases 0–6 complete.
+Awaiting the user's review of the live app plus a logo SVG and imagery. Next:
+Phase 7 (README pass, process narrative, video)._
 
 ---
 
@@ -21,7 +21,7 @@ is done.** What is left is deploying the redesign and the graded paperwork.
 | GitHub repo | `Rounak7721/ReForge`, `main` current and pushed |
 | Vercel | Auto-deploys on every push to `main` |
 | Supabase | `zqyahkyigokbxmufpxpj` — schema + RLS live. **Only the demo account exists**; all test users deleted |
-| Working tree | Clean, on `main`, **1 commit ahead of origin** (`79db0ea`, the redesign) |
+| Working tree | Clean, on `main`, synced with origin (`cbde344`) |
 | LLM quota used today | ~86 of 500 (one refine spent verifying the diff panel). Resets midnight Pacific |
 
 ```
@@ -37,15 +37,23 @@ reserve 2.5h for it.
 
 ## Next actions, in order
 
-### 1. Push and deploy the redesign — **do this first**
+### 1. Awaiting the user — live review, logo SVG, imagery
 
-The redesign is committed locally as `79db0ea` and **has not been pushed**.
-`pnpm lint` and `pnpm build` pass and it was walked in Chromium at 1440px and
-375px in both themes, but **nothing has been verified on the deployed URL yet**.
+The redesign is **deployed and verified on production**. The user is reviewing
+the live app and will supply a logo SVG and image assets. Expect change
+requests; the surfaces are already built to take real imagery (see the image
+brief at the end of this file).
 
-Use the `deploy` skill. No new env vars were added, so Vercel needs no config
-change. After deploying, walk: landing → signup/login → dashboard → project →
-refine, in **both themes**, on production.
+**Deploy verification done:** preflight (lint, build, no `any`, `.env.example`
+in sync, no service-role import in a Client Component) and a security review of
+the auth-touching diff — no findings, auth logic byte-identical, only
+presentation plus additive client-side validation. Confirmed the *new* build is
+serving by probing `/icon.svg` and `/privacy`, both routes that did not exist
+before. Landing renders with zero console errors, 19/19 scroll reveals, no
+horizontal overflow.
+
+**Still not smoke-tested on production:** signup as a brand-new user, the full
+analyze → build → refine flow, and the failure paths. Do that before recording.
 
 ### 2. Frontend redesign — done, for reference
 
