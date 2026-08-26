@@ -730,3 +730,157 @@ browser test compares them. The only reason this was caught is that I read the
 staged file list and noticed a name I expected was missing — which is a habit,
 not a gate. Worth adding a real one: comparing the route directories on disk
 against the routes in the commit is a five-line check.
+
+---
+
+## 7. A custom CSS class silently zeroed a Tailwind utility — and hid the mobile menu
+
+**Date:** 2026-08-26 · **Phase:** frontend redesign
+
+### Problem
+
+On the redesigned landing page at 375px, opening the mobile menu showed
+"Capabilities" and "Pricing" but not "How it works" — the first link was sitting
+*underneath* the floating nav bar. The overlay's container was explicitly
+written as:
+
+```tsx
+<div className="safe-top flex h-full flex-col px-6 pt-24 pb-10">
+```
+
+`pt-24` is 96px, the nav's bottom edge is at 76px, so it should have cleared it
+with room to spare. Nothing in lint, typecheck or the build flagged anything,
+and on desktop the menu is `md:hidden` so it never appeared at all.
+
+### AI prompt
+
+Rather than adjusting the padding until it looked right, I asked for the
+measurement first:
+
+> Content is sitting under the nav. Let me confirm why before changing anything.
+> Report the panel's class list, its **computed** paddingTop, the first link's
+> bounding-rect top, and the nav's bottom.
+
+### Attempted solution
+
+The obvious guesses were all wrong and all would have "worked" by accident:
+bump `pt-24` to `pt-32`, or add a `mt-` to the list, or set `top` on the links.
+Each would have papered over the real cause and left the same trap armed for
+every other element in the codebase.
+
+### Debugging
+
+The measurement came back:
+
+```
+panelClasses:             "safe-top flex h-full flex-col px-6 pt-24 pb-10"
+panelComputedPaddingTop:  "0px"
+firstLinkTop:             0
+navBottom:                76
+```
+
+`pt-24` was in the class list and the computed padding was **zero**. Something
+was overriding it. The culprit was my own utility, defined in `app/globals.css`:
+
+```css
+.safe-top { padding-top: max(0px, env(safe-area-inset-top)); }
+```
+
+`@import "tailwindcss"` sits at the top of that file, so Tailwind's utilities
+are defined *before* anything I write below them. Equal specificity (both are a
+single class), so source order decides — and my class always wins. In a desktop
+browser `env(safe-area-inset-top)` resolves to `0px`, so `.safe-top` was
+resolving to `padding-top: 0` and silently deleting `pt-24`.
+
+The same trap was armed on `.safe-bottom` + `pb-*`, which the sticky command bar
+was one edit away from hitting.
+
+### Final solution
+
+Deleted both custom classes and moved safe-area handling into Tailwind's own
+arbitrary-value syntax, so everything lives in one cascade layer and cannot
+collide:
+
+```tsx
+// header
+className="... pt-[env(safe-area-inset-top)]"
+// overlay — composes instead of competing
+className="... pt-[calc(6rem+env(safe-area-inset-top))]"
+```
+
+**The generalisable lesson:** a hand-written class in the same stylesheet as a
+utility framework is not "adding a utility", it is *shadowing* one, and it wins
+by source order without any warning. The symptom appears at a call site that
+looks obviously correct, which is exactly why reading the **computed** value
+rather than the class list was the step that found it. Guessing at padding
+numbers would have fixed the page and left the bug.
+
+---
+
+## 8. The mobile menu covered the button that closes it
+
+**Date:** 2026-08-26 · **Phase:** frontend redesign
+
+### Problem
+
+With the full-screen mobile menu open, the floating nav island — including the
+hamburger that had just morphed into an X — was gone from the screen. The menu
+could only be dismissed with the Escape key or by tapping a navigation link.
+Phones do not have an Escape key, so on the target device the menu was a
+one-way door.
+
+### AI prompt
+
+The screenshot was ambiguous (the nav might simply have been styled away), so
+the check had to be about hit-testing, not appearance:
+
+> Is the close button the element the browser would actually hit at its own
+> centre, or is the overlay sitting on top of it? Use `elementFromPoint` at the
+> button's centre and report what comes back.
+
+### Attempted solution
+
+My first instinct was to add a separate close button inside the overlay. That
+would have worked, but it abandons the hamburger→X morph — which is the entire
+affordance telling the user the control they just pressed is the control that
+undoes it. Two different close controls for one menu is worse design, not
+better.
+
+### Debugging
+
+`elementFromPoint` returned the overlay, not the button. The cause was in my own
+z-index scale in `globals.css`:
+
+```css
+.z-nav     { z-index: 40; }   /* the header      */
+.z-overlay { z-index: 60; }   /* the menu itself */
+```
+
+The overlay is a child of the same stacking root and outranks the header, so a
+`fixed inset-0` panel at 60 necessarily paints over a `sticky` header at 40.
+This is not a bug in either value — it is a missing case: the scale had no entry
+for *"the nav, while its own overlay is open"*.
+
+### Final solution
+
+Added the missing rung rather than reaching for an arbitrary `z-[9999]`:
+
+```css
+/* The nav while its own overlay is open. It MUST outrank .z-overlay, or the
+   full-screen menu covers the hamburger that closes it. */
+.z-nav-open { z-index: 65; }
+```
+
+and made the header swap classes with the open state:
+
+```tsx
+className={`... ${open ? "z-nav-open" : "z-nav"}`}
+```
+
+Re-ran the hit test: `reachable: true`.
+
+**The generalisable lesson:** a z-index scale is a list of *layers*, but the
+thing that actually needs a slot is a *state* — "nav" and "nav while its overlay
+is open" are two different layers wearing the same name. And a screenshot cannot
+tell "invisible" from "covered": only hit-testing distinguishes an element that
+is not drawn from one that is drawn and unclickable.

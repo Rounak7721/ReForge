@@ -277,6 +277,54 @@ before any deploy that introduces one.
 Fallback if Vercel fails: OCI free tier behind a Cloudflare Tunnel on
 `reforge.rounak.co`. Zero recurring cost either way.
 
+## Design system
+
+Everything visual is driven by tokens in `app/globals.css`. There are two token
+layers and the split is load-bearing:
+
+1. **The Reforge semantic layer** — `--ink`, `--dim`, `--faint`, `--shell`,
+   `--core`, `--hairline`, `--ember`. App components use these directly.
+2. **A shadcn bridge** — `--background`, `--card`, `--primary`, `--border` and
+   friends are *defined in terms of* layer 1. That is why the stock
+   `components/ui/*` primitives inherit the new system without being rewritten,
+   and why swapping a token propagates everywhere at once.
+
+**Accent.** One accent, ember/copper. Deliberately not the purple-blue gradient
+that fingerprints AI-generated SaaS. It is used sparingly — focus rings, state,
+glow, data keys — while primary buttons are ink-on-paper (inverting to
+paper-on-ink in dark), which is both higher contrast and more restrained.
+
+**Contrast.** Ember flips lightness between themes, so `--ember-contrast` exists
+to carry the text colour that sits *on* an ember fill; hardcoding white failed
+dark mode at 2.23:1. Every text token is verified ≥ 4.5:1 against all three
+surfaces (page, shell, core) in both themes — worst case 4.69.
+
+**Type.** Three roles, no more: Bricolage Grotesque (display, with its optical
+size axis driven from 32 to 72 so one family covers an eyebrow and a headline),
+Geist (body), Geist Mono (data and labels).
+
+**Depth without assets.** No image files ship. Surfaces are built from a fixed
+three-orb radial mesh on `body`, an SVG `feTurbulence` grain overlay, masked
+hairline grids, and a "double-bezel" pattern (`.bezel` tray + `.bezel-core`
+plate with concentric radii). This keeps the zero-recurring-cost constraint and
+removes any asset that could fail to load.
+
+**Motion.** CSS only — no animation library. Scroll entry is an
+`IntersectionObserver` (`components/ui/motion.tsx`) toggling a data attribute
+that CSS acts on; the hidden state lives inside a
+`@media (prefers-reduced-motion: no-preference)` block, so a reduced-motion
+visitor gets content immediately with no JS dependency, and a `<noscript>` rule
+un-hides everything if JS never runs. Only `transform` and `opacity` animate.
+
+**Theme.** `next-themes` with `defaultTheme="system"` and `enableSystem`. The
+control is a three-state segmented radio group (light / system / dark) rather
+than a two-way switch, because "system" is the default and a binary toggle makes
+it unreachable once touched.
+
+**Z-index** is a named scale (`.z-nav`, `.z-nav-open`, `.z-overlay`, `.z-toast`).
+Safe-area insets are applied with Tailwind arbitrary values, never custom
+classes — see `DEBUGGING.md` entry 7 for why that distinction cost an afternoon.
+
 ## Known limitations
 
 - **Multi-agent workflow cut** for cost/rate-limit reasons. Five chained calls
@@ -284,8 +332,10 @@ Fallback if Vercel fails: OCI free tier behind a Cloudflare Tunnel on
   adds no *required* capability. A natural LangGraph fit: each agent a node with
   typed state on the edges, orchestration and retries from the framework. What
   blocks it is cost, not design.
-- **Light theme only.** The `ThemeProvider` is mounted with `forcedTheme="light"`
-  so there is one surface to design and QA. Enabling dark mode is a props change.
+- **No server-rendered theme preference.** Theme is resolved client-side by
+  `next-themes` from an inline blocking script, so the first paint is correct
+  but the server has no knowledge of it. Fine here; it would matter if any
+  server component needed to branch on theme.
 - **Daily LLM quota is shared with the grader.** 500 requests/day, ~6 per full
   demo. Caching every result is a correctness requirement, not just a cost rule.
   The seeded demo account (`pnpm seed:demo`) is the insurance.

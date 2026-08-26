@@ -7,11 +7,15 @@ import {
   ProductStudio,
   type RefinementEntry,
 } from "@/components/concept/product-studio";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ExternalLink, Spark } from "@/components/ui/icons";
+import { Reveal } from "@/components/ui/motion";
 import { analysisSchema } from "@/lib/prompts/analyzer";
 import { conceptSchema } from "@/lib/prompts/builder";
 import { createClient } from "@/lib/supabase/server";
+import { safeHostname } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Project — Reforge" };
+export const metadata: Metadata = { title: "Project" };
 
 /**
  * Renders a saved project entirely from Postgres.
@@ -71,64 +75,81 @@ export default async function ProjectPage({
   }));
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-3">
-        <Link
-          href="/dashboard"
-          className="text-muted-foreground hover:text-foreground text-sm"
-        >
-          ← Projects
-        </Link>
+    <div className="space-y-12">
+      {/* ---------------- Project header ---------------- */}
+      <Reveal>
+        <Button asChild variant="ghost" size="sm" className="-ml-3">
+          <Link href="/dashboard">
+            {/* aria-hidden on the glyph: without it a screen reader announces
+                "left arrow Projects". */}
+            <ArrowLeft />
+            Projects
+          </Link>
+        </Button>
 
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-pretty">
-            {project.description}
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            <span className="text-foreground/70">For</span> {project.target_customer}
-          </p>
+        <div className="mt-5 flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-0 flex-1">
+            <h1 className="display max-w-3xl text-3xl font-semibold text-pretty sm:text-[2.5rem]">
+              {project.description}
+            </h1>
+
+            <div className="mt-5 flex flex-wrap items-center gap-2.5">
+              <span className="border-hairline bg-shell text-dim rounded-full border px-3 py-1.5 text-[13px]">
+                <span className="text-faint">For</span> {project.target_customer}
+              </span>
+
+              <a
+                href={project.url}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="border-hairline text-dim hover:border-ember/40 hover:text-ink inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[11px] transition-colors duration-300"
+              >
+                {safeHostname(project.url)}
+                <ExternalLink className="size-3" />
+              </a>
+
+              {concept.success ? (
+                <span className="bg-ember-soft text-ember inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-[10px] tracking-wide uppercase">
+                  <Spark className="size-3" />
+                  Built
+                </span>
+              ) : null}
+            </div>
+          </div>
         </div>
-
-        <a
-          href={project.url}
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-          className="text-muted-foreground hover:text-foreground inline-flex text-xs underline underline-offset-4"
-        >
-          Analyzed from {new URL(project.url).hostname}
-        </a>
-      </div>
+      </Reveal>
 
       {analysis.success ? (
         <>
           <AnalysisView analysis={analysis.data} />
 
-          <div className="space-y-4 border-t pt-8">
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold tracking-tight">Your product</h2>
-              <p className="text-muted-foreground text-sm">
-                {concept.success
-                  ? "Refine it with an instruction — the whole concept updates."
-                  : "The analysis is done. Now turn it into something to build."}
-              </p>
-            </div>
+          <section aria-labelledby="product-heading" className="border-hairline border-t pt-12">
+            <Reveal className="flex items-center gap-3">
+              <Spark className="text-ember size-4" />
+              <h2 id="product-heading" className="eyebrow text-faint">
+                {concept.success ? "Your product" : "Next step"}
+              </h2>
+              <span aria-hidden className="bg-hairline h-px flex-1" />
+            </Reveal>
 
-            <ProductStudio
-              projectId={project.id}
-              initialConcept={concept.success ? concept.data : null}
-              initialRefinements={refinements}
-            />
-          </div>
+            <div className="mt-6">
+              <ProductStudio
+                projectId={project.id}
+                initialConcept={concept.success ? concept.data : null}
+                initialRefinements={refinements}
+              />
+            </div>
+          </section>
         </>
       ) : (
         <div
           role="alert"
-          className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm"
+          className="border-destructive/25 bg-destructive/10 text-destructive rounded-2xl border px-5 py-4 text-sm"
         >
-          <p className="font-medium">This analysis couldn&apos;t be displayed</p>
+          <p className="font-medium">This analysis couldn’t be displayed</p>
           <p className="mt-1 opacity-90">
-            It was saved in a format this version of Reforge doesn&apos;t
-            recognise. Analyzing the site again will fix it.
+            It was saved in a format this version of Reforge doesn’t recognise. Analyzing
+            the site again will fix it.
           </p>
         </div>
       )}

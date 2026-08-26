@@ -4,13 +4,16 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { ComponentProps } from "react";
 
 /**
- * Reforge is deliberately light-only for the MVP: one theme to design, one to
- * QA. The provider is still mounted because shadcn's components resolve their
- * theme through `next-themes` (see `components/ui/sonner.tsx`) — without it
- * they fall back to "system" and a visitor on OS dark mode gets a dark toast
- * on a light page.
+ * Reforge follows the OS by default and lets the user override it.
  *
- * Enabling dark mode later is a props change here, nothing else.
+ * `defaultTheme="system"` + `enableSystem` means a first-time visitor gets
+ * whatever their machine is set to, with no flash — next-themes writes the
+ * class in a blocking inline script before paint, which is also why
+ * `suppressHydrationWarning` sits on <html> in app/layout.tsx.
+ *
+ * `disableTransitionOnChange` suppresses every CSS transition for one frame
+ * during a theme swap. Without it the page cross-fades a hundred properties at
+ * once and the toggle feels broken rather than instant.
  */
 export function ThemeProvider({
   children,
@@ -19,9 +22,8 @@ export function ThemeProvider({
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="light"
-      enableSystem={false}
-      forcedTheme="light"
+      defaultTheme="system"
+      enableSystem
       disableTransitionOnChange
       {...props}
     >

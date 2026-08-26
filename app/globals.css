@@ -4,16 +4,34 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===========================================================================
+   REFORGE DESIGN SYSTEM
+   ===========================================================================
+   Vibe: Ethereal Glass, built to work in BOTH themes rather than dark-only.
+   Layout: asymmetrical bento.
+
+   One accent, and it is ember — not the purple/blue gradient that fingerprints
+   AI-generated SaaS. "Reforge" is a forging metaphor, so heat is the honest
+   accent, and it is used sparingly: focus rings, active state, glow, data
+   keys. Primary buttons are ink-on-paper / paper-on-ink, which is both the
+   higher-contrast choice and the more restrained one.
+
+   Grays are ONE family, warm-tinted (hue ~65) so they sit with the ember
+   instead of fighting it. No cool/warm mixing anywhere.
+=========================================================================== */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans);
-  /* Display face, marketing surfaces only. Named apart from the next/font
-     variable on purpose — mapping a token onto itself makes the reference
-     circular and silently drops the font. See docs/DEBUGGING.md entry 1. */
-  --font-display: var(--font-archivo);
+  /* Display face. Named apart from the next/font variable on purpose —
+     mapping a token onto itself makes the reference circular and silently
+     drops the font. See docs/DEBUGGING.md entry 1. */
+  --font-display: var(--font-bricolage);
+  --font-heading: var(--font-bricolage);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -43,6 +61,19 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* Reforge semantic layer — used directly by app components. */
+  --color-ember: var(--ember);
+  --color-ember-soft: var(--ember-soft);
+  --color-ember-contrast: var(--ember-contrast);
+  --color-ink: var(--ink);
+  --color-dim: var(--dim);
+  --color-faint: var(--faint);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-shell: var(--shell);
+  --color-core: var(--core);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -50,140 +81,531 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* ---------------------------------------------------------------------------
+   LIGHT — warm near-white, never pure #fff on the page itself
+--------------------------------------------------------------------------- */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  color-scheme: light;
+
+  --ink: oklch(0.21 0.008 65);
+  --dim: oklch(0.45 0.008 65);
+  --faint: oklch(0.52 0.008 65);
+
+  --shell: oklch(0.965 0.004 75);
+  --core: oklch(1 0 0);
+
+  --hairline: oklch(0.21 0.01 65 / 9%);
+  --hairline-strong: oklch(0.21 0.01 65 / 17%);
+
+  --ember: oklch(0.55 0.16 45);
+  --ember-soft: oklch(0.55 0.16 45 / 12%);
+  /* Text that sits ON the ember fill. Ember is dark in light mode and light
+     in dark mode, so a hardcoded white fails one of the two — measured at
+     2.23:1 on dark before this token existed. */
+  --ember-contrast: oklch(0.99 0 0);
+
+  /* Ambient mesh — two ember orbs and one cool counterweight, all low alpha.
+     Radial, not a linear 45° fade, so it never reads as a stock gradient. */
+  --mesh-a: oklch(0.7 0.17 48 / 13%);
+  --mesh-b: oklch(0.65 0.14 25 / 9%);
+  --mesh-c: oklch(0.6 0.09 240 / 7%);
+  --grain-opacity: 0.035;
+
+  /* Shadows carry the surface hue rather than neutral black. */
+  --shadow-ambient:
+    0 1px 2px oklch(0.21 0.02 65 / 5%), 0 8px 24px -12px oklch(0.21 0.03 65 / 14%);
+  --shadow-lifted:
+    0 1px 2px oklch(0.21 0.02 65 / 5%), 0 24px 60px -24px oklch(0.21 0.04 65 / 22%);
+  --inner-highlight: inset 0 1px 0 oklch(1 0 0 / 90%);
+
+  /* shadcn bridge — existing ui/* components inherit the new system. */
+  --background: oklch(0.985 0.003 80);
+  --foreground: var(--ink);
+  --card: var(--core);
+  --card-foreground: var(--ink);
+  --popover: var(--core);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: oklch(0.985 0.003 80);
+  --secondary: oklch(0.955 0.004 75);
+  --secondary-foreground: var(--ink);
+  --muted: oklch(0.955 0.004 75);
+  --muted-foreground: var(--dim);
+  --accent: oklch(0.955 0.004 75);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.52 0.19 27);
+  --border: var(--hairline);
+  --input: var(--hairline-strong);
+  --ring: var(--ember);
+  --chart-1: var(--ember);
+  --chart-2: oklch(0.6 0.09 240);
+  --chart-3: oklch(0.55 0.008 65);
+  --chart-4: oklch(0.4 0.008 65);
+  --chart-5: oklch(0.28 0.008 65);
+  --radius: 0.75rem;
+  --sidebar: var(--shell);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: oklch(0.985 0.003 80);
+  --sidebar-accent: oklch(0.955 0.004 75);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--ember);
 }
 
+/* ---------------------------------------------------------------------------
+   DARK — warm off-black. Deliberately not #000: pure black kills the ambient
+   mesh and makes every elevation step invisible.
+--------------------------------------------------------------------------- */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  color-scheme: dark;
+
+  --ink: oklch(0.97 0.004 80);
+  --dim: oklch(0.73 0.008 70);
+  --faint: oklch(0.64 0.008 70);
+
+  --shell: oklch(0.185 0.006 65);
+  --core: oklch(0.215 0.007 65);
+
+  --hairline: oklch(1 0 0 / 9%);
+  --hairline-strong: oklch(1 0 0 / 16%);
+
+  --ember: oklch(0.76 0.15 55);
+  --ember-soft: oklch(0.76 0.15 55 / 14%);
+  --ember-contrast: oklch(0.17 0.02 55);
+
+  --mesh-a: oklch(0.68 0.17 48 / 20%);
+  --mesh-b: oklch(0.6 0.15 25 / 13%);
+  --mesh-c: oklch(0.55 0.11 250 / 12%);
+  --grain-opacity: 0.05;
+
+  --shadow-ambient: 0 1px 2px oklch(0 0 0 / 40%), 0 8px 24px -12px oklch(0 0 0 / 60%);
+  --shadow-lifted: 0 1px 2px oklch(0 0 0 / 45%), 0 24px 60px -24px oklch(0 0 0 / 75%);
+  --inner-highlight: inset 0 1px 0 oklch(1 0 0 / 8%);
+
+  --background: oklch(0.155 0.006 65);
+  --foreground: var(--ink);
+  --card: var(--core);
+  --card-foreground: var(--ink);
+  --popover: var(--core);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: oklch(0.175 0.006 65);
+  --secondary: oklch(0.245 0.007 65);
+  --secondary-foreground: var(--ink);
+  --muted: oklch(0.245 0.007 65);
+  --muted-foreground: var(--dim);
+  --accent: oklch(0.245 0.007 65);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.68 0.19 25);
+  --border: var(--hairline);
+  --input: var(--hairline-strong);
+  --ring: var(--ember);
+  --chart-1: var(--ember);
+  --chart-2: oklch(0.6 0.11 250);
+  --chart-3: oklch(0.73 0.008 70);
+  --chart-4: oklch(0.55 0.008 70);
+  --chart-5: oklch(0.4 0.008 70);
+  --sidebar: var(--shell);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: oklch(0.175 0.006 65);
+  --sidebar-accent: oklch(0.245 0.007 65);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--ember);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* Ambient mesh lives on the body so it survives route changes without a
+       re-mount and never sits inside a scrolling container. */
+    background-image:
+      radial-gradient(60rem 40rem at 12% -10%, var(--mesh-a), transparent 60%),
+      radial-gradient(50rem 35rem at 95% 8%, var(--mesh-b), transparent 62%),
+      radial-gradient(45rem 45rem at 50% 105%, var(--mesh-c), transparent 60%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  /* Every interactive element gets the same ember focus ring. Defined once
+     here so no component can forget it. */
+  :focus-visible {
+    outline: 2px solid var(--ember);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  button,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  ::selection {
+    background: var(--ember);
+    color: oklch(0.99 0 0);
+  }
+
+  /* Chrome paints autofilled fields with its own hard-coded pale blue, which
+     ignores background-color entirely and looks broken on a dark surface. The
+     only reliable override is an inset shadow large enough to cover the field
+     plus a long transition to outrun the repaint. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill {
+    -webkit-text-fill-color: var(--ink);
+    -webkit-box-shadow: 0 0 0 1000px var(--core) inset;
+    box-shadow: 0 0 0 1000px var(--core) inset;
+    caret-color: var(--ink);
+    transition: background-color 6000s ease-in-out 0s;
+  }
+
+  /* Tabular figures wherever numbers are compared. */
+  .tnum,
+  time,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
   }
 }
 
 /* ---------------------------------------------------------------------------
-   Marketing surface
-   ---------------------------------------------------------------------------
-   Scoped under .marketing so nothing here can leak into the app shell. The
-   page is a "spec sheet": the product's own output is structured, typed and
-   labelled, so the page is too — mono labels, visible rules, one accent.
+   GRAIN
+   Fixed, pointer-events-none, z-indexed above content but below nothing
+   interactive. Never attached to a scrolling container — that repaints the
+   GPU on every frame.
 --------------------------------------------------------------------------- */
-
-.marketing {
-  --ink: #14181d;
-  --paper: #ffffff;
-  --wash: #f5f7f9;
-  --rule: #e4e8ed;
-  --dim: #6a7482;
-  --signal: #1f4be0;
-
-  background: var(--paper);
-  color: var(--ink);
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* These links are styled from scratch, so the focus ring has to be explicit —
-   a keyboard user must be able to see where they are. */
-.marketing a:focus-visible,
-.marketing button:focus-visible {
-  outline: 2px solid var(--signal);
-  outline-offset: 3px;
-  border-radius: 8px;
+/* ---------------------------------------------------------------------------
+   DOUBLE-BEZEL (Doppelrand)
+   Nothing premium sits flat on the background. An outer tray holds an inner
+   plate, with concentric radii so the curves stay parallel.
+--------------------------------------------------------------------------- */
+.bezel {
+  position: relative;
+  border-radius: 1.5rem;
+  padding: 0.375rem;
+  background: color-mix(in oklch, var(--shell) 70%, transparent);
+  border: 1px solid var(--hairline);
+  backdrop-filter: blur(12px);
 }
 
-.marketing ::selection {
-  background: var(--signal);
-  color: #fff;
+.bezel-core {
+  border-radius: calc(1.5rem - 0.375rem);
+  background: var(--core);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--inner-highlight);
 }
 
-/* The staggered reveal is the page's one orchestrated moment: the teardown
-   panel assembles itself the way the product assembles a concept. */
-@keyframes rise {
+/* Flat variant: one plate, no tray. For dense bento cells where a double
+   border would read as clutter rather than craft. */
+.plate {
+  border-radius: 1.125rem;
+  background: color-mix(in oklch, var(--core) 82%, transparent);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--inner-highlight), var(--shadow-ambient);
+}
+
+.plate-interactive {
+  transition:
+    transform 0.5s var(--ease-expo),
+    box-shadow 0.5s var(--ease-expo),
+    border-color 0.5s var(--ease-expo);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .plate-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--inner-highlight), var(--shadow-lifted);
+    border-color: var(--hairline-strong);
+  }
+}
+
+.plate-interactive:active {
+  transform: translateY(0) scale(0.995);
+}
+
+/* ---------------------------------------------------------------------------
+   SPOTLIGHT BORDER
+   A card edge that illuminates under the cursor. Driven by --mx/--my set on
+   pointermove; degrades to a static hairline when JS or a pointer is absent.
+--------------------------------------------------------------------------- */
+.spotlight {
+  position: relative;
+  isolation: isolate;
+}
+
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    14rem circle at var(--mx, 50%) var(--my, 0%),
+    var(--ember),
+    transparent 70%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.45s var(--ease-expo);
+  pointer-events: none;
+  z-index: -1;
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .spotlight:hover::before {
+    opacity: 0.55;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   TYPOGRAPHY
+--------------------------------------------------------------------------- */
+.display {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 72;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.display-sm {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 32;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+/* Small mono label. Positive tracking, as small caps demand. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.measure {
+  max-width: 65ch;
+}
+
+/* ---------------------------------------------------------------------------
+   MOTION
+--------------------------------------------------------------------------- */
+@keyframes reforge-rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translate3d(0, 1.25rem, 0);
+    filter: blur(6px);
   }
   to {
     opacity: 1;
     transform: none;
+    filter: blur(0);
   }
 }
 
+@keyframes reforge-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes reforge-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes reforge-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Scroll reveal. `data-reveal` starts hidden; the IntersectionObserver in
+   components/ui/reveal.tsx flips `data-shown`. If JS never runs, the
+   no-preference guard plus the [data-shown] fallback below keep content
+   visible rather than permanently blank. */
 @media (prefers-reduced-motion: no-preference) {
-  .marketing [data-rise] {
+  [data-reveal] {
     opacity: 0;
-    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    transform: translate3d(0, 1.25rem, 0);
+    filter: blur(6px);
+    transition:
+      opacity 0.8s var(--ease-expo),
+      transform 0.8s var(--ease-expo),
+      filter 0.8s var(--ease-expo);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  [data-reveal][data-shown="true"] {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+
+  .rise {
+    animation: reforge-rise 0.7s var(--ease-expo) both;
     animation-delay: calc(var(--i, 0) * 70ms);
   }
+}
+
+/* Shimmer for skeletons — transform-only, so it stays on the compositor. */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--ink) 8%, transparent),
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shimmer::after {
+    animation: reforge-sweep 1.8s var(--ease-spring) infinite;
+  }
+}
+
+.spin-slow {
+  animation: reforge-spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin-slow {
+    animation: reforge-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+.pulse-dot {
+  animation: reforge-pulse 1.4s var(--ease-spring) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   UTILITIES
+--------------------------------------------------------------------------- */
+
+/* Hairline grid, for hero and empty-state backdrops. */
+.gridlines {
+  background-image:
+    linear-gradient(to right, var(--hairline) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--hairline) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 75%);
+}
+
+.ember-text {
+  color: var(--ember);
+}
+
+.ember-glow {
+  box-shadow: 0 0 0 1px var(--ember-soft), 0 8px 32px -12px var(--ember);
+}
+
+/* Keyboard-only skip link. */
+.skip-link {
+  position: absolute;
+  left: 50%;
+  top: 0.75rem;
+  z-index: 80;
+  translate: -50% -300%;
+  transition: translate 0.3s var(--ease-expo);
+}
+
+.skip-link:focus-visible {
+  translate: -50% 0;
+}
+
+/* Safe areas are applied with Tailwind arbitrary values at the call sites
+   (`pt-[env(safe-area-inset-top)]`) rather than as custom classes. Custom
+   classes defined after `@import "tailwindcss"` win the cascade against real
+   utilities, so a `.safe-top pt-24` element silently rendered with zero top
+   padding and the mobile menu's first link sat underneath the nav bar. Keeping
+   everything in one system removes the conflict entirely.
+--------------------------------------------------------------------------- */
+
+/* Z-index scale. Named, so no component invents a z-[9999]. */
+.z-nav {
+  z-index: 40;
+}
+.z-overlay {
+  z-index: 60;
+}
+/* The nav while its own overlay is open. It MUST outrank .z-overlay, or the
+   full-screen menu covers the hamburger that closes it and the only way out is
+   the Escape key — which a phone does not have. */
+.z-nav-open {
+  z-index: 65;
+}
+.z-toast {
+  z-index: 70;
 }

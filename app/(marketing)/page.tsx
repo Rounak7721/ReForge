@@ -4,9 +4,23 @@ import Link from "next/link";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { TeardownPanel } from "@/components/marketing/teardown-panel";
 import { Wordmark } from "@/components/marketing/wordmark";
+import { Button, ButtonIcon } from "@/components/ui/button";
+import {
+  ArrowUpRight,
+  Check,
+  Fault,
+  Layers,
+  Route,
+  Scan,
+  Spark,
+  Vault,
+} from "@/components/ui/icons";
+import { Reveal, Spotlight } from "@/components/ui/motion";
 
 export const metadata: Metadata = {
-  title: "Reforge — take any product apart, build yours from the pieces",
+  // `absolute` opts out of the root layout's "%s · Reforge" template — this
+  // title already ends in the brand, and the template would double it.
+  title: { absolute: "Reforge — take any product apart, build yours from the pieces" },
   description:
     "Paste a URL. Reforge reads the site, names what the product does and who it serves, then drafts a complete concept for the product you want to build instead.",
 };
@@ -14,63 +28,69 @@ export const metadata: Metadata = {
 /**
  * The landing page.
  *
- * Direction: a spec sheet. The product emits typed, labelled, structured data,
- * so the page is built the same way — mono keys, visible rules, one accent
- * (`--signal`), and section markers written as paths (`/how`, `/pricing`)
- * because paths are literally part of what Reforge outputs.
+ * Layout archetype: editorial split hero over an asymmetrical bento. The three
+ * equal feature columns that every generated SaaS page ships are deliberately
+ * absent — capabilities live in a 6-cell bento of varying spans, and the steps
+ * alternate sides rather than sitting in a row.
  */
 
 /** Section marker. The slash echoes the nav paths the product generates. */
 function Marker({ children }: { children: string }) {
-  return (
-    <p className="font-mono text-[11px] tracking-[0.18em] text-[var(--signal)] uppercase">
-      /{children}
-    </p>
-  );
+  return <p className="eyebrow text-ember">/{children}</p>;
 }
 
 const STEPS = [
   {
     n: "01",
     title: "Point it at a product",
-    body: "Give it a URL, a sentence about what you want to build, and who it's for. Reforge fetches the page itself — it doesn't guess from the address.",
+    body: "Give it a URL, a sentence about what you want to build, and who it is for. Reforge fetches the page itself — it does not guess from the address.",
+    Icon: Scan,
   },
   {
     n: "02",
     title: "Read the teardown",
     body: "What the product does, who it serves, the problem it solves, how it makes money, and where it leaves room. Seven fields, no essays.",
+    Icon: Layers,
   },
   {
     n: "03",
     title: "Build yours, then argue with it",
     body: "One click turns the analysis into your product: name, features, navigation, pages, UI direction. Then change it by saying what you want.",
+    Icon: Spark,
   },
 ];
 
-const FEATURES = [
+/** Bento cells. `span` drives the asymmetry — deliberately not uniform. */
+const CAPABILITIES = [
   {
     title: "Structure, not paragraphs",
     body: "Navigation comes back as paths. Pages come back as sections. Colours come back as hex. You can act on it, not just read it.",
+    Icon: Route,
+    span: "md:col-span-3",
   },
   {
     title: "Edits that hold together",
-    body: "Remove the pricing page and the nav entry goes with it. The whole concept is rewritten as one object, so it can't contradict itself.",
+    body: "Remove the pricing page and the nav entry goes with it. The whole concept is rewritten as one object, so it cannot contradict itself.",
+    Icon: Spark,
+    span: "md:col-span-3",
   },
   {
     title: "Nothing is regenerated",
-    body: "Every result is saved. Reopening a project reads from the database and never calls the model again — so your work can't drift.",
+    body: "Every result is saved. Reopening a project reads from Postgres and never calls the model again, so your work cannot drift.",
+    Icon: Vault,
+    span: "md:col-span-2",
   },
   {
     title: "Honest about limits",
-    body: "Free-tier AI has a daily ceiling. When it's reached, Reforge says so plainly instead of showing a spinner that never resolves.",
+    body: "Free-tier AI has a daily ceiling. When it is reached, Reforge says so plainly instead of showing a spinner that never resolves.",
+    Icon: Fault,
+    span: "md:col-span-2",
   },
   {
     title: "Your projects stay yours",
-    body: "Row-level security in Postgres, enforced per query. Not a filter in the app that someone could forget to write.",
-  },
-  {
-    title: "Swappable model",
-    body: "Every call goes through one provider layer. Changing model or vendor is an environment variable, not a refactor.",
+    body: "Row-level security in Postgres, enforced per query — not a filter in the app that someone could forget to write.",
+    Icon: Layers,
+    span: "md:col-span-2",
   },
 ];
 
@@ -80,8 +100,12 @@ const TIERS = [
     price: "$0",
     cadence: "forever",
     line: "Enough to find out whether the idea holds up.",
-    items: ["3 projects", "Unlimited refinements", "Saved and reopenable", "Full teardown and concept"],
-    cta: "Start free",
+    items: [
+      "3 projects",
+      "Unlimited refinements",
+      "Saved and reopenable",
+      "Full teardown and concept",
+    ],
     featured: false,
   },
   {
@@ -89,8 +113,12 @@ const TIERS = [
     price: "$19",
     cadence: "per month",
     line: "For people shipping more than one thing a quarter.",
-    items: ["Unlimited projects", "Refinement history", "Export to Markdown", "Priority generation"],
-    cta: "Start free",
+    items: [
+      "Unlimited projects",
+      "Refinement history",
+      "Export to Markdown",
+      "Priority generation",
+    ],
     featured: true,
   },
   {
@@ -99,257 +127,332 @@ const TIERS = [
     cadence: "per month",
     line: "Shared teardowns, so nobody re-researches the same product.",
     items: ["Everything in Studio", "5 seats", "Shared workspace", "SSO"],
-    cta: "Start free",
     featured: false,
   },
 ];
 
+/** Example inputs, not customers — the copy says so explicitly. */
+const TARGETS = ["linear.app", "stripe.com", "notion.so", "figma.com", "vercel.com"];
+
 export default function LandingPage() {
   return (
-    <div className="marketing min-h-svh">
+    <div className="min-h-svh">
       <MarketingHeader />
 
-      <main>
+      <main id="main">
         {/* ---------------- Hero ---------------- */}
-        <section className="border-b border-[var(--rule)]">
-          <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 py-14 lg:grid-cols-[1.08fr_1fr] lg:items-center lg:gap-16 lg:py-20">
-            <div>
-              <Marker>teardown</Marker>
+        <section className="relative overflow-hidden">
+          <div aria-hidden className="gridlines absolute inset-0 -z-10" />
 
-              {/* Each sentence balances its own lines. One `text-balance` across
-                  both leaves "pieces." orphaned on a line of its own. */}
-              <h1 className="font-display mt-5 text-[2.4rem] leading-[1.02] font-semibold tracking-[-0.035em] sm:text-[3.1rem] lg:text-[3.4rem]">
-                <span className="block text-balance">Take any product apart.</span>
-                <span className="block text-balance">
-                  <span className="text-[var(--signal)]">Build yours</span> from the
-                  pieces.
+          <div className="mx-auto grid w-full max-w-6xl gap-14 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-16 lg:pt-24 lg:pb-28">
+            <Reveal>
+              <span className="border-hairline bg-shell/60 text-dim inline-flex items-center gap-2 rounded-full border px-3 py-1.5 backdrop-blur-sm">
+                <span aria-hidden className="bg-ember pulse-dot size-1.5 rounded-full" />
+                <span className="eyebrow">Teardown → concept</span>
+              </span>
+
+              <h1 className="display mt-6 text-[2.6rem] font-semibold sm:text-[3.4rem] lg:text-[3.8rem]">
+                <span className="block">Take any product apart.</span>
+                <span className="block">
+                  <span className="ember-text">Build yours</span> from the pieces.
                 </span>
               </h1>
 
-              <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-[var(--dim)] text-pretty">
-                Paste a URL. Reforge reads the site, names what the product does
-                and who it serves, then drafts a complete concept for the thing
-                you actually want to build — and rewrites it as you talk to it.
+              <p className="text-dim measure mt-6 text-[17px] leading-relaxed text-pretty">
+                Paste a URL. Reforge reads the site, names what the product does and who it
+                serves, then drafts a complete concept for the thing you actually want to
+                build — and rewrites it as you talk to it.
               </p>
 
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/signup"
-                  className="rounded-lg bg-[var(--ink)] px-5 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
-                >
-                  Paste a URL
-                </Link>
-                <a
-                  href="#how"
-                  className="rounded-lg border border-[var(--rule)] px-5 py-3 text-sm font-medium transition-colors hover:bg-[var(--wash)]"
-                >
-                  See how it works
-                </a>
+              <div className="mt-9 flex flex-wrap items-center gap-3">
+                <Button asChild size="lg">
+                  <Link href="/signup">
+                    Paste a URL
+                    <ButtonIcon>
+                      <ArrowUpRight />
+                    </ButtonIcon>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <a href="#how">See how it works</a>
+                </Button>
               </div>
 
-              <p className="mt-5 font-mono text-[11px] tracking-wide text-[var(--dim)]">
-                No card. Free tier is genuinely free.
+              <p className="text-faint mt-6 font-mono text-[11px] tracking-wide">
+                No card. The free tier is genuinely free.
               </p>
-            </div>
+            </Reveal>
 
-            <div className="lg:pl-4">
+            <Reveal delay={140} className="lg:pl-4">
               <TeardownPanel />
-            </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ---------------- Target strip ---------------- */}
+        <section className="border-hairline border-y">
+          <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+            <Reveal className="flex flex-col items-center gap-5 sm:flex-row sm:gap-8">
+              <p className="text-faint eyebrow shrink-0">Point it at</p>
+              <ul className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
+                {TARGETS.map((target) => (
+                  <li
+                    key={target}
+                    className="text-dim font-mono text-sm tracking-tight"
+                    translate="no"
+                  >
+                    {target}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-faint ml-auto shrink-0 text-xs">or anything else with a homepage</p>
+            </Reveal>
           </div>
         </section>
 
         {/* ---------------- How it works ---------------- */}
-        {/* Numbered because this genuinely is a sequence — you cannot build
-            before you analyze, or refine before you build. */}
-        <section id="how" className="scroll-mt-16 border-b border-[var(--rule)]">
-          <div className="mx-auto w-full max-w-6xl px-6 py-16 lg:py-20">
-            <Marker>how</Marker>
-            <h2 className="font-display mt-4 max-w-2xl text-3xl font-semibold tracking-[-0.03em] text-balance sm:text-4xl">
-              Three steps, in order.
-            </h2>
+        {/* Alternating sides rather than three columns: this genuinely is a
+            sequence, and a row of equal cards flattens the order out. */}
+        <section id="how" className="scroll-mt-28">
+          <div className="mx-auto w-full max-w-5xl px-4 py-24 sm:px-6 lg:py-32">
+            <Reveal>
+              <Marker>how</Marker>
+              <h2 className="display mt-4 max-w-2xl text-3xl font-semibold sm:text-[2.75rem]">
+                Three steps, in order.
+              </h2>
+            </Reveal>
 
-            <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
-              {STEPS.map((step) => (
-                <li key={step.n} className="border-t-2 border-[var(--ink)] pt-4">
-                  <span className="font-mono text-xs tracking-widest text-[var(--dim)]">
-                    {step.n}
-                  </span>
-                  <h3 className="mt-3 text-[17px] font-semibold tracking-tight text-pretty">
-                    {step.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--dim)] text-pretty">
-                    {step.body}
-                  </p>
-                </li>
+            <div className="mt-16 space-y-4">
+              {STEPS.map((step, index) => (
+                <Reveal key={step.n} delay={index * 90}>
+                  <div
+                    className={`plate plate-interactive flex flex-col gap-5 p-7 sm:flex-row sm:items-start sm:gap-8 sm:p-9 ${
+                      index % 2 === 1 ? "sm:ml-auto sm:w-[92%]" : "sm:w-[92%]"
+                    }`}
+                  >
+                    <div className="flex shrink-0 items-center gap-4">
+                      <span className="border-hairline bg-shell text-ember flex size-12 items-center justify-center rounded-2xl border text-xl">
+                        <step.Icon />
+                      </span>
+                      <span className="text-faint font-mono text-xs tracking-[0.2em]" data-numeric>
+                        {step.n}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0">
+                      <h3 className="display-sm text-xl font-semibold text-pretty">
+                        {step.title}
+                      </h3>
+                      <p className="text-dim measure mt-2.5 text-[15px] leading-relaxed text-pretty">
+                        {step.body}
+                      </p>
+                    </div>
+                  </div>
+                </Reveal>
               ))}
-            </ol>
+            </div>
           </div>
         </section>
 
-        {/* ---------------- Features ---------------- */}
-        {/* Deliberately unnumbered: these are simultaneous properties, not a
-            sequence, and numbering them would imply an order that isn't real. */}
-        <section className="border-b border-[var(--rule)] bg-[var(--wash)]">
-          <div className="mx-auto w-full max-w-6xl px-6 py-16 lg:py-20">
-            <Marker>features</Marker>
-            <h2 className="font-display mt-4 max-w-2xl text-3xl font-semibold tracking-[-0.03em] text-balance sm:text-4xl">
-              Built to be acted on, not admired.
-            </h2>
+        {/* ---------------- Capabilities (bento) ---------------- */}
+        <section id="capabilities" className="border-hairline scroll-mt-28 border-t">
+          <div className="mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:py-32">
+            <Reveal>
+              <Marker>capabilities</Marker>
+              <h2 className="display mt-4 max-w-2xl text-3xl font-semibold sm:text-[2.75rem]">
+                Built to be acted on, not admired.
+              </h2>
+            </Reveal>
 
-            <div className="mt-12 grid gap-px overflow-hidden rounded-xl border border-[var(--rule)] bg-[var(--rule)] sm:grid-cols-2 lg:grid-cols-3">
-              {FEATURES.map((feature) => (
-                <div key={feature.title} className="bg-[var(--paper)] p-6">
-                  <h3 className="text-[15px] font-semibold tracking-tight text-pretty">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--dim)] text-pretty">
-                    {feature.body}
-                  </p>
-                </div>
+            <div className="mt-16 grid gap-4 md:grid-cols-6">
+              {CAPABILITIES.map((item, index) => (
+                <Reveal key={item.title} delay={index * 70} className={item.span}>
+                  <Spotlight className="plate plate-interactive h-full p-7">
+                    <span className="border-hairline bg-shell text-ember mb-5 flex size-11 items-center justify-center rounded-xl border text-lg">
+                      <item.Icon />
+                    </span>
+                    <h3 className="text-[15px] font-semibold tracking-tight text-pretty">
+                      {item.title}
+                    </h3>
+                    <p className="text-dim mt-2 text-sm leading-relaxed text-pretty">
+                      {item.body}
+                    </p>
+                  </Spotlight>
+                </Reveal>
               ))}
+
+              {/* Sixth cell is the model note, styled as a statement rather
+                  than another card — it breaks the grid's rhythm on purpose. */}
+              <Reveal delay={350} className="md:col-span-4">
+                <Spotlight className="plate h-full overflow-hidden p-7 sm:p-9">
+                  <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <h3 className="display-sm text-xl font-semibold text-pretty">
+                        Swap the model with an environment variable.
+                      </h3>
+                      <p className="text-dim measure mt-2 text-sm leading-relaxed text-pretty">
+                        Every call goes through one provider layer. Changing vendor is
+                        config, not a refactor.
+                      </p>
+                    </div>
+                    <code className="border-hairline bg-shell text-faint shrink-0 rounded-xl border px-4 py-3 font-mono text-xs">
+                      <span className="text-ember">LLM_PROVIDER</span>=gemini
+                    </code>
+                  </div>
+                </Spotlight>
+              </Reveal>
             </div>
           </div>
         </section>
 
         {/* ---------------- Pricing ---------------- */}
-        <section id="pricing" className="scroll-mt-16 border-b border-[var(--rule)]">
-          <div className="mx-auto w-full max-w-6xl px-6 py-16 lg:py-20">
-            <Marker>pricing</Marker>
-            <h2 className="font-display mt-4 max-w-2xl text-3xl font-semibold tracking-[-0.03em] text-balance sm:text-4xl">
-              Start free. Pay when it earns it.
-            </h2>
+        <section id="pricing" className="border-hairline scroll-mt-28 border-t">
+          <div className="mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:py-32">
+            <Reveal>
+              <Marker>pricing</Marker>
+              <h2 className="display mt-4 max-w-2xl text-3xl font-semibold sm:text-[2.75rem]">
+                Start free. Pay when it earns it.
+              </h2>
+            </Reveal>
 
-            <div className="mt-12 grid gap-5 lg:grid-cols-3">
-              {TIERS.map((tier) => (
-                <div
-                  key={tier.name}
-                  className={`flex flex-col rounded-xl border p-6 ${
-                    tier.featured
-                      ? "border-[var(--ink)] bg-[var(--ink)] text-white"
-                      : "border-[var(--rule)] bg-[var(--paper)]"
-                  }`}
-                >
-                  <div className="flex h-6 items-center justify-between">
-                    <h3 className="font-mono text-[11px] tracking-[0.18em] uppercase">
-                      {tier.name}
-                    </h3>
-                    {tier.featured ? (
-                      <span className="rounded-full bg-white/15 px-2 py-0.5 font-mono text-[10px] tracking-wide uppercase">
-                        Popular
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <p className="mt-5 flex items-baseline gap-1.5">
-                    <span className="font-display text-4xl font-semibold tracking-[-0.03em]">
-                      {tier.price}
-                    </span>
-                    <span
-                      className={`text-xs ${tier.featured ? "text-white/60" : "text-[var(--dim)]"}`}
-                    >
-                      {tier.cadence}
-                    </span>
-                  </p>
-
-                  <p
-                    className={`mt-3 text-sm leading-relaxed text-pretty ${
-                      tier.featured ? "text-white/70" : "text-[var(--dim)]"
-                    }`}
-                  >
-                    {tier.line}
-                  </p>
-
-                  <ul className="mt-6 grow space-y-2.5">
-                    {tier.items.map((item) => (
-                      <li key={item} className="flex gap-2.5 text-sm">
-                        <span
-                          aria-hidden
-                          className={`mt-[7px] size-1.5 shrink-0 rounded-full ${
-                            tier.featured ? "bg-white/40" : "bg-[var(--signal)]"
-                          }`}
-                        />
-                        <span className={tier.featured ? "text-white/90" : ""}>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link
-                    href="/signup"
-                    className={`mt-8 block rounded-lg py-2.5 text-center text-sm font-medium transition-opacity hover:opacity-90 ${
+            <div className="mt-16 grid gap-5 lg:grid-cols-3">
+              {TIERS.map((tier, index) => (
+                <Reveal key={tier.name} delay={index * 80} className="h-full">
+                  <div
+                    className={`relative flex h-full flex-col p-7 sm:p-8 ${
                       tier.featured
-                        ? "bg-white text-[var(--ink)]"
-                        : "bg-[var(--ink)] text-white"
+                        ? "bezel ember-glow border-ember/30"
+                        : "plate plate-interactive"
                     }`}
                   >
-                    {tier.cta}
-                  </Link>
-                </div>
+                    <div className={tier.featured ? "bezel-core flex h-full flex-col p-7" : "contents"}>
+                      {/* Fixed-height header block keeps the price, the line and
+                          the feature list on the same baseline across all three
+                          columns regardless of copy length. */}
+                      <div className="flex h-6 items-center justify-between">
+                        <h3 className="eyebrow text-dim" translate="no">
+                          {tier.name}
+                        </h3>
+                        {tier.featured ? (
+                          <span className="bg-ember-soft text-ember rounded-md px-2 py-0.5 font-mono text-[10px] tracking-wide uppercase">
+                            Recommended
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <p className="mt-5 flex items-baseline gap-1.5">
+                        <span className="display text-4xl font-semibold" data-numeric>
+                          {tier.price}
+                        </span>
+                        <span className="text-faint text-xs">{tier.cadence}</span>
+                      </p>
+
+                      <p className="text-dim mt-3 h-10 text-sm leading-relaxed text-pretty">
+                        {tier.line}
+                      </p>
+
+                      <ul className="mt-6 grow space-y-3">
+                        {tier.items.map((item) => (
+                          <li key={item} className="flex gap-2.5 text-sm">
+                            <Check
+                              className={`mt-0.5 size-4 shrink-0 ${
+                                tier.featured ? "text-ember" : "text-faint"
+                              }`}
+                            />
+                            <span className="text-pretty">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {/* Pinned to the bottom so all three CTAs form one line. */}
+                      <Button
+                        asChild
+                        variant={tier.featured ? "default" : "outline"}
+                        className="mt-8 w-full"
+                      >
+                        <Link href="/signup">Start free</Link>
+                      </Button>
+                    </div>
+                  </div>
+                </Reveal>
               ))}
             </div>
           </div>
         </section>
 
         {/* ---------------- CTA ---------------- */}
-        <section className="border-b border-[var(--rule)]">
-          <div className="mx-auto w-full max-w-6xl px-6 py-20 text-center lg:py-28">
-            <h2 className="font-display mx-auto max-w-2xl text-3xl font-semibold tracking-[-0.03em] text-balance sm:text-[2.75rem] sm:leading-[1.05]">
-              There is a product you keep thinking about.
-            </h2>
-            <p className="mx-auto mt-5 max-w-xl text-[17px] leading-relaxed text-balance text-[var(--dim)]">
-              Find out what it&apos;s actually made of, and what yours would have to be.
-            </p>
-            <Link
-              href="/signup"
-              className="mt-8 inline-block rounded-lg bg-[var(--ink)] px-6 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-            >
-              Start free
-            </Link>
+        <section className="border-hairline relative overflow-hidden border-t">
+          <div aria-hidden className="gridlines absolute inset-0 -z-10 rotate-180" />
+          <div className="mx-auto w-full max-w-3xl px-4 py-28 text-center sm:px-6 lg:py-36">
+            <Reveal>
+              <h2 className="display text-3xl font-semibold sm:text-[2.9rem]">
+                There is a product you keep thinking about.
+              </h2>
+              <p className="text-dim mx-auto mt-5 max-w-xl text-[17px] leading-relaxed text-balance">
+                Find out what it is actually made of, and what yours would have to be.
+              </p>
+              <div className="mt-9 flex justify-center">
+                <Button asChild size="lg">
+                  <Link href="/signup">
+                    Start free
+                    <ButtonIcon>
+                      <ArrowUpRight />
+                    </ButtonIcon>
+                  </Link>
+                </Button>
+              </div>
+            </Reveal>
           </div>
         </section>
       </main>
 
       {/* ---------------- Footer ---------------- */}
-      <footer>
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-12 sm:flex-row sm:items-start sm:justify-between">
+      <footer className="border-hairline border-t">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-14 sm:flex-row sm:items-start sm:justify-between sm:px-6">
           <div className="max-w-sm">
             <Wordmark />
-            <p className="mt-3 text-sm leading-relaxed text-[var(--dim)] text-pretty">
-              Turn a product you admire into a spec for the one you want to
-              build.
+            <p className="text-dim mt-4 text-sm leading-relaxed text-pretty">
+              Turn a product you admire into a spec for the one you want to build.
             </p>
           </div>
 
-          <nav className="flex gap-12 text-sm">
+          <nav aria-label="Footer" className="flex gap-14 text-sm">
             <div>
-              <p className="font-mono text-[10px] tracking-[0.18em] text-[var(--dim)] uppercase">
-                Product
-              </p>
-              <ul className="mt-3 space-y-2">
+              <p className="eyebrow text-faint">Product</p>
+              <ul className="mt-4 space-y-2.5">
                 <li>
-                  <a href="#how" className="text-[var(--dim)] hover:text-[var(--ink)]">
+                  <a href="#how" className="text-dim hover:text-ink transition-colors">
                     How it works
                   </a>
                 </li>
                 <li>
-                  <a href="#pricing" className="text-[var(--dim)] hover:text-[var(--ink)]">
+                  <a href="#capabilities" className="text-dim hover:text-ink transition-colors">
+                    Capabilities
+                  </a>
+                </li>
+                <li>
+                  <a href="#pricing" className="text-dim hover:text-ink transition-colors">
                     Pricing
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <p className="font-mono text-[10px] tracking-[0.18em] text-[var(--dim)] uppercase">
-                Account
-              </p>
-              <ul className="mt-3 space-y-2">
+              <p className="eyebrow text-faint">Account</p>
+              <ul className="mt-4 space-y-2.5">
                 <li>
-                  <Link href="/login" className="text-[var(--dim)] hover:text-[var(--ink)]">
+                  <Link href="/login" className="text-dim hover:text-ink transition-colors">
                     Log in
                   </Link>
                 </li>
                 <li>
-                  <Link href="/signup" className="text-[var(--dim)] hover:text-[var(--ink)]">
+                  <Link href="/signup" className="text-dim hover:text-ink transition-colors">
                     Sign up
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="text-dim hover:text-ink transition-colors">
+                    Privacy
                   </Link>
                 </li>
               </ul>
@@ -357,10 +460,10 @@ export default function LandingPage() {
           </nav>
         </div>
 
-        <div className="border-t border-[var(--rule)]">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-6 py-5 text-xs text-[var(--dim)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="border-hairline border-t">
+          <div className="text-faint mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p>© {new Date().getFullYear()} Reforge</p>
-            {/* Said plainly rather than hidden: the pricing above is illustrative. */}
+            {/* Said plainly rather than buried: the pricing above is illustrative. */}
             <p className="text-pretty">
               A demo build. The plans above are illustrative — there is no billing.
             </p>

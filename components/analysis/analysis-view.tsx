@@ -1,46 +1,88 @@
 import type { Analysis } from "@/lib/prompts/analyzer";
+import {
+  Fault,
+  Layers,
+  Scan,
+  Spark,
+  Steps,
+  Users,
+  Vault,
+} from "@/components/ui/icons";
+import { Reveal, Spotlight } from "@/components/ui/motion";
 
 /**
  * Renders an analysis. A pure function of the object and nothing else — no
  * fetching, no state — so the same component serves a fresh result and one
  * loaded from the database years later.
  *
- * Phase 3's ConceptView mirrors this shape deliberately.
+ * Laid out as an asymmetrical bento rather than seven identical stacked cards.
+ * The fields are not equally important and the layout now says so: what the
+ * product does gets the full width and display type, the two forward-looking
+ * fields get their own visually distinct row at the bottom, and everything
+ * between is paired by relationship.
+ *
+ * ConceptView mirrors this shape deliberately.
  */
 
-function Section({
+function Cell({
   title,
+  icon: Icon,
   hint,
   children,
   className = "",
+  tone = "default",
+  delay = 0,
 }: {
   title: string;
+  icon: React.ComponentType<{ className?: string }>;
   hint?: string;
   children: React.ReactNode;
   className?: string;
+  tone?: "default" | "proposal";
+  delay?: number;
 }) {
   return (
-    <section className={`bg-card rounded-lg border p-5 ${className}`}>
-      <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-        {title}
-      </h3>
-      {hint ? <p className="text-muted-foreground/70 mt-0.5 text-xs">{hint}</p> : null}
-      <div className="mt-3">{children}</div>
-    </section>
+    <Reveal delay={delay} className={className}>
+      <Spotlight
+        as="section"
+        className={`plate plate-interactive flex h-full flex-col p-6 ${
+          tone === "proposal" ? "border-ember/25 bg-ember-soft/40" : ""
+        }`}
+      >
+        <div className="flex items-center gap-2.5">
+          <Icon
+            className={`size-4 shrink-0 ${tone === "proposal" ? "text-ember" : "text-faint"}`}
+          />
+          <h3 className={`eyebrow ${tone === "proposal" ? "text-ember" : "text-faint"}`}>
+            {title}
+          </h3>
+        </div>
+        {hint ? <p className="text-faint mt-1.5 text-xs">{hint}</p> : null}
+        <div className="mt-4">{children}</div>
+      </Spotlight>
+    </Reveal>
   );
 }
 
-function Prose({ children }: { children: string }) {
-  return <p className="text-sm leading-relaxed text-pretty">{children}</p>;
+function Prose({ children, large = false }: { children: string; large?: boolean }) {
+  return (
+    <p
+      className={`text-pretty ${
+        large ? "text-[17px] leading-relaxed sm:text-lg" : "text-[14.5px] leading-relaxed"
+      }`}
+    >
+      {children}
+    </p>
+  );
 }
 
 function Chips({ items }: { items: readonly string[] }) {
   return (
     <ul className="flex flex-wrap gap-2">
-      {items.map((item) => (
+      {items.map((item, index) => (
         <li
-          key={item}
-          className="bg-muted text-foreground/80 rounded-full px-3 py-1 text-xs font-medium"
+          key={`${item}-${index}`}
+          className="border-hairline bg-shell rounded-full border px-3 py-1.5 text-xs font-medium"
         >
           {item}
         </li>
@@ -51,10 +93,10 @@ function Chips({ items }: { items: readonly string[] }) {
 
 function Bullets({ items }: { items: readonly string[] }) {
   return (
-    <ul className="space-y-2">
-      {items.map((item) => (
-        <li key={item} className="flex gap-2.5 text-sm leading-relaxed">
-          <span aria-hidden className="bg-muted-foreground/40 mt-2 size-1.5 shrink-0 rounded-full" />
+    <ul className="space-y-3">
+      {items.map((item, index) => (
+        <li key={`${item}-${index}`} className="flex gap-3 text-[14.5px] leading-relaxed">
+          <span aria-hidden className="bg-ember/50 mt-2 size-1.5 shrink-0 rounded-full" />
           <span className="text-pretty">{item}</span>
         </li>
       ))}
@@ -64,10 +106,13 @@ function Bullets({ items }: { items: readonly string[] }) {
 
 function Numbered({ items }: { items: readonly string[] }) {
   return (
-    <ol className="space-y-2.5">
+    <ol className="space-y-3">
       {items.map((item, index) => (
-        <li key={item} className="flex gap-3 text-sm leading-relaxed">
-          <span className="bg-foreground text-background flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums">
+        <li key={`${item}-${index}`} className="flex gap-3 text-[14.5px] leading-relaxed">
+          <span
+            className="bg-ember text-ember-contrast flex size-5 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold"
+            data-numeric
+          >
             {index + 1}
           </span>
           <span className="text-pretty">{item}</span>
@@ -79,48 +124,65 @@ function Numbered({ items }: { items: readonly string[] }) {
 
 export function AnalysisView({ analysis }: { analysis: Analysis }) {
   return (
-    <div className="space-y-4">
-      <Section title="What this product does">
-        <Prose>{analysis.whatItDoes}</Prose>
-      </Section>
+    <section aria-labelledby="teardown-heading">
+      <Reveal className="flex items-center gap-3">
+        <Scan className="text-ember size-4" />
+        <h2 id="teardown-heading" className="eyebrow text-faint">
+          Teardown
+        </h2>
+        <span aria-hidden className="bg-hairline h-px flex-1" />
+      </Reveal>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Section title="Target users">
+      <div className="mt-6 grid gap-4 md:grid-cols-6">
+        {/* The headline finding gets the full width and display type. */}
+        <Cell title="What this product does" icon={Scan} className="md:col-span-6">
+          <Prose large>{analysis.whatItDoes}</Prose>
+        </Cell>
+
+        <Cell title="Target users" icon={Users} className="md:col-span-2" delay={60}>
           <Chips items={analysis.targetUsers} />
-        </Section>
-        <Section title="Core problem">
+        </Cell>
+
+        <Cell title="Core problem" icon={Fault} className="md:col-span-4" delay={100}>
           <Prose>{analysis.coreProblem}</Prose>
-        </Section>
-      </div>
+        </Cell>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Section title="Key features">
+        {/* Equal spans here, not 4/2: key features is a list of short phrases
+            and the business model is a paragraph, so the wide cell would sit
+            half-empty while the prose was squeezed into a column. */}
+        <Cell title="Key features" icon={Layers} className="md:col-span-3" delay={140}>
           <Bullets items={analysis.keyFeatures} />
-        </Section>
-        <Section title="Business model">
-          <Prose>{analysis.businessModel}</Prose>
-        </Section>
-      </div>
+        </Cell>
 
-      {/* The two forward-looking fields. Visually separated because they are
-          proposals rather than observations, and the distinction is the whole
-          point of the analysis. */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Section
+        <Cell title="Business model" icon={Vault} className="md:col-span-3" delay={180}>
+          <Prose>{analysis.businessModel}</Prose>
+        </Cell>
+
+        {/* The two forward-looking fields. Tinted rather than merely dashed —
+            these are proposals, not observations, and the distinction is the
+            whole point of the analysis. */}
+        <Cell
           title="Suggested improvements"
+          icon={Steps}
           hint="To the existing product"
-          className="border-dashed"
+          tone="proposal"
+          className="md:col-span-3"
+          delay={220}
         >
           <Bullets items={analysis.suggestedImprovements} />
-        </Section>
-        <Section
+        </Cell>
+
+        <Cell
           title="Proposed MVP features"
+          icon={Spark}
           hint="For the product you described"
-          className="border-dashed"
+          tone="proposal"
+          className="md:col-span-3"
+          delay={260}
         >
           <Numbered items={analysis.mvpFeatures} />
-        </Section>
+        </Cell>
       </div>
-    </div>
+    </section>
   );
 }

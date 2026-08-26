@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Exit } from "@/components/ui/icons";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -19,14 +20,21 @@ export function LogoutButton() {
       router.replace("/login");
       router.refresh();
     } catch {
-      toast.error("Couldn't log you out. Please try again.");
+      toast.error("Couldn’t log you out. Please try again.");
       setPending(false);
     }
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={onLogout} disabled={pending}>
-      {pending ? "Logging out…" : "Log out"}
+    <Button
+      variant="outline"
+      size="icon-sm"
+      onClick={onLogout}
+      disabled={pending}
+      aria-label={pending ? "Logging out…" : "Log out"}
+      title="Log out"
+    >
+      <Exit />
     </Button>
   );
 }

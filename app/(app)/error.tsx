@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Fault } from "@/components/ui/icons";
 
 /**
  * Error boundary for the signed-in app.
@@ -26,20 +27,26 @@ export default function AppError({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed px-6 py-16 text-center">
-      <div className="space-y-1">
-        <p className="font-medium">Something went wrong</p>
-        <p className="text-muted-foreground mx-auto max-w-sm text-sm text-pretty">
-          We couldn&apos;t load this page. Nothing has been lost — your saved
-          projects are still there.
-        </p>
+    <div className="bezel mx-auto max-w-lg">
+      <div className="bezel-core flex flex-col items-center gap-5 px-6 py-14 text-center">
+        <span className="border-destructive/25 bg-destructive/10 text-destructive flex size-12 items-center justify-center rounded-2xl border text-xl">
+          <Fault />
+        </span>
+
+        <div>
+          <h1 className="display-sm text-xl font-semibold">Something went wrong</h1>
+          <p className="text-dim mx-auto mt-2.5 max-w-sm text-sm leading-relaxed text-pretty">
+            We couldn’t load this page. Nothing has been lost — your saved projects are
+            still there.
+          </p>
+        </div>
+
+        <Button onClick={reset}>Try again</Button>
+
+        {error.digest ? (
+          <p className="text-faint font-mono text-xs">Reference: {error.digest}</p>
+        ) : null}
       </div>
-      <Button onClick={reset}>Try again</Button>
-      {error.digest ? (
-        <p className="text-muted-foreground/70 font-mono text-xs">
-          Reference: {error.digest}
-        </p>
-      ) : null}
     </div>
   );
 }

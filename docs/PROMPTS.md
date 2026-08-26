@@ -432,3 +432,143 @@ smaller in every measurement* — would have needed a migration to do the same. 
 measured winner lost to a stated future requirement, which is the correct
 ordering and would not have happened if that sentence had been treated as
 incidental.
+
+---
+
+## 7. Naming the reference class instead of describing the aesthetic
+
+**Date:** 2026-08-26 · **Phase:** frontend redesign
+
+### What I asked
+
+After I offered three named design-skill options and asked which to use, the
+answer deliberately refused all three and deferred:
+
+> wait for me to tell you and provide you with some referencing designs to work on.
+
+then, an hour later:
+
+> I want it to look something like v0, Lovable, Replit. Current UI is too simple.
+> If we are intending to make this a startup page we should have it look like an
+> actual good startup page with all the UI enhancements, loaders, animations, to
+> make it attractive and feel like a real product instead of just some plain old
+> generic demo. We should consider adding bg images, logos, gradients, stylish
+> buttons. […] Make the app light and dark theme toggleable and it should be able
+> to take up the default system theme as well as have a toggle option. You have
+> full autonomy so do not stop in between.
+
+### Why I structured it that way
+
+I had asked the wrong question. My options were *"which skill should drive
+this"* — an implementation detail — when the answer that actually constrains the
+work is *"what should it look like"*. Three named products carry more usable
+information than any adjective I could have offered: they fix the surface
+treatment (gradients, glass, depth), the motion budget, the density, and the
+tone, all at once and without ambiguity.
+
+The refusal to pick from my list was the most useful part. It is also why the
+right response to "which of A/B/C" is sometimes "none, here is the real input".
+
+### What the AI produced
+
+Reading the references rather than the adjectives changed two decisions that
+the literal wording would have gotten wrong:
+
+1. **"Gradients" did not mean a purple/blue gradient.** The `redesign-existing-projects`
+   skill flags the purple-blue AI gradient as *the* fingerprint of generated
+   design, and every generic AI SaaS demo uses it — so following the word
+   literally would have produced exactly the "generic demo" look the request was
+   trying to escape. I used an **ember/copper** accent instead: semantically
+   tied to the name (*Re-forge*), warm like Lovable, and distinct from v0's
+   monochrome. One accent, used sparingly.
+2. **"Background images" had no source.** No image generation was available, no
+   asset pipeline exists, and zero recurring cost is a hard project constraint,
+   which rules out CDN-hosted stock. Rather than block on it or ship broken
+   `<img>` tags, I built the depth out of CSS: a fixed three-orb radial mesh, an
+   SVG `feTurbulence` grain overlay, and masked hairline grids. Zero bytes, zero
+   dependencies, no asset to go missing.
+
+Ten surfaces were rebuilt on a dual-theme token system with a three-state
+(light/system/dark) control, plus a visual diff for refinements.
+
+### What I changed / fixed afterward
+
+Three things the model got wrong that only showed up when driven in a browser:
+
+- **`ButtonIcon` was themed to the page, not the button.** It used
+  `bg-black/8 dark:bg-white/12`, but the primary button *inverts* with the theme —
+  so in dark mode it rendered a white well on a white button and vanished. Fixed
+  by tinting from `currentColor`, which is correct for every variant at once.
+- **White-on-ember measured 2.23:1.** `--ember` is dark in light mode and light
+  in dark mode, so a hardcoded `text-white` could only ever pass in one of them.
+  Added an `--ember-contrast` token that flips with the theme; now 5.06 / 8.61.
+- **The `.safe-top` class silently deleted `pt-24`** — see `DEBUGGING.md` entry 7.
+
+The pattern across all three: each was invisible in one theme or one viewport
+and perfectly fine in the other, which is precisely the class of bug that a
+single-theme design process never surfaces. Asking for both themes was what made
+them findable.
+
+---
+
+## 8. Making the verification prove itself before trusting it
+
+**Date:** 2026-08-26 · **Phase:** frontend redesign
+
+### What I asked
+
+Twice during the redesign, a check reported failure and I asked for the cause
+rather than applying a fix:
+
+> 11 of 19 never revealed. Let me find the actual reason rather than assume.
+
+> Five failures, all the same element — and the ratio of exactly 1.0 is
+> suspicious. My parser only handles `rgb()`, but these compute to `oklch()`.
+> Let me resolve colours properly before trusting this.
+
+### Why I structured it that way
+
+`HANDOFF.md` carries a standing warning from an earlier session: three separate
+times, **the verification step was wrong rather than the thing being verified** —
+and it is trusted precisely when it says what you hoped to hear. A failing
+result deserves the same suspicion as a passing one; the difference is that a
+false failure costs you a fix you did not need, while a false pass ships a bug.
+
+Both suspicious results had a tell. "11 of 19 hidden" was too many to be a real
+regression when the visible ones worked. A contrast ratio of *exactly* 1.0 means
+foreground and background resolved to the same value, which almost always means
+a parser returned a default rather than a measurement.
+
+### What the AI produced
+
+Both were verification bugs, and both would have caused real damage if believed:
+
+- **The scroll-reveal check** used `window.scrollTo` while `html` had
+  `scroll-behavior: smooth`, so every step queued an animated scroll that never
+  landed and the page never reached the lower sections. Re-run with
+  `behavior: 'instant'`: **19/19**. Had I "fixed" this, I would have removed the
+  `IntersectionObserver` for a broken-by-design always-visible fallback and lost
+  the entry animation across the whole site.
+- **The contrast audit** matched only `rgb()`/`rgba()` with a regex, but the
+  design system is authored in `oklch()`. Unparseable colours fell through to a
+  white default, producing ratio 1.0 against white text. Rewritten to resolve
+  any CSS colour through a 1×1 canvas.
+
+The corrected audit then found a **real** failure that the broken one had buried
+in noise: white-on-ember at 2.23:1.
+
+### What I changed / fixed afterward
+
+I kept the canvas-based resolver as the standard method for the rest of the
+pass and re-ran it across both themes and all three surfaces (page, shell,
+core), reporting the *worst* ratio per token rather than a spot check. That
+turned up a second genuine failure the first version missed — `--faint` at 4.37
+against the raised surface in light mode — which a single-surface check would
+have passed.
+
+Final state: every text token ≥ 4.5:1 against every surface in both themes,
+worst case 4.69.
+
+**The lesson, restated:** a broken checker does not fail loudly — it produces
+*plausible* numbers. The defence is not more checks, it is asking "what would
+this look like if the checker itself were wrong?" before acting on a result.
