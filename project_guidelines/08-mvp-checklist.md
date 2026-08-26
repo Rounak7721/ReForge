@@ -59,34 +59,36 @@ Covers requirement 4 (partially) and requirement 5 in full.
 
 Covers requirement 2. See `04-execution-flows.md` for the flow and failure table.
 
-**Status 2026-08-26:** built and verified end to end **on localhost**, not yet on
-the deployed URL — hence `[~]` rather than `[x]` throughout. Flip these to `[x]`
-only after the same walk-through passes on Vercel.
+**Status 2026-08-26:** verified end to end **on production**
+(https://reforge-blond-two.vercel.app) as a brand-new user: signup → analyze
+notion.so → all 7 fields → reopen from DB with zero `/api/` calls → logout →
+deep-linked redirect preserves `next`. Console clean. Test accounts deleted
+afterwards; the database is empty again.
 
 **Backend**
-- [~] `lib/llm/` — `getLLM`, `generateStructured`, `providers/gemini.ts`, `registry.ts`
-- [~] `lib/llm/README.md` documenting the swap contract
+- [x] `lib/llm/` — `getLLM`, `generateStructured`, `providers/gemini.ts`, `registry.ts`
+- [x] `lib/llm/README.md` documenting the swap contract
 - [x] Confirm current free Flash model ID; set `GEMINI_MODEL` — **`gemini-3.1-flash-lite`**, chosen on daily quota (500 RPD vs 20 for the 3.x Flash line); table in `03-tech-stack.md`
-- [~] `lib/prompts/analyzer.ts`
-- [~] Zod schema: exactly the 7 analysis fields from `02-functional-requirements.md`
-- [~] Server-side URL fetch — timeout, size cap, HTML→text, truncate to token budget. **SSRF guard resolves the hostname and checks the resulting addresses**, and follows redirects by hand so every hop is re-validated (decimal/hex/short IPv4, v4-mapped IPv6, public hostnames resolving to private IPs, 302→metadata all blocked)
-- [~] `POST /api/analyze` — input validation, try/catch, typed error JSON + status
-- [~] Result cached to `projects.analysis`
-- [~] `maxOutputTokens` set, with a **floor** (`MIN_OUTPUT_TOKENS`) — `thinkingLevel` is not portable across the Flash family
-- [~] Malformed-JSON path: zod fail → one stricter retry → typed error *(code path built; not yet observed in the wild)*
-- [~] 429 path returns a distinct rate-limited error code — **and distinguishes per-minute from per-day exhaustion** (scope read from the quota id). *Built and rendered distinctly in the UI; not yet triggered against a real 429*
+- [x] `lib/prompts/analyzer.ts`
+- [x] Zod schema: exactly the 7 analysis fields from `02-functional-requirements.md`
+- [x] Server-side URL fetch — timeout, size cap, HTML→text, truncate to token budget. **SSRF guard resolves the hostname and checks the resulting addresses**, and follows redirects by hand so every hop is re-validated (decimal/hex/short IPv4, v4-mapped IPv6, public hostnames resolving to private IPs, 302→metadata all blocked)
+- [x] `POST /api/analyze` — input validation, try/catch, typed error JSON + status
+- [x] Result cached to `projects.analysis`
+- [x] `maxOutputTokens` set, with a **floor** (`MIN_OUTPUT_TOKENS`) — `thinkingLevel` is not portable across the Flash family
+- [x] Malformed-JSON path: zod fail → one stricter retry → typed error *(code path built; not yet observed in the wild)*
+- [x] 429 path returns a distinct rate-limited error code — **and distinguishes per-minute from per-day exhaustion** (scope read from the quota id). *Built and rendered distinctly in the UI; not yet triggered against a real 429*
 
 **Frontend**
-- [~] Form: Website URL + Product description + Target customer (validated)
-- [~] Analysis results view rendering all 7 fields
-- [~] Loading state (skeleton)
-- [~] Error state with retry — form stays mounted so answers survive a failure (DEBUGGING 5)
-- [~] Rate-limited state, distinct from generic error
+- [x] Form: Website URL + Product description + Target customer (validated)
+- [x] Analysis results view rendering all 7 fields
+- [x] Loading state (skeleton)
+- [x] Error state with retry — form stays mounted so answers survive a failure (DEBUGGING 5)
+- [x] Rate-limited state, distinct from generic error
 
 **Verify**
-- [~] Works on a real marketing site — stripe.com and linear.app, 7 fields, ~6s (localhost)
-- [~] Unreachable URL → friendly error, nothing persisted — verified: project count unchanged (localhost)
-- [~] JS-only shell site → falls back to meta/title, tells the user the site was thin — excalidraw.com (10 chars) produced a usable analysis
+- [x] Works on a real marketing site — stripe.com and linear.app, 7 fields, ~6s (localhost)
+- [x] Unreachable URL → friendly error, nothing persisted — verified: project count unchanged (localhost)
+- [x] JS-only shell site → falls back to meta/title, tells the user the site was thin — excalidraw.com (10 chars) produced a usable analysis
 
 ---
 
@@ -123,18 +125,18 @@ Covers requirement 3.
 Covers requirement 6.
 
 **Backend**
-- [ ] List projects for current user
+- [x] List projects for current user — dashboard renders the list, RLS-scoped (no `user_id` filter, deliberately)
 - [ ] Create project
-- [ ] Load project by id (analysis + concept + refinements) — **zero LLM calls**
+- [~] Load project by id — analysis renders; concept + refinements land in Phase 3. **Zero LLM calls verified on production** (reopen fired no `/api/` requests)
 
 **Frontend**
-- [ ] Project list with empty state + CTA
+- [x] Project list with empty state + CTA
 - [ ] Create-project flow
-- [ ] `/dashboard/[projectId]` — analysis, concept, chat on one page
-- [ ] Reopening a saved project renders instantly from DB
+- [~] `/dashboard/[projectId]` — analysis renders; concept + chat are Phase 3
+- [x] Reopening a saved project renders instantly from DB — 147ms locally, no API traffic
 
 **Verify**
-- [ ] Reopen a project with the network tab open — confirm no LLM request fires
+- [x] Reopen a project with the network tab open — confirmed on production, zero `/api/` calls
 - [ ] Refresh mid-flow doesn't lose state
 
 ---
