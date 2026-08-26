@@ -16,6 +16,7 @@
 import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/demo/credentials";
 import {
   DEMO_ANALYSIS,
+  DEMO_GENERATED_HTML,
   DEMO_CONCEPT,
   DEMO_PROJECT,
   DEMO_REFINEMENTS,
@@ -75,6 +76,7 @@ async function main() {
       target_customer: DEMO_PROJECT.targetCustomer,
       analysis: DEMO_ANALYSIS,
       concept: DEMO_CONCEPT,
+      generated_html: DEMO_GENERATED_HTML,
     })
     .select("id")
     .single();

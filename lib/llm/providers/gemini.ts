@@ -29,15 +29,31 @@ const REQUEST_TIMEOUT_MS = 20_000;
 type JsonSchema = Record<string, unknown>;
 
 /**
- * Gemini's `responseJsonSchema` accepts a subset of JSON Schema. `$schema` and
- * `additionalProperties` — both of which zod emits by default — are not part of
- * it and cause a 400, so they are stripped recursively.
+ * Gemini's `responseJsonSchema` accepts a subset of JSON Schema, and the subset
+ * is narrower than the documentation implies. Anything outside it is rejected
+ * with a bare `400 Request contains an invalid argument` that names neither the
+ * offending keyword nor its path, so each exclusion here was found by bisection
+ * against the live API.
+ *
+ * - `$schema` and `additionalProperties` are emitted by zod and are not part of
+ *   the dialect.
+ * - `minItems` / `maxItems` are rejected **when the same schema also contains an
+ *   `enum`**. Either one alone is accepted; together they are not. `conceptSchema`
+ *   has both — `palette[].role` is an enum and almost every array is bounded —
+ *   which took /api/build and /api/refine down completely until this was found.
+ *   Verified by bisection on 2026-08-27: dropping either keyword fixes it.
+ *
+ * Dropping the bounds costs nothing real. They are advisory on the wire, and
+ * `generateStructured` validates the response against the FULL zod schema
+ * afterwards — bounds included — with a stricter retry when it does not match.
+ * The wire schema's job is to shape the model's output; zod's job is to be
+ * right. Only zod's job is load-bearing.
  *
  * `propertyOrdering` is Google's own recommendation: without it the model may
  * emit keys in an arbitrary order, which measurably degrades output quality on
  * the Flash models.
  */
-function toGeminiSchema(schema: z.ZodType<unknown>): JsonSchema {
+export function toGeminiSchema(schema: z.ZodType<unknown>): JsonSchema {
   const jsonSchema = z.toJSONSchema(schema, { io: "output" }) as JsonSchema;
   return sanitize(jsonSchema) as JsonSchema;
 }
@@ -48,7 +64,14 @@ function sanitize(node: unknown): unknown {
 
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
-    if (key === "$schema" || key === "additionalProperties") continue;
+    if (
+      key === "$schema" ||
+      key === "additionalProperties" ||
+      key === "minItems" ||
+      key === "maxItems"
+    ) {
+      continue;
+    }
     out[key] = sanitize(value);
   }
 

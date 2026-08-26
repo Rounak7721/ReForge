@@ -18,6 +18,10 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Throwaway verification scripts. Git-ignored, never shipped, and held to
+      // a different standard than committed code — linting them turns the
+      // pre-commit gate red for files that do not exist in the repo.
+      "scripts/_scratch/**",
     ],
   },
 ];
