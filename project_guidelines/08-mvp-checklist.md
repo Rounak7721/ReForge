@@ -96,32 +96,41 @@ afterwards; the database is empty again.
 
 Covers requirement 3.
 
-**Status 2026-08-26:** built and verified end to end **on localhost** — analyze →
-build → four refinements → reload from DB. `[~]` until the same walk-through
-passes on the deployed URL. One complete demo measured at **exactly 6 Gemini
-calls** (1 analyze + 1 build + 4 refine), matching the documented figure.
+**Status 2026-08-26:** verified on **production** — signup → analyze figma.com →
+build ("Pinpoint") → "Add a dashboard." → reload renders concept *and* history
+from Postgres with zero `/api/` calls. Console clean. One complete demo is
+**exactly 6 Gemini calls** (1 analyze + 1 build + 4 refine); a repeat build
+returns `cached: true` in 407ms with no model call.
+
+**Demo caveat, measured not assumed:** the builder's output does not reliably
+contain a dashboard or a pricing page, so two of the brief's four instructions
+can be no-ops depending on the draft. On the localhost run `/dashboard` already
+existed; on the production run it did not. When "Add a dashboard" *is* live, the
+model **converts the home page into the dashboard rather than adding a fifth
+page** — defensible, consistent (nav still matches pages, UI untouched), but not
+literally additive. Pick the demo project so the instructions land.
 
 **Backend**
-- [~] `lib/prompts/builder.ts`
-- [~] Zod schema: exactly the 6 concept fields, **structured not prose** — see the `[OUR DECISION]` block in `02-functional-requirements.md` §3
-- [~] `POST /api/build` — reads cached analysis by `projectId`, writes `projects.concept`
-- [~] `lib/prompts/editor.ts`
-- [~] `POST /api/refine` — `{projectId, instruction}` → **full** updated concept, persisted
-- [~] Refinement logged to `refinements`
-- [~] Both routes: validation, try/catch, typed errors, `maxOutputTokens`
+- [x] `lib/prompts/builder.ts`
+- [x] Zod schema: exactly the 6 concept fields, **structured not prose** — see the `[OUR DECISION]` block in `02-functional-requirements.md` §3
+- [x] `POST /api/build` — reads cached analysis by `projectId`, writes `projects.concept`
+- [x] `lib/prompts/editor.ts`
+- [x] `POST /api/refine` — `{projectId, instruction}` → **full** updated concept, persisted
+- [x] Refinement logged to `refinements`
+- [x] Both routes: validation, try/catch, typed errors, `maxOutputTokens`
 
 **Frontend**
-- [~] "Build My Product" button + loading state
-- [~] Concept view rendering all 6 fields — `<ConceptView concept={...} />`, a pure function of the concept object (so the preview bonus is a sibling component, not a refactor)
-- [~] Chat/instruction input, **debounced**, max one in-flight request
-- [~] Refinement history visible
-- [~] Optimistic or clearly-signalled updating state
+- [x] "Build My Product" button + loading state
+- [x] Concept view rendering all 6 fields — `<ConceptView concept={...} />`, a pure function of the concept object (so the preview bonus is a sibling component, not a refactor)
+- [x] Chat/instruction input, **debounced**, max one in-flight request
+- [x] Refinement history visible
+- [x] Optimistic or clearly-signalled updating state
 
 **Verify — all four PDF instructions visibly change the concept**
-- [~] "Make the design more premium." — uiDirection changed (Minimalist/high-contrast → Editorial/spacious), nav + pages + name untouched
-- [~] "Add a dashboard." — **not a valid test on this concept**: the builder already included `/dashboard`. Verified instead with "Add a pricing page.", which added the page *and* its nav entry
-- [~] "Remove the pricing page." — removed from **both** `pages` and `navigation`; other 4 pages kept; nav still consistent with pages
-- [~] "Make it suitable for enterprise customers." — repositioned wholesale: "Soloist" → "Align", features → governance/audit/compliance, `/projects` → `/portfolios`
+- [x] "Make the design more premium." — uiDirection changed (Minimalist/high-contrast → Editorial/spacious), nav + pages + name untouched
+- [x] "Add a dashboard." — verified on production where no dashboard existed: added to nav *and* pages, nav still consistent, uiDirection untouched. Converts the home page rather than appending a page (see caveat above). "Add a pricing page." separately verified as genuinely additive
+- [x] "Remove the pricing page." — removed from **both** `pages` and `navigation`; other 4 pages kept; nav still consistent with pages
+- [x] "Make it suitable for enterprise customers." — repositioned wholesale: "Soloist" → "Align", features → governance/audit/compliance, `/projects` → `/portfolios`
 
 ---
 
@@ -132,12 +141,12 @@ Covers requirement 6.
 **Backend**
 - [x] List projects for current user — dashboard renders the list, RLS-scoped (no `user_id` filter, deliberately)
 - [ ] Create project
-- [~] Load project by id — analysis renders; concept + refinements land in Phase 3. **Zero LLM calls verified on production** (reopen fired no `/api/` requests)
+- [x] Load project by id (analysis + concept + refinements) — **zero LLM calls verified on production**: reopen renders all three from Postgres with no `/api/` traffic
 
 **Frontend**
 - [x] Project list with empty state + CTA
 - [ ] Create-project flow
-- [~] `/dashboard/[projectId]` — analysis renders; concept + chat are Phase 3
+- [x] `/dashboard/[projectId]` — analysis, concept and chat on one page
 - [x] Reopening a saved project renders instantly from DB — 147ms locally, no API traffic
 
 **Verify**
