@@ -191,14 +191,22 @@ issue tracker), which also satisfies the required "product demo / mockup". Worth
 
 Covers requirement 7 and the remainder of requirement 4.
 
-- [~] Every async view has loading + error + empty + rate-limited states — added route-level `loading.tsx` for `/dashboard` and `/dashboard/[projectId]`, an `error.tsx` boundary with `reset()` for the app segment, and a branded `not-found.tsx`. Before this, a slow DB read showed a blank screen and a thrown read showed Next's unbranded default
-- [~] No unhandled promise rejections — audited; every `fetch`/Supabase call is awaited inside try/catch, and the two deliberate fire-and-forget cancels carry `.catch(() => {})`
-- [~] No secret in the client bundle — grepped `.next/static` for the live Gemini key, the service-role key and the `AIza` prefix. All absent
-- [~] Service-role client provably absent from any Client Component — no `"use client"` file references it, and `lib/supabase/admin.ts` imports `server-only`, so a future mistake is a build error rather than a silent key leak
-- [~] `pnpm lint` and `pnpm build` green (plus `tsc --noEmit`)
-- [~] `security-review` run on the diff
-- [~] **Seed a demo account with one pre-analyzed project** — `pnpm seed:demo`, idempotent, **zero model calls**: the data is captured in `lib/demo/seed-data.ts` from one real run, because a seed that called Gemini would fail in exactly the situation it exists for. Account holds "Soloist" (4 pages, 5 features) plus 2 refinements, and deliberately ships with a `/pricing` page so the brief's own "Remove the pricing page." has something to act on live
-- [ ] Full flow smoke-tested in a fresh incognito window as a new user, on production
+**Status 2026-08-26:** complete and verified on production.
+**Demo login:** `demo@reforge.app` / `reforge-demo-2026` — re-seed any time with
+`pnpm seed:demo`.
+
+- [x] Every async view has loading + error + empty + rate-limited states — added route-level `loading.tsx` for `/dashboard` and `/dashboard/[projectId]`, an `error.tsx` boundary with `reset()` for the app segment, and a branded `not-found.tsx`. Before this, a slow DB read showed a blank screen and a thrown read showed Next's unbranded default
+- [x] No unhandled promise rejections — audited; every `fetch`/Supabase call is awaited inside try/catch, and the two deliberate fire-and-forget cancels carry `.catch(() => {})`
+- [x] No secret in the client bundle — grepped `.next/static` for the live Gemini key, the service-role key and the `AIza` prefix. All absent
+- [x] Service-role client provably absent from any Client Component — no `"use client"` file references it, and `lib/supabase/admin.ts` imports `server-only`, so a future mistake is a build error rather than a silent key leak
+- [x] `pnpm lint` and `pnpm build` green (plus `tsc --noEmit`)
+- [x] `security-review` run on the diff
+- [x] **Seed a demo account with one pre-analyzed project** — `pnpm seed:demo`, idempotent, **zero model calls**: the data is captured in `lib/demo/seed-data.ts` from one real run, because a seed that called Gemini would fail in exactly the situation it exists for. Account holds "Soloist" (4 pages, 5 features) plus 2 refinements, and deliberately ships with a `/pricing` page so the brief's own "Remove the pricing page." has something to act on live
+- [x] Full flow smoke-tested as a brand-new user on production — signup →
+  empty state (the demo project correctly **invisible** to them, RLS holding at
+  the UI) → analyze duolingo.com → build ("Cadence") → "Make the design more
+  premium." → uiDirection changed, navigation and name untouched → history
+  logged. Console clean. Test user deleted afterwards
 
 ---
 
