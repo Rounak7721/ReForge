@@ -23,10 +23,27 @@ export function LogoMark({ className = "" }: { className?: string }) {
         className="absolute inset-0 rounded-[30%] bg-linear-to-b from-white/30 to-transparent"
         style={{ maskImage: "linear-gradient(to bottom, #000, transparent 55%)" }}
       />
-      <svg viewBox="0 0 24 24" className="relative size-[62%]" fill="none">
-        <rect x="4.5" y="6" width="15" height="2.6" rx="1.3" fill="white" />
-        <rect x="8" y="10.7" width="11.5" height="2.6" rx="1.3" fill="white" fillOpacity="0.82" />
-        <rect x="4.5" y="15.4" width="7" height="2.6" rx="1.3" fill="white" fillOpacity="0.6" />
+      {/* Bowl: two concentric arcs about (18, 10.6), outer r=6 and counter r=2,
+          so every arm is exactly 4 thick and the curve stays parallel to
+          itself.
+
+          Strokes: parallelograms on a 0.55 shear at pitch 7.18. They are 4.68
+          wide, not 4.1 — a sheared bar's *optical* thickness is its horizontal
+          width times cos(atan(0.55)) ≈ 0.876, so matching the stem numerically
+          would render them ~12% lighter than the letter they belong to.
+
+          The longest stroke doubles as the R's leg, which is what makes this a
+          letter rather than a letter with decoration beside it. Checked
+          legible down to 28px — the nav size. */}
+      <svg viewBox="0 0 32 32" className="relative size-[64%]" fill="white">
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M7.5 4.6 H18 A6 6 0 0 1 18 16.6 H7.5 Z M11.6 8.6 H18 A2 2 0 0 1 18 12.6 H11.6 Z"
+        />
+        <path d="M16.06 16.6 H20.74 L26.68 27.4 H22.0 Z" />
+        <path d="M10.695 19.9 H15.375 L19.5 27.4 H14.82 Z" />
+        <path d="M5.33 23.2 H10.01 L12.32 27.4 H7.64 Z" />
       </svg>
     </span>
   );

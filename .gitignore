@@ -37,3 +37,7 @@ yarn-error.log*
 
 # Stray Playwright screenshots (the MCP server writes to cwd unless given a path)
 /*.png
+
+# Logo-creator working directory: iterations and the HTML preview harness.
+# The approved mark lives in components/marketing/wordmark.tsx and app/icon.svg.
+/.skill-archive/
