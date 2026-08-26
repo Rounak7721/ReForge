@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { Wordmark } from "@/components/marketing/wordmark";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardLayout({
@@ -22,8 +23,9 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-svh flex-col">
       <header className="flex items-center justify-between gap-4 border-b px-6 py-4">
-        <Link href="/dashboard" className="font-semibold tracking-tight">
-          Reforge
+        {/* `marketing` scopes only the brand colour tokens the Wordmark reads. */}
+        <Link href="/dashboard" aria-label="Reforge dashboard" className="marketing rounded-md">
+          <Wordmark />
         </Link>
         <div className="flex items-center gap-3">
           <span className="text-muted-foreground hidden text-sm sm:inline">

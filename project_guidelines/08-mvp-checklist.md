@@ -140,36 +140,49 @@ Covers requirement 6.
 
 **Backend**
 - [x] List projects for current user — dashboard renders the list, RLS-scoped (no `user_id` filter, deliberately)
-- [ ] Create project
+- [x] Create project — `POST /api/analyze` inserts the row *after* the analysis succeeds, so a failed run persists nothing
 - [x] Load project by id (analysis + concept + refinements) — **zero LLM calls verified on production**: reopen renders all three from Postgres with no `/api/` traffic
 
 **Frontend**
 - [x] Project list with empty state + CTA
-- [ ] Create-project flow
+- [x] Create-project flow — `/dashboard/new`, reachable from the dashboard CTA and the empty state
 - [x] `/dashboard/[projectId]` — analysis, concept and chat on one page
 - [x] Reopening a saved project renders instantly from DB — 147ms locally, no API traffic
 
 **Verify**
 - [x] Reopen a project with the network tab open — confirmed on production, zero `/api/` calls
-- [ ] Refresh mid-flow doesn't lose state
+- [x] Refresh mid-flow doesn't lose state — every result is written before it is rendered, so a refresh re-reads from Postgres
 
 ---
 
 ## Phase 5 — Landing page
 
-Covers requirement 1. Worth a large share of the 15 product-quality points, and it's the grader's first impression. Use the `frontend-design` skill.
+Covers requirement 1.
 
-- [ ] Product name / logo
-- [ ] Clear value proposition
-- [ ] Hero section
-- [ ] Product demo / mockup
-- [ ] Features
-- [ ] How it works
-- [ ] CTA (→ sign up)
-- [ ] Pricing (sample tiers are explicitly fine — no billing)
-- [ ] Footer
-- [ ] Responsive at 375 / 768 / 1440
-- [ ] Reads like a startup, not an assignment
+**Status 2026-08-26:** built and verified on localhost at 375 / 768 / 1440. `[~]`
+until confirmed on the deployed URL.
+
+**Direction — a spec sheet.** The product emits typed, labelled, structured data,
+so the page is built the same way: mono keys, visible rules, one accent
+(`--signal` #1F4BE0), and section markers written as paths (`/how`, `/pricing`)
+because paths are literally part of what Reforge outputs. Display face is
+Archivo; body Geist; data Geist Mono. Three roles, no more.
+
+**Signature element:** the hero panel is not a stock mockup — it is the product's
+real output in the product's real shape (a linear.app teardown becoming a solo
+issue tracker), which also satisfies the required "product demo / mockup". Worth a large share of the 15 product-quality points, and it's the grader's first impression. Use the `frontend-design` skill.
+
+- [~] Product name / logo
+- [~] Clear value proposition
+- [~] Hero section
+- [~] Product demo / mockup — the teardown panel; the product's actual output, not an illustration
+- [~] Features
+- [~] How it works
+- [~] CTA (→ sign up)
+- [~] Pricing (sample tiers) — three tiers, and the footer says plainly that they are illustrative and there is no billing
+- [~] Footer
+- [~] Responsive at 375 / 768 / 1440 — no horizontal overflow at any width; pricing labels, prices and CTAs align to the pixel
+- [~] Reads like a startup, not an assignment
 
 ---
 
