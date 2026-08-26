@@ -16,6 +16,20 @@ Seven bonuses listed in the PDF, verbatim below. Note they map onto the high-val
 | 6 | **Iterative AI Development** — user says "Change the homepage," AI modifies the generated application | Refine, but targeting generated *code/UI* rather than the concept object | High | Only meaningful after #3 + #5 |
 | 7 | **Automated QA** — "AI agent to inspect the application and identify UI/functionality problems" | Playwright MCP + a qa-tester subagent walking the deployed app | Low | **Do it** — it costs almost nothing since the tooling is already available, and it produces material for the video and for `docs/DEBUGGING.md` |
 
+## Status as of 2026-08-26 — **[LIVE]**
+
+| # | Bonus | Status | Notes |
+|---|---|---|---|
+| 1 | Screenshot analysis | **Planned — phase 3** | No microlink call and no image part exists yet |
+| 2 | Generate actual UI | **Partial → phase 1** | Concept renders as *structure* (nav bar, page outline, palette mock). Not yet a rendered page |
+| 3 | Code generation | **Planned — phase 2** | Groq + Qwen, HTML out |
+| 4 | Agent workflow | **CUT** | Reason stated below; keep it cut |
+| 5 | Live preview | **Partial → phase 1** | Only the small palette mock exists |
+| 6 | Iterative AI dev | **Planned — phase 2** | Un-cut: it depended on #3 + #5, both now planned |
+| 7 | Automated QA | **Done as process, NOT as a feature** | Real AI-driven inspection happened (`docs/UI-AUDIT.md`, the contrast audit, the frame-sampling that caught the analyze flash). It is a development practice, not something the product does. **Claim it as process; do not claim it as a shipped feature.** |
+
+The full phase plan lives in `HANDOFF.md`.
+
 ## Recommended order **[OUR DECISION]**
 
 If time remains after deploy, in this order:

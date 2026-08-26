@@ -2,17 +2,18 @@
 
 **Read this first in every new session.** It is the fastest path back to full context.
 
-_Last updated: 2026-08-26, ~18:05 IST — session 4. **The frontend redesign is
-built, pushed and live on production** (`cbde344`). Phases 0–6 complete.
-Awaiting the user's review of the live app plus a logo SVG and imagery. Next:
-Phase 7 (README pass, process narrative, video)._
+_Last updated: 2026-08-26, ~20:15 IST — end of session 5. **All 42 required
+bullets are built, deployed and verified; 5 of 5 deliverables done except the
+video.** The next session builds three bonus phases, then records the video
+last so the new features appear in it._
 
 ---
 
 ## Where things stand
 
-**Every functional requirement is built and verified, and the frontend redesign
-is done.** What is left is deploying the redesign and the graded paperwork.
+**All 42 required bullets are built, deployed and verified (audited
+2026-08-26).** Four of five deliverables are done. What is left is three
+approved bonus phases, the process narrative, and the video.
 
 | | Status |
 |---|---|
@@ -21,75 +22,154 @@ is done.** What is left is deploying the redesign and the graded paperwork.
 | GitHub repo | `Rounak7721/ReForge`, `main` current and pushed |
 | Vercel | Auto-deploys on every push to `main` |
 | Supabase | `zqyahkyigokbxmufpxpj` — schema + RLS live. **Only the demo account exists**; all test users deleted |
-| Working tree | Clean, on `main`, synced with origin (`cbde344`) |
+| Working tree | Clean, on `main`, synced with origin |
 | LLM quota used today | ~86 of 500 (one refine spent verifying the diff panel). Resets midnight Pacific |
 
 ```
-checklist    86 / 95 boxes    91% complete
-deadline     2026-08-27 ~13:42 IST     (~20h remaining at time of writing)
+checklist      93 / 95 boxes     98% complete
+required       42 / 42 bullets   100% — audited against the deployed URL
+bonuses        1.5 / 7           three more approved, phases 1-3
+deliverables   4 / 5             video outstanding, deliberately last
+deadline       2026-08-27 ~13:42 IST      (~17h remaining at time of writing)
 ```
 
-**Estimated remaining work: ~4h.** The redesign is done, so the buffer is
-healthier than it was. The video is still the item that cannot be rushed —
-reserve 2.5h for it.
+**Estimated remaining work: ~10.5h** — 7.5h of bonus phases plus 3h of
+deliverables, against ~17h. It fits, but only if the hard stop is respected:
+**stop bonus work when 4 hours remain and record the video.**
 
 ---
 
 ## Next actions, in order
 
-### 1. Awaiting the user — live review, logo SVG, imagery
+The user approved a three-phase bonus plan on 2026-08-26. **Phases are ordered
+so each one is independently shippable** — stop at any boundary.
 
-The redesign is **deployed and verified on production**. The user is reviewing
-the live app and will supply a logo SVG and image assets. Expect change
-requests; the surfaces are already built to take real imagery (see the image
-brief at the end of this file).
+> **Hard stop rule:** stop bonus work when 4 hours remain and record the video.
+> An unrecorded video costs more than a missing bonus. The video is deliberately
+> last so the bonus features are in it.
 
-**Deploy verification done:** preflight (lint, build, no `any`, `.env.example`
-in sync, no service-role import in a Client Component) and a security review of
-the auth-touching diff — no findings, auth logic byte-identical, only
-presentation plus additive client-side validation. Confirmed the *new* build is
-serving by probing `/icon.svg` and `/privacy`, both routes that did not exist
-before. Landing renders with zero console errors, 19/19 scroll reveals, no
-horizontal overflow.
+### Phase 1 — Concept preview (bonuses #2 + #5) · ~2h · zero quota
 
-**Still not smoke-tested on production:** signup as a brand-new user, the full
-analyze → build → refine flow, and the failure paths. Do that before recording.
+Turn the concept into a **rendered page** instead of a structured summary, in a
+third tab beside Teardown and Your product.
 
-### 2. Frontend redesign — done, for reference
+**This needs no model call.** Everything a page requires is already in the
+concept object: `pages[].sections[].{type, headline, body}` is real copy,
+`uiDirection.palette[]` is real hex, `uiDirection.typography` is a concrete
+typeface direction. It is a renderer over existing data.
 
-Direction was v0 / Lovable / Replit. Every surface was rebuilt; see the commit
-message on `79db0ea` and the new **Design system** section in
-`docs/ARCHITECTURE.md`. Highlights that matter for the video:
+**The one decision that matters: render into a sandboxed `<iframe srcdoc>`,
+not the app DOM.** Two reasons — the concept has its own colours and fonts that
+would collide with the design system, and an iframe's srcdoc *is* an HTML
+document, which is exactly what phase 2 produces. Build "render an HTML string
+in a sandboxed iframe" once and phases 1 and 2 share it.
 
-- **Dark mode now exists.** `forcedTheme="light"` is gone; the control is a
-  three-state light/system/dark segmented toggle in the header.
-- **The project page is a bento**, not a vertical dump.
-- **Refinements now show a visual diff** — `lib/concept-diff.ts` +
-  `ConceptDiffPanel`. Verified on production data: "Remove the pricing page."
-  reports both the removed page *and* the orphaned nav entry. Costs no quota
-  (pure client-side comparison of two in-memory objects).
-- **The refine box is a sticky command bar.** Still an editing control over the
-  concept object, still not a chat transcript.
+**Security, already decided with the user:** `sandbox="allow-scripts"` and
+**NOT** `allow-same-origin`. That pair is what stops generated JS reaching the
+parent page, cookies or the Supabase session. It means the preview cannot talk
+to the app at all, which is correct.
 
-`docs/UI-AUDIT.md` holds the pre-redesign defect baseline; every `[keep]` item
-in it has been addressed.
+Reuse the existing tab component (`components/project/project-view.tsx`) — it
+already handles URL sync, keeps panels mounted, and has correct tablist
+semantics. It currently takes exactly two panels; generalise it to N.
 
-### 3. Phase 7 — deliverables (the remaining 9 boxes)
+### Phase 2 — Code generation + iteration (bonuses #3 + #6) · ~4h
 
-1. **Final pass on the docs.** They are current, not stale — this is verification,
-   not writing. `docs/PROMPTS.md` has **8** entries (target 5–10),
-   `docs/DEBUGGING.md` has **8** (minimum 2), `docs/ARCHITECTURE.md` is current
-   including a new Design system section. **`README.md` still describes the old
-   light-only UI — it needs a pass.**
-2. **AI development process narrative** — blank folder → deployed. Not yet
-   written. This is a required deliverable.
-3. **Record the video, ≤3 min, against production**, all 8 beats from
-   `project_guidelines/06-deliverables.md`.
-4. **Walk `02-functional-requirements.md` top to bottom against the deployed
-   URL** and tick the last boxes.
+Generate a single self-contained starter page from the concept, preview it in
+the phase-1 iframe, refine it in natural language, download it.
 
-**Before recording, read the demo caveat under Decisions — two of the brief's
-four example instructions can be no-ops depending on the generated draft.**
+**Provider: Groq + Qwen, with Gemini as fallback — the user's call.**
+
+⚠️ **Cost is NOT confirmed.** The pricing page the user reviewed shows Groq
+*Preview Models* with per-token pricing on a Developer Plan, and a banner
+saying preview models "should not be used in production environments as they
+may be discontinued at short notice." That is evidence *against* a free tier,
+not for one. **Before enabling Groq in production, check the free-tier limits
+specifically.** The project's zero-recurring-cost rule is hard.
+
+The mitigation is already designed in: **make the codegen provider an env var
+and keep Gemini working.** If Groq costs money or the preview model is pulled,
+flip one variable and nothing else changes. Do not let Groq become load-bearing.
+
+Implementation notes, verified against the code:
+
+- Adding a provider is **3 files, not 1** — `LLMProviderName` is a closed union
+  in `lib/llm/types.ts`, plus `registry.ts`, plus the env schema in `lib/env.ts`.
+  Still ~30 minutes.
+- **Wrap the HTML in JSON: `{ html: string }`.** The provider contract is
+  `generateJson`, validated by zod. Wrapping keeps schema validation *and* the
+  existing stricter-retry on malformed output with **no interface change**.
+  Adding a `generateText` method would touch every provider and discard the
+  retry policy.
+- **One self-contained HTML file, not three.** It doubles as the iframe srcdoc
+  *and* the download (`<a download>` + Blob, no ZIP code at all), and a model
+  produces one coherent file far more reliably than three that must reference
+  each other. ZIP is ~60 lines of stored-entry writer if files are split later
+  — cheap to add after, pointless before.
+- **Refinement reuses the Editor pattern**: `current HTML + instruction → new
+  HTML`, exactly like `concept + instruction → concept`. That is all the
+  "memory" a single-page loop needs.
+- Reuse the command-bar component so both refine loops look identical.
+- **The preview tab must never be empty.** Show the phase-1 template render
+  immediately; "Build starter site" *upgrades* it to generated code. That keeps
+  the tab useful when quota is gone — which matters when a grader is running on
+  our shared free tier.
+
+**LangChain was considered and rejected.** Three reasons, all still true:
+`pnpm-workspace.yaml`'s `allowBuilds` has broken this repo twice
+(`docs/DEBUGGING.md` 4 + addendum) and LangChain pulls a large tree; `lib/llm`
+already provides provider abstraction, schema-constrained output, validation,
+retry, typed errors and a token floor, so it would wrap our abstraction in
+another; and "memory" here is one variable. Do not reopen this without a new
+reason.
+
+### Phase 3 — Screenshot analysis (bonus #1) · ~1.5h · zero extra quota
+
+1. `GET https://api.microlink.io?url=<target>&screenshot=true&meta=false` → a
+   hosted PNG URL. Free tier, no key needed for basic use.
+2. Fetch the bytes server-side, base64 them.
+3. **Attach to the existing analyzer call as an `inlineData` part** alongside
+   the scraped text. Gemini Flash is already multimodal — this is the *same*
+   call, so it costs no extra quota.
+4. Add prompt fields the text cannot answer: visual style, layout density,
+   colour treatment.
+
+**Both failure modes must degrade to text-only silently, never fail the
+request:** microlink is slow (3–8s against a 60s route budget) and it
+rate-limits anonymous callers.
+
+Why it is worth doing: the analyzer is text-only today, so a JS-heavy landing
+page with little copy analyses badly — a limitation already written into the
+README. This fixes a real weakness rather than adding a trick.
+
+### Phase 4 — Deliverables (the last two boxes)
+
+1. **AI development process narrative** — blank folder → deployed. Required,
+   not yet written. ~30min.
+2. **Record the video**, ≤3 min, against production, all 8 beats from
+   `project_guidelines/06-deliverables.md`. Reserve **2.5h**.
+
+**Read the demo caveat under Decisions before recording** — two of the brief's
+four example instructions can be no-ops depending on the generated draft.
+
+---
+
+## Bonus status — audited 2026-08-26
+
+| # | Bonus | Status |
+|---|---|---|
+| 1 | Screenshot analysis | Planned, phase 3 |
+| 2 | Generate actual UI | **Partial** — structure renders, page does not. Phase 1 |
+| 3 | Code generation | Planned, phase 2 |
+| 4 | Agent workflow | **CUT** — reasoned, documented, keep it cut |
+| 5 | Live preview | **Partial** — only the palette mock. Phase 1 |
+| 6 | Iterative AI dev | Planned, phase 2 (un-cut: depended on #3 + #5) |
+| 7 | Automated QA | **Done as process, NOT as a feature.** Claim it as process only |
+
+On #7: real AI-driven inspection happened — `docs/UI-AUDIT.md`, the canvas
+contrast audit across both themes, the overflow sweep, and the frame-sampling
+that caught the analyze flash. It is a development practice, not something the
+product does. Saying otherwise in the video would be a false claim.
 
 ---
 
@@ -193,6 +273,23 @@ project, or choose a target where all four instructions land.
   known, documented residual; closing it needs a pinned-IP connection `fetch`
   does not expose.
 
+### Bonus architecture — settled 2026-08-26, do not relitigate
+- **The preview is a sandboxed iframe**, `sandbox="allow-scripts"` WITHOUT
+  `allow-same-origin`. That exact pair is what isolates generated JS from the
+  parent page, cookies and the Supabase session. Not negotiable.
+- **One HTML string is the shared substrate** for bonuses #2, #3, #5 and #6.
+  Template-rendered from the concept (free, deterministic) or model-generated —
+  the iframe does not care which.
+- **Codegen output is `{ html: string }` JSON**, not raw text. Keeps zod
+  validation and the existing stricter-retry with no provider-interface change.
+- **Single self-contained HTML, not a multi-file bundle.** More reliable from a
+  model, and it is both the srcdoc and the download with no ZIP code.
+- **LangChain is rejected** — allowBuilds risk (has broken this repo twice),
+  it would wrap `lib/llm` in a second abstraction that duplicates every feature
+  it already has, and "memory" here is one variable.
+- **Groq must not become load-bearing.** Provider is an env var; Gemini stays a
+  working fallback.
+
 ### Process
 - Route Handlers, not Server Actions. Phase branches, fast-forward into `main`.
 - **No subagents** — `code-review` is the review gate, `playwright` + `run` cover QA.
@@ -235,20 +332,20 @@ precisely when it says what you hoped to hear. **Read the reason, not the verdic
 
 ## Open questions for the user
 
-1. **Video: demo from the seeded account or a live analysis?** Live is more
-   impressive but spends quota and risks the two interpretive instructions in
-   the Decisions section. A hybrid — live analyze + build, then the seeded
-   project for refinements — is probably the strongest. The new diff panel
-   makes the refinement beat land much harder than it used to, so give it
-   screen time.
-2. **Should the video be recorded in dark or light?** Dark reads better on
-   video and is what the references use; light is the system default for most
-   graders. Showing the toggle once, early, covers both.
-3. **Background imagery.** The user asked for background images; none were
-   available (no image generation, no asset pipeline, and CDN-hosted stock
-   would break the zero-cost constraint). Depth is currently CSS-only — radial
-   mesh, SVG grain, hairline grids. If real imagery is wanted, the user needs
-   to supply files in `public/`; the surfaces are already built to take them.
+1. **Is Groq actually free at our volume?** Unresolved, and it gates phase 2's
+   provider choice. The pricing page reviewed showed *Preview Models* with
+   per-token pricing and a "not for production, may be discontinued" banner —
+   which argues against a free tier. Check the free-tier limits specifically.
+   Either answer is workable: the codegen provider is an env var and Gemini is
+   the fallback, so this is not a blocker, only a config decision.
+2. **Video: seeded account or live analysis?** A hybrid — live analyze + build,
+   then the seeded project for refinements — is probably strongest. The diff
+   panel makes the refinement beat land much harder than it used to, so give it
+   screen time. If phases 1–2 land, the preview and starter-site beats need
+   room too, which argues for keeping the live portion short.
+3. **Imagery.** The user decided against background images ("looks better as
+   is"). The logo is done. Only the OG card (1200x630) is still worth making —
+   metadata is wired in `app/layout.tsx`, only the file is missing.
 
 ## Session wrap-up ritual
 

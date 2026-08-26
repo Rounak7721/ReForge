@@ -214,22 +214,30 @@ Covers requirement 7 and the remainder of requirement 4.
 
 These are 35 of 100 points. See `06-deliverables.md`. Written continuously, finalised here.
 
-- [ ] Root `README.md` with all 9 required sections
-- [ ] `docs/PROMPTS.md` — 5–10 prompts, each with all 4 required parts
-- [ ] `docs/DEBUGGING.md` — ≥2 full Problem→Prompt→Attempt→Debug→Fix trails
-- [ ] `docs/ARCHITECTURE.md` current
+- [x] Root `README.md` with all 9 required sections — verified 2026-08-26; the
+  stale "light theme only" limitation was corrected after the redesign
+- [x] `docs/PROMPTS.md` — **8** entries, each with all 4 required parts
+- [x] `docs/DEBUGGING.md` — **8** full Problem→Prompt→Attempt→Debug→Fix trails
+- [x] `docs/ARCHITECTURE.md` current — includes the Design system section
 - [ ] AI development process narrative (blank folder → deployed)
-- [ ] Clean commit history, pushed to GitHub
-- [ ] Vercel connected to GitHub for CI/CD auto-deploy
+- [x] Clean commit history, pushed to GitHub — 29 commits, no secrets
+- [x] Vercel connected to GitHub for CI/CD auto-deploy — verified by asset-hash
+      comparison, not by a 200 (middleware makes any /dashboard path answer 307)
 - [ ] Video ≤3 min, recorded against **production**, all 8 beats
-- [ ] Every box in `02-functional-requirements.md` verified on the deployed URL
+- [x] Every box in `02-functional-requirements.md` verified — **42/42** on the
+      deployed URL, audited 2026-08-26
+
+**Deliberately last:** the video is being recorded after the bonus work so the
+new features appear in it.
 
 ---
 
 ## Explicitly cut from MVP
 
 - **[-] Multi-agent workflow (Research → Product → UI → QA)** — cut for cost/rate-limit reasons. Five chained calls per user action against a ~10–15 RPM free tier is not viable, and it adds no *required* capability. Documented as future scope: a natural LangGraph fit, where each agent is a graph node with typed state and the orchestration/retry/fan-out is handled by the framework rather than hand-rolled. Say this in the README's "Known limitations" and in the video's "what I'd build next" beat — a reasoned cut is a product-thinking signal, an unexplained gap is not.
-- **[-] Iterative code-level AI development** — depends on code generation + live preview; out of MVP scope.
+- **[-] Iterative code-level AI development** — was cut as depending on code
+  generation + live preview. **Both are now planned** (bonus phases 2 and 1
+  respectively), so this is back in scope. See `HANDOFF.md`.
 
 ## Reordering rule
 
