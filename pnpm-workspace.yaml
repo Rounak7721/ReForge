@@ -3,9 +3,14 @@
 # unrs-resolver — prebuilt binaries ship for this platform.
 # @google/genai — its only install script is a literal `echo 'preinstall: no-op'`.
 # protobufjs — postinstall is a CLI convenience step; nothing we import needs it.
+# esbuild — its postinstall (`node install.js`) fetches/links the native binary,
+#   which sounds load-bearing. It isn't here: pnpm installs the platform package
+#   (@esbuild/linux-x64) as an optional dependency, so the binary already exists.
+#   Verified by blocking it and running `tsx` — works. Tested, not assumed.
 # Leaving any of these unset makes `pnpm install` exit 1, which breaks every script.
 allowBuilds:
   '@google/genai': false
+  esbuild: false
   protobufjs: false
   sharp: false
   unrs-resolver: false

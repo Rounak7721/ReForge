@@ -191,13 +191,13 @@ issue tracker), which also satisfies the required "product demo / mockup". Worth
 
 Covers requirement 7 and the remainder of requirement 4.
 
-- [ ] Every async view has loading + error + empty + rate-limited states
-- [ ] No unhandled promise rejections
-- [ ] No secret in the client bundle (grep the build output for key prefixes)
-- [ ] Service-role client provably absent from any Client Component
-- [ ] `pnpm lint` and `pnpm build` green
-- [ ] `security-review` run on the diff
-- [ ] **Seed a demo account with one pre-analyzed project** — now *required*, not optional: the free tier is 500 requests/day shared with the grader, and one full demo is 6 calls
+- [~] Every async view has loading + error + empty + rate-limited states — added route-level `loading.tsx` for `/dashboard` and `/dashboard/[projectId]`, an `error.tsx` boundary with `reset()` for the app segment, and a branded `not-found.tsx`. Before this, a slow DB read showed a blank screen and a thrown read showed Next's unbranded default
+- [~] No unhandled promise rejections — audited; every `fetch`/Supabase call is awaited inside try/catch, and the two deliberate fire-and-forget cancels carry `.catch(() => {})`
+- [~] No secret in the client bundle — grepped `.next/static` for the live Gemini key, the service-role key and the `AIza` prefix. All absent
+- [~] Service-role client provably absent from any Client Component — no `"use client"` file references it, and `lib/supabase/admin.ts` imports `server-only`, so a future mistake is a build error rather than a silent key leak
+- [~] `pnpm lint` and `pnpm build` green (plus `tsc --noEmit`)
+- [~] `security-review` run on the diff
+- [~] **Seed a demo account with one pre-analyzed project** — `pnpm seed:demo`, idempotent, **zero model calls**: the data is captured in `lib/demo/seed-data.ts` from one real run, because a seed that called Gemini would fail in exactly the situation it exists for. Account holds "Soloist" (4 pages, 5 features) plus 2 refinements, and deliberately ships with a `/pricing` page so the brief's own "Remove the pricing page." has something to act on live
 - [ ] Full flow smoke-tested in a fresh incognito window as a new user, on production
 
 ---

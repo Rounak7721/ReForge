@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:demo": "tsx --conditions=react-server --env-file=.env scripts/seed-demo.ts"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
@@ -37,6 +38,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.23",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }
