@@ -2,6 +2,7 @@ import type { Analysis } from "@/lib/prompts/analyzer";
 import {
   Fault,
   Layers,
+  Palette,
   Scan,
   Spark,
   Steps,
@@ -157,6 +158,38 @@ export function AnalysisView({ analysis }: { analysis: Analysis }) {
         <Cell title="Business model" icon={Vault} className="md:col-span-3" delay={180}>
           <Prose>{analysis.businessModel}</Prose>
         </Cell>
+
+        {/* Only present when a screenshot was captured and read. Rendered
+            behind a presence check rather than with a placeholder: microlink
+            is anonymous-tier and rate-limits, so "no visual read this time" is
+            a normal outcome, and an empty cell announcing a missing feature is
+            worse than no cell. */}
+        {analysis.visualImpression !== undefined ? (
+          <Cell
+            title="Visual impression"
+            icon={Palette}
+            hint="Read from a screenshot"
+            className="md:col-span-6"
+            delay={200}
+          >
+            <dl className="grid gap-5 sm:grid-cols-3">
+              {(
+                [
+                  ["Style", analysis.visualImpression.style],
+                  ["Layout density", analysis.visualImpression.layoutDensity],
+                  ["Colour", analysis.visualImpression.colourTreatment],
+                ] as const
+              ).map(([label, value]) => (
+                <div key={label}>
+                  <dt className="eyebrow text-faint">{label}</dt>
+                  <dd className="mt-2">
+                    <Prose>{value}</Prose>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Cell>
+        ) : null}
 
         {/* The two forward-looking fields. Tinted rather than merely dashed —
             these are proposals, not observations, and the distinction is the

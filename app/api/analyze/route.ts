@@ -3,9 +3,10 @@ import { z } from "zod";
 
 import { apiError } from "@/lib/api/errors";
 import { fromPipelineError } from "@/lib/api/llm-error";
-import { generateStructured } from "@/lib/llm";
+import { generateStructured, getLLM } from "@/lib/llm";
 import { analysisSchema, buildAnalyzerPrompt, type Analysis } from "@/lib/prompts/analyzer";
 import { fetchSite } from "@/lib/scrape/fetch-site";
+import { captureScreenshot } from "@/lib/scrape/screenshot";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -42,6 +43,8 @@ export type AnalyzeResult = {
   analysis: Analysis;
   /** The site was a client-rendered shell; the analysis leans on metadata. */
   siteWasThin: boolean;
+  /** A screenshot was captured and analysed alongside the text. */
+  sawScreenshot: boolean;
 };
 
 export async function POST(request: NextRequest) {
@@ -68,15 +71,41 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const site = await fetchSite(url);
-    const { system, prompt } = buildAnalyzerPrompt({ site, description, targetCustomer });
+    // Concurrent, not sequential. Both hit the network for the same target and
+    // neither needs the other's result, so running them in series would add
+    // microlink's latency straight onto a 60s budget that already has to fit a
+    // model call plus its stricter retry.
+    //
+    // `fetchSite` rejecting is fatal — no text, no analysis. `captureScreenshot`
+    // resolves to null instead of throwing, so it cannot fail the request; it
+    // is awaited through the same Promise.all purely for the concurrency.
+    // Only capture if the configured model can actually look at it. Skipping
+    // the call outright is better than capturing and discarding: it saves a
+    // round trip, and it keeps `hasScreenshot` below honest for every provider.
+    const canSee = getLLM().supportsImages;
+    const [site, screenshot] = await Promise.all([
+      fetchSite(url),
+      canSee ? captureScreenshot(url) : null,
+    ]);
+
+    const { system, prompt } = buildAnalyzerPrompt({
+      site,
+      description,
+      targetCustomer,
+      hasScreenshot: screenshot !== null,
+    });
 
     const analysis = await generateStructured({
       schema: analysisSchema,
       schemaName: "product_analysis",
       system,
       prompt,
-      maxOutputTokens: 4096,
+      // The image rides along on the call that was already being made, so
+      // vision costs no extra request against the daily quota.
+      ...(screenshot === null ? {} : { image: screenshot }),
+      // Raised from 4096: the response now carries three more prose fields, and
+      // this budget caps thinking AND output combined on this model family.
+      maxOutputTokens: screenshot === null ? 4096 : 5120,
     });
 
     // Anon client with the request's cookies, so RLS enforces
@@ -105,6 +134,7 @@ export async function POST(request: NextRequest) {
       projectId: data.id,
       analysis,
       siteWasThin: site.thin,
+      sawScreenshot: screenshot !== null,
     });
   } catch (error) {
     return fromPipelineError(error, "analyze");

@@ -32,11 +32,36 @@ export type StructuredRequest<T> = {
    */
   maxOutputTokens: number;
   temperature?: number;
+  /**
+   * An optional image for the model to look at alongside the prompt.
+   *
+   * Optional rather than a separate method on purpose: a vendor that cannot
+   * accept images simply ignores the field, and every caller that does not
+   * send one is unchanged. Adding `generateJsonWithImage` would have forced
+   * every provider and the retry policy in `generate.ts` to grow a parallel
+   * path for one extra request part.
+   *
+   * `data` is base64 with no `data:` prefix.
+   */
+  image?: { data: string; mimeType: string };
 };
 
 export interface LLMProvider {
   readonly name: LLMProviderName;
   readonly model: string;
+  /**
+   * Whether this provider's configured model can read `StructuredRequest.image`.
+   *
+   * Callers must branch on this, not assume it. The analyzer prompt states in
+   * words that a screenshot is attached, so pairing it with a provider that
+   * silently drops the image does not merely lose the picture — it invites the
+   * model to invent a description of a page it never saw, which is precisely
+   * what the optional `visualImpression` field exists to prevent.
+   *
+   * A property rather than a lookup table because it depends on the MODEL, not
+   * the vendor: the same provider file serves vision and text-only models.
+   */
+  readonly supportsImages: boolean;
   /**
    * Returns the model's raw JSON text. Providers own transport, the vendor's
    * schema dialect, and error mapping; they do NOT parse or validate, so that

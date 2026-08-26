@@ -120,6 +120,10 @@ export function createGeminiProvider(apiKey: string, model: string): LLMProvider
   return {
     name: "gemini",
     model,
+    // Every Gemini Flash model in the 3.x line is multimodal, which is what
+    // makes the screenshot analysis free: the image is one more part on a call
+    // that was already being made.
+    supportsImages: true,
 
     async generateJson(request: StructuredRequest<unknown>): Promise<string> {
       // Held so the catch block can tell "we timed out" from any other abort.
@@ -132,7 +136,26 @@ export function createGeminiProvider(apiKey: string, model: string): LLMProvider
       try {
         response = await client.models.generateContent({
           model,
-          contents: request.prompt,
+          // A bare string is shorthand for a single text part. As soon as there
+          // is an image the parts have to be spelled out — text first, so the
+          // model reads the instructions before the picture.
+          contents:
+            request.image === undefined
+              ? request.prompt
+              : [
+                  {
+                    role: "user",
+                    parts: [
+                      { text: request.prompt },
+                      {
+                        inlineData: {
+                          mimeType: request.image.mimeType,
+                          data: request.image.data,
+                        },
+                      },
+                    ],
+                  },
+                ],
           config: {
             ...(request.system === undefined ? {} : { systemInstruction: request.system }),
             responseMimeType: "application/json",

@@ -1,5 +1,5 @@
 /**
- * Self-check for the concept renderer. `pnpm check:preview`.
+ * Self-check for the concept renderer. `pnpm check`.
  *
  * Not a test suite — the project has none and none is planned. This is the one
  * runnable assertion that fails if the renderer's non-obvious parts break: the
