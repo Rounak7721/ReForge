@@ -34,3 +34,6 @@ yarn-error.log*
 
 # playwright mcp scratch output
 .playwright-mcp/
+
+# Stray Playwright screenshots (the MCP server writes to cwd unless given a path)
+/*.png

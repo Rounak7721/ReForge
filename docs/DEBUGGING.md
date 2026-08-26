@@ -459,3 +459,122 @@ failed with an error about `install`, not about ESLint. When a script fails
 citing a different command than the one invoked, the problem is upstream of the
 script — and here that upstream sits between a green local session and a failing
 Vercel build.
+
+## 5. The retry hint lied — a loading state that silently emptied the form
+
+**Phase:** Phase 2 (analyzer UI) · **Date:** 2026-08-26
+
+### Problem
+
+Submitting an unreachable URL correctly produced a 422 and the intended error
+state:
+
+> **Couldn't read that site**
+> We couldn't reach that site. Check the URL and try again.
+> *Your answers are still here — press Analyze to try again.*
+
+The last line was false. The accessibility snapshot taken immediately after the
+failure shows all three inputs empty:
+
+```yaml
+- textbox "Website URL" [ref=f3e31]:
+- textbox "What do you want to build?" [ref=f3e35]:
+- textbox "Who is it for?" [ref=f3e38]:
+- paragraph [ref=f3e42]: Your answers are still here — press Analyze to try again.
+```
+
+A user who mistypes a domain — the single most likely failure in this flow —
+loses a URL, a paragraph of product description and a target customer, and is
+told by the UI that they didn't. The message actively discourages them from
+noticing before they click.
+
+### AI prompt
+
+Self-inflicted, from the approved plan's own wording for this component:
+
+> **`components/analyze/analyze-form.tsx`** (client) — the three fields,
+> mirrored validation, submit disabled while in flight, and four distinct
+> result states: loading, generic error with retry, **rate-limited**, **quota
+> exhausted**.
+
+"Four distinct result states" is the phrase that caused it. Read literally, it
+suggests a state machine that renders one branch at a time — which is what got
+written.
+
+### Attempted solution
+
+An early return for the pending branch, which is idiomatic React and reads
+perfectly well:
+
+```tsx
+if (pending) {
+  return (
+    <div className="space-y-6">
+      <StatusBanner />
+      <AnalysisSkeleton />
+    </div>
+  );
+}
+
+return <form onSubmit={onSubmit}>…</form>;
+```
+
+Nothing about this looks wrong in review. It type-checks, it lints, the loading
+state is a proper skeleton rather than a spinner, and every state is visually
+correct **in isolation** — which is exactly how a component gets reviewed.
+
+### Debugging
+
+The failure was not visible from reading the component, and would not have been
+visible from clicking through the happy path either: on success the page
+redirects to `/dashboard/[projectId]`, so the form's contents stop mattering
+before anyone could notice. It only surfaced because the error path was driven
+in a real browser and the snapshot was read field by field rather than skimmed
+for "an error appeared".
+
+The first hypothesis was a stray `event.currentTarget.reset()` or a controlled
+component defaulting to `""`. Both were wrong — there is no reset call, and the
+inputs are uncontrolled with no `value` prop.
+
+The actual cause is the early return. `if (pending) return <div>…</div>`
+replaces the form with a structurally different tree, so React unmounts the
+`<form>` and its three `<input>` nodes. Uncontrolled inputs keep their state in
+the DOM node itself; destroy the node and the value is gone. When `pending` flips
+back to `false`, a *new* form mounts with empty defaults.
+
+The tell, in hindsight: the component held no state for the field values, yet
+the error copy promised they would survive a round trip. Nothing was keeping
+that promise — the claim and the mechanism were written minutes apart and never
+checked against each other.
+
+### Final solution
+
+Keep the form mounted for the whole lifecycle and hide it instead of replacing
+it. The `hidden` attribute leaves the DOM nodes — and therefore the values — in
+place:
+
+```tsx
+<div className="space-y-6">
+  {pending ? <StatusBanner /> : null}
+  <div hidden={pending}>
+    <form onSubmit={onSubmit}>…</form>
+  </div>
+  {pending ? <AnalysisSkeleton /> : null}
+</div>
+```
+
+The fields are also `disabled` while in flight, so the hidden form cannot be
+submitted or tabbed into.
+
+**Why this works rather than merely appearing to:** it removes the promise's
+dependence on anything remembering the values. Lifting them into `useState`
+would also have worked, but it adds three pieces of state and a re-render per
+keystroke to solve a problem that only exists because the node was being thrown
+away.
+
+**The lesson:** an early return is a *remount*, and remounting is invisible in
+every gate this project has — types, lint, build, and reading the diff. The
+copy claimed a behaviour the structure could not deliver, and only driving the
+failure path in a browser and reading the resulting DOM caught it. Testing the
+happy path would never have found this, because on success the form is
+discarded anyway.
