@@ -132,9 +132,14 @@ typed error envelope with a real status code.
 | `/api/auth/signup` | POST | Create account. Returns `{ signedIn }` — false when confirmation is required |
 | `/api/auth/login` | POST | Sign in |
 | `/api/auth/logout` | POST | Sign out |
-| `/api/analyze` | POST | *Phase 2* — url + description + customer → analysis, cached |
-| `/api/build` | POST | *Phase 3* — projectId → concept, cached |
-| `/api/refine` | POST | *Phase 3* — projectId + instruction → full updated concept |
+| `/api/analyze` | POST | url + description + customer → 7-field analysis. **Creates the project row after the analysis succeeds**, so a failed run persists nothing |
+| `/api/build` | POST | projectId → 6-field concept from the *cached* analysis. Returns `cached: true` without calling the model if a concept exists |
+| `/api/refine` | POST | projectId + instruction → **full** updated concept, plus a `refinements` history row |
+
+`/api/analyze`, `/api/build` and `/api/refine` set `maxDuration = 60` (Vercel
+Hobby's ceiling). The per-call model timeout is 20s so the worst case — 8s fetch
++ 20s call + 20s stricter retry = 48s — fits inside it. A handler killed
+mid-flight would spend quota and persist nothing.
 
 ### Error envelope
 
@@ -158,6 +163,90 @@ turned a clear 400 into an opaque 502; see `docs/DEBUGGING.md` entry 3.
 path. `startsWith("/")` is not sufficient — `//evil.com` and `/\evil.com` are
 protocol-relative and navigate off-origin, which turns a genuine login on the
 real domain into a credential-phishing handoff.
+
+## The LLM layer
+
+All model calls go through `lib/llm`. Feature code imports **only**
+`generateStructured` and `getLLM`; `@google/genai` appears in exactly one file,
+`lib/llm/providers/gemini.ts`. Switching model or vendor is an env change;
+adding a vendor is one file in `providers/` plus one line in `registry.ts`.
+
+```
+analyzer / builder / editor        lib/prompts/*
+        │  zod schema + prompt
+        ▼
+generateStructured                 lib/llm/generate.ts
+        │  token floor · JSON parse · zod validate · ONE stricter retry
+        ▼
+getLLM()                           lib/llm/registry.ts   (LLM_PROVIDER)
+        │
+        ▼
+createGeminiProvider               lib/llm/providers/gemini.ts
+```
+
+The zod schema is used **twice** — converted to the vendor's schema so the model
+is constrained on the wire, and again to validate the response — so the two can
+never drift. Field-level `.describe()` text rides onto the wire, so per-field
+guidance lives on the field.
+
+`openai` and `anthropic` exist in the registry as entries that throw a clear
+"not enabled" error. That is deliberate: it keeps the swap contract honest
+without enabling a paid vendor. Full contract in `lib/llm/README.md`.
+
+### Concept schema — chosen by measurement
+
+Three wire formats (nested JSON / XML / flat JSON with string sections) were run
+head to head over **42 live calls** — build, narrow edit, structural edit, depth
+stress. All three scored 100%, so nesting was never the reliability risk it was
+assumed to be. Nested JSON won on two secondary grounds: Gemini enforces
+`responseJsonSchema` on the wire and has no equivalent for XML, and
+`pages[].sections[]` is already the shape a visual preview or code generator
+needs. See `docs/PROMPTS.md` entry 3.
+
+Array minimums are `1`, not `3`. The schema is shared with the Editor, and
+"remove the pricing page" is a first-class instruction — a `min(3)` on `pages`
+makes the third removal unsatisfiable and dead-ends the user after spending two
+requests. Validity is the schema's job; richness is the builder prompt's.
+
+## Rate limits
+
+Free tier is **15 requests/minute and 500 requests/day**. The daily cap is the
+real constraint: one complete demo is 6 calls (1 analyze + 1 build + 4 refine),
+measured.
+
+`LLMRateLimitError` carries a `scope` read from the 429 body's
+`error.details[].violations[].quotaId` — structurally, never by matching message
+text. The distinction is load-bearing: a per-minute limit clears on retry and a
+per-day one does not, and the UI renders them as different states
+(`rate_limited` vs `quota_exhausted`, both HTTP 429).
+
+## SSRF guard
+
+`/api/analyze` fetches an untrusted, user-supplied URL from inside our
+infrastructure. `lib/scrape/fetch-site.ts`:
+
+- resolves the hostname and checks the **resolved addresses**, rather than
+  pattern-matching the literal — this catches `2130706433`, `127.1`,
+  `0x7f000001` and public hostnames that resolve to private IPs;
+- parses IPv6 to bytes rather than by spelling, because the URL parser rewrites
+  `::ffff:169.254.169.254` as `::ffff:a9fe:a9fe`;
+- follows redirects **by hand**, re-validating every hop, because
+  `redirect: "follow"` would let hop 0 be public and hop 1 be the metadata
+  endpoint.
+
+**Known residual:** this is resolve-then-fetch, not resolve-then-pin, so DNS
+rebinding is not caught. Closing it needs a pinned-IP connection with a `Host`
+override, which `fetch` does not expose.
+
+## Demo account
+
+`pnpm seed:demo` — idempotent, and makes **zero model calls**. The data in
+`lib/demo/seed-data.ts` was captured from one real pipeline run by
+`scripts/generate-demo-data.ts`. That separation matters: the account exists as
+insurance for when the daily quota is exhausted, so a seed that called Gemini
+would fail in precisely the situation it was written for.
+
+Credentials are in the root `README.md` and are intentionally public.
 
 ## AI models used
 
@@ -198,7 +287,20 @@ Fallback if Vercel fails: OCI free tier behind a Cloudflare Tunnel on
 - **Light theme only.** The `ThemeProvider` is mounted with `forcedTheme="light"`
   so there is one surface to design and QA. Enabling dark mode is a props change.
 - **Daily LLM quota is shared with the grader.** 500 requests/day, ~6 per full
-  demo. Caching every result is a correctness requirement, not just a cost rule,
-  and a seeded demo account is planned as insurance.
+  demo. Caching every result is a correctness requirement, not just a cost rule.
+  The seeded demo account (`pnpm seed:demo`) is the insurance.
+- **No server-side rate limiting.** The refine box serialises requests and
+  enforces a client-side minimum interval, but a second tab or a direct API call
+  can still spend quota faster. A real fix needs a counter in Postgres.
+- **"Add a dashboard" is interpretive.** Measured on production: where no
+  dashboard exists the model *converts the home page into one* rather than
+  appending a fifth page. Consistent (nav still matches pages) and defensible,
+  but not literally additive — and the builder does not reliably emit a pricing
+  page either, so two of the brief's four demo instructions can be no-ops
+  depending on the draft.
+- **Landing page is dynamically rendered.** The header is auth-aware, so `/`
+  reads cookies and opts out of static caching. Correct — a cached auth-aware
+  page would serve one visitor's state to another — but it costs a server render
+  per visit.
 - **No test suite.** Verification is `pnpm lint` + `pnpm build` + Playwright
   walkthroughs + direct SQL assertions against RLS.

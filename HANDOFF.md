@@ -2,53 +2,81 @@
 
 **Read this first in every new session.** It is the fastest path back to full context.
 
-_Last updated: 2026-08-25, ~22:00 IST — end of session 2. Phases 0 and 1 complete and verified on production. Next: Phase 2, the analyzer._
+_Last updated: 2026-08-26, ~14:30 IST — end of session 3. Phases 0–6 complete and verified on production. Next: a frontend/UX refactor, then Phase 7 (docs + video)._
 
 ---
 
 ## Where things stand
 
-**Phase:** 0 and 1 done. **Phase 2 (the analyzer) is next** — the first code that calls Gemini.
+**Every functional requirement in the brief is built, deployed and verified.**
+What is left is a UI/UX pass the user has asked for, and the graded paperwork.
 
 | | Status |
 |---|---|
-| Production URL | **https://reforge-blond-two.vercel.app/** — live, auth working |
-| GitHub repo | `Rounak7721/ReForge`, pushed over SSH, `main` is current |
-| Vercel | Connected to the repo. **Every push to `main` auto-deploys** |
-| Vercel env vars | All six set and verified working in production |
-| Supabase | `zqyahkyigokbxmufpxpj` — schema applied, RLS verified, advisors clean, tables empty |
-| Local `.env` | Complete, git-ignored |
+| Production URL | **https://reforge-blond-two.vercel.app/** — full flow working |
+| Demo login | `demo@reforge.app` / `reforge-demo-2026` — opens a finished project |
+| GitHub repo | `Rounak7721/ReForge`, `main` current and pushed |
+| Vercel | Auto-deploys on every push to `main` |
+| Supabase | `zqyahkyigokbxmufpxpj` — schema + RLS live. **Only the demo account exists**; all test users deleted |
 | Working tree | Clean, on `main`, synced with origin |
-
-**Deadline: 2026-08-27 ~13:42 IST.** ~40h remained at the end of this session.
-
-### Are we on pace?
-
-Yes, with a caveat.
+| LLM quota used today | ~85 of 500. Resets midnight Pacific |
 
 ```
-checklist    24 / 95 boxes    25% complete
-time         8.1h of 48h      17% elapsed
+checklist    86 / 95 boxes    91% complete
+deadline     2026-08-27 ~13:42 IST     (~23h remaining at time of writing)
 ```
 
-Ahead on paper — 25% of the work in 17% of the time — and the projection says
-~24h of work against ~40h remaining. **But the caveat matters:** Phases 0 and 1
-were infrastructure with well-trodden patterns. Phase 2 onward is LLM
-integration, where prompt iteration, malformed-output handling and a 500/day
-quota make estimates less reliable. Treat the buffer as insurance, not slack.
-
-Budget guidance: aim to have **Phases 2–4 done in the next ~15h**, leaving the
-landing page, hardening, README/video for the final stretch. Reserve the last
-4h for the video and deliverables — an unfinished bonus scores zero, a missing
-README loses guaranteed points.
+**Estimated remaining work: ~6h.** Comfortable, but the video is the one item
+that cannot be rushed — reserve 2.5h for it and do not let the refactor eat that.
 
 ---
 
-## No blockers
+## Next actions, in order
 
-Everything is connected and verified: Supabase MCP, context7, playwright; skills
-`prompt-log`, `debug-log`, `deploy`, `wrap-up`, plus `frontend-design`,
-`code-review`, `security-review`, `run`.
+### 1. Frontend / UX refactor — **the user's explicit next request**
+
+> "we will do some refactoring for the frontend with new added skills … to give
+> a more natural feel to it"
+
+The user intends to add new skills before this. **Ask which skills are available
+before starting**, and treat this as a design task — they granted full autonomy
+for the last one and reviewing the artifact beat approving a plan.
+
+Where the current UI is weakest, in priority order:
+
+1. **`/dashboard/[projectId]` is a long vertical dump.** Analysis (7 sections)
+   then concept (4 sections) stacked. It works but has no rhythm — this is the
+   page a grader spends the most time on and the one that would benefit most.
+2. **The refine box is functional, not conversational.** It sits above the
+   concept as a form. The brief calls this "modify through natural-language
+   instructions"; it currently reads as a control panel. *Careful:* a previous
+   decision (below) explicitly rejects building it as a chat transcript — the
+   goal is a more natural *feel*, not a message stream.
+3. **No visual diff after a refinement.** The concept silently changes. Showing
+   what changed would make the demo land far harder.
+4. **`/dashboard/new` is a plain form** on an otherwise designed product.
+5. Landing page is done and verified — leave it unless asked.
+
+The design language is established: see `.marketing` in `app/globals.css`
+(`--ink`, `--paper`, `--wash`, `--rule`, `--dim`, `--signal: #1F4BE0`) and
+`components/marketing/`. Three type roles: Archivo display, Geist body, Geist
+Mono data.
+
+### 2. Phase 7 — deliverables (the remaining 9 boxes)
+
+1. **Final pass on the docs.** They are current, not stale — this is verification,
+   not writing. `docs/PROMPTS.md` has **6** entries (target 5–10),
+   `docs/DEBUGGING.md` has **6** (minimum 2), `README.md` has all nine required
+   sections plus a demo-account block, `docs/ARCHITECTURE.md` is current.
+2. **AI development process narrative** — blank folder → deployed. Not yet
+   written. This is a required deliverable.
+3. **Record the video, ≤3 min, against production**, all 8 beats from
+   `project_guidelines/06-deliverables.md`.
+4. **Walk `02-functional-requirements.md` top to bottom against the deployed
+   URL** and tick the last boxes.
+
+**Before recording, read the demo caveat under Decisions — two of the brief's
+four example instructions can be no-ops depending on the generated draft.**
 
 ---
 
@@ -56,152 +84,149 @@ Everything is connected and verified: Supabase MCP, context7, playwright; skills
 
 ```
 app/
-  (marketing)/page.tsx       branded placeholder — what / currently serves
-  (auth)/login|signup        pages sharing components/auth/auth-form.tsx
-  (app)/dashboard/           protected shell: header, user email, logout, empty state
-  api/auth/{signup,login,logout}/route.ts     WORKING
+  (marketing)/page.tsx        THE landing page — 9 sections, verified on prod
+  (auth)/login|signup         share components/auth/auth-form.tsx
+  (app)/dashboard/            page (list) · new (analyze form) · [projectId]
+                              + loading.tsx on both server routes, error.tsx
+  not-found.tsx               branded 404
+  api/auth/{signup,login,logout}
+  api/analyze  api/build  api/refine        all working, all maxDuration=60
 lib/
-  env.ts                     zod-validated env access
-  safe-redirect.ts           same-origin guard for `next` params (19 payloads tested)
-  supabase/                  browser · server · middleware · admin(service role)
-  api/                       errors · auth-schema · supabase-auth-error
-  types/database.ts          generated from live schema — REGENERATE after migrations
-  llm/  prompts/             EMPTY — this is Phase 2
-middleware.ts                session refresh + /dashboard guard
-supabase/migrations/         0001 schema+RLS · 0002 set_updated_at hardening
+  llm/            getLLM · generateStructured · providers/gemini.ts · registry
+                  + README.md documenting the swap contract
+  prompts/        analyzer.ts (7 fields) · builder.ts (6) · editor.ts
+  scrape/         fetch-site.ts — SSRF guard + manual redirect following
+  api/            errors · llm-error · project · auth-schema · supabase-auth-error
+  demo/           credentials.ts · seed-data.ts (captured, zero model calls)
+  supabase/       browser · server · middleware · admin(service role)
+  types/database.ts    generated — REGENERATE after any migration
+scripts/
+  generate-demo-data.ts   one-off; runs the real pipeline, writes seed-data
+  seed-demo.ts            `pnpm seed:demo` — idempotent, zero model calls
 components/
-  auth/                      auth-form · logout-button
-  providers/theme-provider   light-only (forcedTheme)
-  ui/                        shadcn: button input textarea card label sonner skeleton
-docs/                        ARCHITECTURE(current) · PROMPTS(2) · DEBUGGING(3)
-README.md                    all 9 required sections, current
-project_guidelines/08-mvp-checklist.md   ← the live tracker, accurate
+  marketing/      wordmark · marketing-header · teardown-panel
+  analysis/       analysis-view (pure) · analysis-skeleton
+  concept/        concept-view (pure) · product-studio (build + refine + history)
+  analyze/        analyze-form
+docs/             ARCHITECTURE · PROMPTS(6) · DEBUGGING(6)
 ```
 
-**Honest status:** the landing page is a *placeholder*, not the real one
-(Phase 5). The dashboard renders an empty state with a **disabled** "New
-project" button — project CRUD is Phase 4.
-
-**Graded deliverables:** `docs/DEBUGGING.md` has **3** entries (≥2 required —
-met). `docs/PROMPTS.md` has **2** of the 5–10 needed. Keep logging as you go;
-do not batch these.
-
----
-
-## Next actions, in order
-
-1. **Build `lib/llm`** — `getLLM`, `generateStructured`, `providers/gemini.ts`,
-   `registry.ts`, plus `lib/llm/README.md` documenting the swap contract. It
-   must: set `maxOutputTokens` with a **floor**, throw a typed error when
-   `candidates[0].content.parts` is missing (carrying `finishReason`), and map
-   429 to a distinct error code. See the two traps under Decisions.
-2. **`lib/prompts/analyzer.ts` + zod schema** locked to exactly the 7 fields in
-   `02-functional-requirements.md` §2. No more, no fewer.
-3. **Server-side URL fetch** — timeout, size cap, HTML→text, truncate to a token
-   budget. Never ask the model to "visit" a URL. Fall back to meta tags + title
-   for JS-only shells and tell the user the site was thin.
-4. **`POST /api/analyze`** — validate input, cache the result to
-   `projects.analysis`, typed errors. Needs a `projects` row to exist first, so
-   create the project in the same request or add `POST /api/projects`.
-5. **Analyzer UI** — the 3-field form, results view rendering all 7 fields, plus
-   loading / error / **rate-limited** states (rate-limited is distinct).
-6. Then Phase 3 (builder + editor), Phase 4 (dashboard CRUD), Phase 5 (landing
-   page, use the `frontend-design` skill), Phase 6 (hardening), Phase 7 (docs +
-   video).
-
-Plan mode first for anything non-trivial, per `CLAUDE.md`.
+**Honest status:** everything above works. The UI is clean but plain in the app
+shell — that is exactly what the next session is meant to address.
 
 ---
 
 ## Decisions already made — don't relitigate
 
-**Stack & process**
-- Next.js 15 (App Router), TS strict, Tailwind v4 + shadcn/ui on the **Radix**
-  base, Supabase (Postgres + Auth, RLS on), Vercel Hobby. Pinned to Next **15**,
-  not the 16 that `create-next-app@latest` now installs — follow the reference
-  docs.
-- **Route Handlers, not Server Actions**, for everything including auth.
-  Supabase's own examples use Server Actions; we deviate deliberately.
-- **Deploy early via GitHub → Vercel CI/CD.** Verify on the deployed URL as you
-  go, not at the end. Fallback if Vercel fails: OCI + Cloudflare Tunnel on
-  `reforge.rounak.co`.
-- **Zero recurring cost is a hard requirement.** Claude Code builds it, Gemini
-  runs in it. State that distinction in the README and video.
-- Work on phase branches, fast-forward into `main`. **No subagents** —
-  `code-review` covers the review gate, `playwright` + `run` cover QA.
-
-**The product**
-- The MVP generates a **structured product concept, not a codebase.** No code
-  generation, no iframe preview, no export — those are bonuses #2/#3/#5/#6 and
-  are out of scope until the required flow is deployed.
-- **Two display gates, not one:** the analysis renders as a finished artifact,
-  and "Build My Product" is a *separate* action producing a second artifact.
-- The chat refines the **concept object** — it is an editing control, not a
-  message stream. Building it as a transcript loses points on requirement 3.
-- **The concept schema is structured data, not prose** — `navigation`, `pages`
-  and `uiDirection` are arrays/objects, so the visual-preview bonus becomes an
-  additive component rather than a rewrite. Shape and rationale in
-  `02-functional-requirements.md` §3. Moderate structure only; deep nesting
-  hurts model reliability.
+### Product
+- MVP produces a **structured product concept, not a codebase**. No code
+  generation, no iframe preview, no export.
+- **Two display gates:** the analysis is a finished artifact; "Build My Product"
+  is a *separate* action producing a second artifact.
+- The chat refines the **concept object** — an editing control, not a message
+  stream. **Building it as a transcript loses points on requirement 3.** Keep
+  this in mind during the UX refactor.
 - Rendering is a pure function of the concept object; DB changes stay additive.
-- **Multi-agent workflow is cut** — framed as a LangGraph fit in the README's
-  known limitations and the video's "what's next" beat.
+- **Multi-agent workflow is cut** — framed in the README as a LangGraph fit.
 
-**Model — measured, not assumed**
+### The concept schema — settled by measurement, do not revisit
+42 live calls across nested JSON / XML / flat JSON. All three scored **100%** on
+build, narrow edit, structural edit and depth stress — nesting was never the
+reliability risk we assumed. **Nested JSON won** on two secondary grounds:
+Gemini enforces `responseJsonSchema` on the wire and has no XML equivalent, and
+`pages[].sections[]` is already the shape a visual preview or code generator
+needs. Full write-up: `docs/PROMPTS.md` entry 3.
+
+**Array minimums are 1, not 3.** The schema is shared with the Editor and
+"remove the pricing page" is a first-class instruction — `min(3)` on `pages`
+makes the third removal unsatisfiable and dead-ends the user after spending two
+requests. Validity is the schema's job; richness belongs to the builder prompt.
+
+### Model — measured, not assumed
 - **`gemini-3.1-flash-lite`**, chosen on **daily quota**: the 3.x Flash line
-  allows **20 requests/day** (≈3 complete demos); flash-lite allows **500** at
-  15 RPM. `gemini-2.5-flash` is 404 for new keys; `gemini-3.7-flash` is
-  UNAVAILABLE under load; avoid `*-latest` aliases, they float.
+  allows 20 requests/day, flash-lite 500. Avoid `*-latest` aliases.
 - **Trap 1: `maxOutputTokens` caps thinking + output combined.** A lean budget
-  returns HTTP 200 with `content: {}` and **no `parts` array**, so the usual
-  accessor throws rather than returning undefined.
-- **Trap 2: `thinkingLevel` is not portable.** flash-lite emits 0 thinking
-  tokens with no config but 118 with `"low"` — the inverse of 3.6-flash. Enforce
-  a token floor instead of trusting it.
+  returns HTTP 200 with `content: {}` and **no `parts` array**.
+- **Trap 2: `thinkingLevel` is not portable** across the Flash family. The
+  portable defence is `MIN_OUTPUT_TOKENS`, a floor in `lib/llm/generate.ts`.
 - Both reproduced in `docs/DEBUGGING.md` entry 2.
 
-**Auth & security**
-- **`getUser()` everywhere**, never `getSession()` (trusts the cookie) or
-  `getClaims()` (needs asymmetric keys enabled).
-- Only `getAll`/`setAll` cookie methods — `get`/`set`/`remove` are deprecated
-  and cause random logouts.
-- **Redirects must carry rotated auth cookies forward.** `getUser()` can refresh
-  tokens as a side effect; a bare `NextResponse.redirect` throws them away and
-  silently logs the user out. `redirectPreservingCookies()` exists for this.
-- **`lib/safe-redirect.ts` guards every caller-supplied `next`.**
-  `startsWith("/")` is not enough — `//evil.com` is protocol-relative.
-- **`mailer_autoconfirm` is `true`** (email confirmation OFF). Load-bearing, not
-  cosmetic: with it on, every signup sends an email, the free tier allows a
-  handful per hour, and signup then fails **project-wide** with
-  `over_email_send_rate_limit`. We hit exactly that. **Do not turn it back on.**
-- Map Supabase errors by **`error.code`**, never message substrings. Unmapped
-  errors must log server-side — a silent catch-all is where bugs hide.
+### Demo caveat — read before recording the video
+Measured on production: **the builder does not reliably emit a dashboard or a
+pricing page**, so two of the brief's four example instructions can be no-ops
+depending on the draft. And where no dashboard exists, "Add a dashboard"
+**converts the home page into one rather than appending a fifth page** —
+consistent (nav still matches pages) and defensible, but not literally additive.
+
+The seeded demo project is built around this: it ships *with* a `/pricing` page
+so "Remove the pricing page." demonstrably works. Either demo from the seeded
+project, or choose a target where all four instructions land.
+
+### Auth & security
+- **`getUser()` everywhere**, never `getSession()` or `getClaims()`.
+- Only `getAll`/`setAll` cookie methods.
+- **Redirects must carry rotated auth cookies forward** —
+  `redirectPreservingCookies()` exists for this.
+- `lib/safe-redirect.ts` guards every caller-supplied `next`.
+- **`mailer_autoconfirm` is `true`** (email confirmation OFF). Load-bearing —
+  turning it on makes signup fail project-wide with
+  `over_email_send_rate_limit`. **Do not turn it back on.**
+- Map Supabase errors by **`error.code`**, never message substrings.
+- **SSRF guard is resolve-then-fetch, not resolve-then-pin.** DNS rebinding is a
+  known, documented residual; closing it needs a pinned-IP connection `fetch`
+  does not expose.
+
+### Process
+- Route Handlers, not Server Actions. Phase branches, fast-forward into `main`.
+- **No subagents** — `code-review` is the review gate, `playwright` + `run` cover QA.
+- `pnpm-workspace.yaml` `allowBuilds`: **any new dependency with an install
+  script makes `pnpm install` exit 1**, which silently breaks `lint` and `build`.
+  Read what the script does, then set it. Hit twice — `docs/DEBUGGING.md` 4 and
+  its addendum.
+- **`.gitignore` patterns must be root-anchored** (`/build/`, not `build/`). An
+  unanchored `build/` silently excluded `app/api/build/route.ts` from the index
+  while every gate passed. `docs/DEBUGGING.md` entry 6.
 
 ---
 
 ## Standing constraints worth re-reading before coding
 
-- Reopening a saved project must render from the DB and **never** re-call
-  Gemini — a cost rule *and* requirement 6.
-- Set `maxOutputTokens` on every call (with a floor); zod-validate every LLM
-  response before it touches the DB or UI.
-- 15 RPM / **500 requests per day**, shared with the grader. Debounce the chat
-  box, serialise requests, and handle 429 as **two** distinct states:
-  per-minute (retrying works) and per-day (retrying never works — say so).
-- **Seeding a demo account with a pre-analyzed project is required**, not
-  optional — insurance if the grader arrives after quota is spent.
-- `apply_migration` and `execute_sql` write straight to the remote project with
-  no staging. **Ask before running either.** After any migration, regenerate
-  `lib/types/database.ts`.
-- Any **new** env var must be added to Vercel too — code reading a missing var
-  builds fine and fails at runtime.
+- Reopening a saved project must render from the DB and **never** re-call Gemini.
+- `maxOutputTokens` on every call, with a floor; zod-validate every response.
+- 15 RPM / **500 requests per day**, shared with the grader. One full demo is
+  exactly **6 calls**. Handle 429 as two states: per-minute (retry works) and
+  per-day (retry never works — say so).
+- Any **new** env var must be added to Vercel too.
+- `apply_migration` / `execute_sql` write straight to production. **Ask first.**
+  Regenerate `lib/types/database.ts` after any migration.
+- Delete test users after any manual flow — only `demo@reforge.app` should remain.
 - 35 of 100 points are process docs, maintained continuously by Claude.
+
+---
+
+## A pattern worth carrying forward
+
+Three separate times this session a **verification step was wrong rather than the
+thing being verified**: a deploy probe that would have reported success against
+the old build, a "blocked" SSRF result that was actually a network timeout, a
+structural test that passed because the fixture never contained the thing being
+removed, and an assertion that failed only because the headings are
+CSS-uppercased. Verification code gets no review and no tests, and it is trusted
+precisely when it says what you hoped to hear. **Read the reason, not the verdict.**
 
 ---
 
 ## Open questions for the user
 
-- None blocking. Phase 2 can start immediately.
+1. **Which skills are being added for the frontend refactor?** The user said
+   "with new added skills" — ask before starting so the work uses them.
+2. **How much of the app shell should the refactor touch?** The landing page is
+   done and verified; the recommendation is to focus on
+   `/dashboard/[projectId]`, which is where a grader spends most time.
+3. **Video: demo from the seeded account or a live analysis?** Live is more
+   impressive but spends quota and risks the two interpretive instructions
+   above. A hybrid — live analyze + build, then the seeded project for
+   refinements — is probably the strongest.
 
 ---
 

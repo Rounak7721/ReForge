@@ -6,11 +6,29 @@ which you refine in plain English.
 
 **Live:** https://reforge-blond-two.vercel.app/
 
-> **Build status.** Phases 0–1 are complete and verified on the deployed URL:
-> the app is scaffolded and deployed, and Supabase schema, RLS and auth all
-> work in production. The AI pipeline (`lib/llm/`, `lib/prompts/`) is the next
-> phase and is **not built yet**. `project_guidelines/08-mvp-checklist.md` is
-> the live tracker and is accurate.
+> **Build status.** Every functional requirement is built and verified on the
+> deployed URL: landing page, auth, the analyzer, the builder, natural-language
+> refinement, the dashboard, and persistence. What remains is documentation and
+> the demo video. `project_guidelines/08-mvp-checklist.md` is the live tracker
+> and is accurate (86/95).
+
+## Try it without signing up
+
+An account is seeded with a finished project so you can see the output without
+spending any of the shared free-tier AI quota:
+
+| | |
+|---|---|
+| **Email** | `demo@reforge.app` |
+| **Password** | `reforge-demo-2026` |
+
+It opens **"Soloist"** — a solo-developer issue tracker built from a `linear.app`
+teardown, with all seven analysis fields, all six concept fields and two
+refinements in its history. It deliberately ships with a `/pricing` page, so
+typing *"Remove the pricing page."* into the refine box shows a real edit.
+
+These credentials are intentionally public. Re-seed at any time with
+`pnpm seed:demo`, which makes zero model calls.
 
 ---
 
@@ -163,7 +181,7 @@ constructor.
 |---|---|---|
 | **Google Gemini** (`generativelanguage.googleapis.com`) | The analyzer, builder and editor calls | Free |
 | **Supabase** — Postgres, Auth, Management API | Database, authentication, project config | Free |
-| **microlink.io** | Website screenshots for the vision bonus | Free (not yet built) |
+| **microlink.io** | Website screenshots for the vision bonus | Free — **not built**, bonus only |
 
 ### Our own routes
 
@@ -172,9 +190,9 @@ constructor.
 | `/api/auth/signup` | POST | Built. Returns `{ signedIn }` |
 | `/api/auth/login` | POST | Built |
 | `/api/auth/logout` | POST | Built |
-| `/api/analyze` | POST | Phase 2 |
-| `/api/build` | POST | Phase 3 |
-| `/api/refine` | POST | Phase 3 |
+| `/api/analyze` | POST | Built. url + description + customer → 7-field analysis. Creates the project row *after* the analysis succeeds, so a failed run persists nothing |
+| `/api/build` | POST | Built. projectId → 6-field concept from the cached analysis. Returns `cached: true` without calling the model if one exists |
+| `/api/refine` | POST | Built. projectId + instruction → **full** updated concept, plus a history row |
 
 Every route validates its input with zod, wraps the call in try/catch, and
 returns a typed envelope with a real status code:
@@ -318,9 +336,22 @@ Fallback if Vercel fails: OCI free tier behind a Cloudflare Tunnel on
 ## Known limitations
 
 - **Free-tier LLM quota is 15 RPM / 500 requests per day, shared with everyone
-  using the deployment.** One full demo is ~6 calls. This is why every result is
-  cached in Postgres and why reopening a project never re-calls Gemini. A seeded
-  demo account is planned as insurance against exhaustion during evaluation.
+  using the deployment.** One full demo is exactly 6 calls, measured. This is why
+  every result is cached in Postgres and why reopening a project never re-calls
+  Gemini. The seeded demo account above is the insurance against exhaustion.
+- **No server-side rate limiting.** The refine box allows one in-flight request
+  and enforces a minimum interval, but a second tab or a direct API call can
+  still spend quota faster. A real fix needs a counter in Postgres.
+- **The SSRF guard is resolve-then-fetch, not resolve-then-pin.** It blocks
+  private and loopback addresses in every encoding, and re-validates each
+  redirect hop — but a hostname whose DNS answer changes between our lookup and
+  `fetch`'s own is not caught. Closing that needs a pinned-IP connection with a
+  `Host` override, which `fetch` does not expose.
+- **"Add a dashboard" is interpretive.** Measured on production: where no
+  dashboard exists, the model converts the home page into one rather than adding
+  a fifth page — consistent, and defensible, but not literally additive. The
+  builder also does not reliably emit a pricing page, so two of the brief's four
+  example instructions can be no-ops depending on the draft.
 - **Rate-limit handling must distinguish per-minute from per-day.** A daily cap
   does not clear on retry, so "rate limited, retrying" would be dishonest after
   the 500th call.

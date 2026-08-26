@@ -351,3 +351,84 @@ wrote to *check* things, not in the thing being checked — a probe that measure
 the wrong signal and a screenshot call that wrote to the wrong place. Verification
 tooling gets no review and no tests, and it is trusted precisely when it says
 what you were hoping to hear.
+
+## 6. Handing over a design task with full autonomy — and three quality bars
+
+**Phase:** Phase 5 (landing page) · **Date:** 2026-08-26
+
+### What I asked
+
+> OK, proceed with Phase 5. It's a designing task, so proceed with full
+> autonomy. Make sure everything fits exactly in its place, looks clean and
+> professional, and is secure.
+
+Earlier in the same thread, a constraint that turned out to decide the schema:
+
+> Keep in mind we are likely to add actual starter code and visuals later on if
+> time permits, so make sure to keep it modular and easy to add on.
+
+### Why I structured it that way
+
+"Full autonomy" on a *design* task is a different instruction from full autonomy
+on an implementation task, and it is the right call here. Design is where
+round-tripping is most expensive: describing a layout in prose and waiting for
+approval costs more than building it and looking at it, because neither party
+can evaluate a landing page from a description. Handing over the whole decision
+— palette, type, structure, copy — and reviewing the artifact is strictly faster
+than approving a plan for one.
+
+But autonomy without a bar produces something plausible and generic. So the
+prompt carries three, and they are deliberately different in kind:
+
+- **"fits exactly in its place"** — a *measurable* bar. Not "looks tidy" but
+  something that can be checked with numbers, which is what made it actionable.
+- **"clean and professional"** — a taste bar, unavoidably subjective.
+- **"is secure"** — a bar that does not obviously apply to a static marketing
+  page, which is exactly why stating it was useful.
+
+### What the AI produced
+
+A spec-sheet direction derived from the product itself: Reforge emits typed,
+labelled, structured data, so the page is built the same way — mono keys, visible
+rules, one accent, and section markers written as paths (`/how`, `/pricing`)
+because paths are literally part of the product's output. Three type roles
+(Archivo display, Geist body, Geist Mono data) and no more.
+
+The signature element is the hero panel, and it is the honest choice: not a stock
+mockup but the product's **real output in its real shape** — a `linear.app`
+teardown becoming a solo issue tracker. It doubles as the required "product
+demo/mockup", which means the demo cannot drift from what the product does.
+
+All nine required sections, verified present on the deployed URL.
+
+### What I changed / fixed afterward
+
+**The measurable bar did the most work.** "Fits exactly in its place" converted
+into an actual assertion — every pricing card's label, price and CTA must share a
+pixel top — and three rounds of screenshot critique found real faults that
+reading the code would not have: the headline orphaned "pieces." on a line of its
+own, the CTAs failed to bottom-align because the tiers have different item
+counts, and the "POPULAR" badge pushed the featured card's content down 2px
+against its neighbours. All three were invisible in the markup and obvious in a
+screenshot.
+
+**The security bar found the one real risk.** A static marketing page has almost
+no attack surface — but the header is auth-aware, and an auth-aware page that
+gets statically cached serves one visitor's session state to another. Checking
+the build output confirmed `ƒ /` (dynamic), so Next had correctly opted out.
+Worth noting that this is a *tradeoff I made and would flag*, not a free win: the
+landing page now costs a server render per visit to gain that behaviour.
+
+**I deliberately spent the freedom against the defaults.** AI design clusters
+around cream-and-terracotta serif, black-with-acid-green, and broadsheet
+hairlines. Naming those upfront and refusing all three is what stopped the
+"clean and professional" bar from resolving to "templated".
+
+**The throwaway constraint outranked the explicit ones.** The note about starter
+code and visuals was appended almost as an afterthought, and it decided the
+concept schema: nested `sections: {type, headline, body}[]` renders directly as
+visual blocks, whereas the flat `string[]` alternative — which was *faster and
+smaller in every measurement* — would have needed a migration to do the same. The
+measured winner lost to a stated future requirement, which is the correct
+ordering and would not have happened if that sentence had been treated as
+incidental.

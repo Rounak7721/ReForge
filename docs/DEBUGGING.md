@@ -460,6 +460,36 @@ citing a different command than the one invoked, the problem is upstream of the
 script — and here that upstream sits between a green local session and a failing
 Vercel build.
 
+### Addendum, 2026-08-26 — the same gate, the opposite answer
+
+Adding `tsx` in Phase 6 pulled in `esbuild` and tripped this identically:
+`pnpm seed:demo` died with the same `install` error, and I had silenced the
+`pnpm add` output so the warning went unseen a second time.
+
+The interesting part is that the conclusion above — "for a library consumed
+through its runtime API the answer is almost always `false`" — looked wrong
+here. `esbuild`'s postinstall is `node install.js`, which fetches and links its
+**native binary**. Blocking that sounds like breaking the tool.
+
+Rather than reason about it, I set `false` and ran `tsx`:
+
+```
+$ pnpm exec tsx -e 'console.log("tsx works:", 1+1)'
+tsx works: 2
+```
+
+It works because pnpm installs the platform package (`@esbuild/linux-x64`) as an
+optional dependency, so the binary is already present and `install.js` is
+redundant. `false` is both correct and safer.
+
+**Why this is worth appending rather than filing separately:** the original
+entry's rule of thumb would have produced the right answer for the wrong reason,
+and a rule that happens to be right is indistinguishable from one that is right
+until it isn't. The rule is not "libraries don't need their install scripts" —
+it is "check what the script actually does, then verify by blocking it". The
+second half is what made this one safe.
+
+
 ## 5. The retry hint lied — a loading state that silently emptied the form
 
 **Phase:** Phase 2 (analyzer UI) · **Date:** 2026-08-26
