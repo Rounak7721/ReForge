@@ -9,7 +9,7 @@ import { apiError } from "@/lib/api/errors";
  * rather than on `message` substrings. Messages are not an API contract: they
  * change wording and are locale-dependent. An earlier version of this file
  * matched substrings and turned a clear 400 "email address is invalid" into an
- * opaque 502, because no substring happened to match. See docs/DEBUGGING.md
+ * opaque 502, because no substring happened to match. See docs/04-debugging-log.md
  * entry 3.
  */
 export function fromAuthError(error: AuthError) {

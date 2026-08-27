@@ -1,11 +1,11 @@
 ---
 name: debug-log
-description: Log a real failure to docs/DEBUGGING.md in the required Problem→Prompt→Attempt→Debug→Fix format. Use the moment AI-generated code fails, breaks, or behaves wrongly — before fixing it. Also use when the user says "log this bug" or at wrap-up to catch unlogged failures.
+description: Log a real failure to docs/04-debugging-log.md in the required Problem→Prompt→Attempt→Debug→Fix format. Use the moment AI-generated code fails, breaks, or behaves wrongly — before fixing it. Also use when the user says "log this bug" or at wrap-up to catch unlogged failures.
 ---
 
 # debug-log
 
-`docs/DEBUGGING.md` is a graded deliverable worth **10 points**. The brief asks for at least 2 examples where AI-generated code failed, and marks the section *"This is important."*
+`docs/04-debugging-log.md` is a graded deliverable worth **10 points**. The brief asks for at least 2 examples where AI-generated code failed, and marks the section *"This is important."*
 
 **Log the failure before fixing it.** Once the fix lands, the dead ends and the wrong hypotheses are gone — and those are the parts that demonstrate debugging skill. A bug fixed silently is a lost point.
 
@@ -74,5 +74,5 @@ Worth recognising early so they get logged rather than reflexively patched:
 
 ## Related
 
-- `project_guidelines/06-deliverables.md` — the deliverable spec
-- `prompt-log` skill — for notable prompts, which go to `docs/PROMPTS.md` instead
+- `internal/guidelines/06-deliverables.md` — the deliverable spec
+- `prompt-log` skill — for notable prompts, which go to `docs/03-prompt-log.md` instead

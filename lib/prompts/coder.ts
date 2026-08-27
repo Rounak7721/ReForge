@@ -36,7 +36,7 @@ export const generatedSiteSchema = z.object({
     // and closes the JSON cleanly around the stump — `finish_reason` still says
     // "stop". Checking the closing tag is the only reliable signal, and failing
     // here routes into the existing stricter retry rather than saving a broken
-    // page. See docs/DEBUGGING.md.
+    // page. See docs/04-debugging-log.md.
     .refine((html) => html.trimEnd().endsWith("</html>"), {
       message: "The document is incomplete — it must end with a closing </html> tag.",
     }),

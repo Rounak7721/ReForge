@@ -1,11 +1,11 @@
 ---
 name: prompt-log
-description: Append a notable prompt to docs/PROMPTS.md with all four required answers filled in. Use when a prompt in this session unblocked something, shaped the architecture, or failed instructively — and at session wrap-up to catch anything unlogged. Also use when the user says "log that prompt" or "add this to prompts".
+description: Append a notable prompt to docs/03-prompt-log.md with all four required answers filled in. Use when a prompt in this session unblocked something, shaped the architecture, or failed instructively — and at session wrap-up to catch anything unlogged. Also use when the user says "log that prompt" or "add this to prompts".
 ---
 
 # prompt-log
 
-`docs/PROMPTS.md` is a graded deliverable (part of the 20-point AI-agent-usage category — the largest on the rubric). The brief asks for **5–10 best prompts**, each answering four specific questions.
+`docs/03-prompt-log.md` is a graded deliverable (part of the 20-point AI-agent-usage category — the largest on the rubric). The brief asks for **5–10 best prompts**, each answering four specific questions.
 
 **This log is Claude's job.** The user never edits it and should never have to review it for cleanup. That means every entry is complete and clean at the moment it's written — no placeholders, no "fill in later".
 
@@ -22,13 +22,13 @@ Do **not** log routine prompts. Ten mediocre entries score worse than six sharp 
 
 ## How to log
 
-Append to `docs/PROMPTS.md` **in the same turn the prompt proved notable** — never batched at the end. The fourth question in particular cannot be reconstructed days later.
+Append to `docs/03-prompt-log.md` **in the same turn the prompt proved notable** — never batched at the end. The fourth question in particular cannot be reconstructed days later.
 
 Before writing the entry:
 
 1. **Correct spelling and typos** in the prompt text. Record the corrected version, not the raw one. Fix mechanics only — never rewrite the prompt to look smarter than it was, and never invent a prompt that wasn't sent.
 2. **Answer all four questions now**, from what actually happened in this session.
-3. Number the entry sequentially and set the phase from `project_guidelines/08-mvp-checklist.md`.
+3. Number the entry sequentially and set the phase from `internal/guidelines/08-mvp-checklist.md`.
 
 ## Entry format
 
@@ -63,6 +63,6 @@ unchanged, say what was verified before trusting it and why that check mattered.
 
 ## Related
 
-- `project_guidelines/06-deliverables.md` — the deliverable spec
-- `project_guidelines/07-scoring-map.md` — why this is worth so much
-- `debug-log` skill — for failures, which go to `docs/DEBUGGING.md` instead
+- `internal/guidelines/06-deliverables.md` — the deliverable spec
+- `internal/guidelines/07-scoring-map.md` — why this is worth so much
+- `debug-log` skill — for failures, which go to `docs/04-debugging-log.md` instead

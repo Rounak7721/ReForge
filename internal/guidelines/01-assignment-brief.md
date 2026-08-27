@@ -1,6 +1,6 @@
 # 01 — Assignment Brief
 
-Source: `project_reference/AI FS Engineer Technical Task.pdf` (10 pages). Everything here is from the PDF unless marked **[OUR DECISION]**.
+Source: `internal/brief/AI FS Engineer Technical Task.pdf` (10 pages). Everything here is from the PDF unless marked **[OUR DECISION]**.
 
 ## Role being assessed
 

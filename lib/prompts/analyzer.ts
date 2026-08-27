@@ -6,7 +6,7 @@ import type { SiteContent } from "@/lib/scrape/fetch-site";
  * The Analyzer: step 1 of the three-call pipeline.
  *
  * The seven fields below are the seven bullets in
- * `project_guidelines/02-functional-requirements.md` §2, one for one. Do not
+ * `internal/guidelines/02-functional-requirements.md` §2, one for one. Do not
  * add an eighth "for completeness" and do not merge two — each one is a
  * gradeable item.
  *

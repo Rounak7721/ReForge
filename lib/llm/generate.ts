@@ -24,7 +24,7 @@ import type { LLMProviderName, StructuredRequest } from "@/lib/llm/types";
  *
  * The floor is the portable defence: a model swap that ignores the thinking
  * hint degrades to "slower and pricier" instead of "silently returns nothing".
- * See docs/DEBUGGING.md entry 2.
+ * See docs/04-debugging-log.md entry 2.
  */
 const MIN_OUTPUT_TOKENS = 2048;
 

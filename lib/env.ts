@@ -56,7 +56,7 @@ export function serverEnv() {
  *
  * Defaults mirror `.env.example`. Gemini's model is pinned by daily quota — the
  * 3.x Flash line allows 20 requests/day, flash-lite allows 500. See
- * `project_guidelines/03-tech-stack.md`.
+ * `internal/guidelines/03-tech-stack.md`.
  */
 const PROVIDER_DEFAULT_MODELS: Record<LLMProviderName, string> = {
   gemini: "gemini-3.1-flash-lite",
@@ -65,7 +65,7 @@ const PROVIDER_DEFAULT_MODELS: Record<LLMProviderName, string> = {
   // whether the model returns a COMPLETE document: qwen3.8-27b consistently ran
   // to exactly 10240 characters and stopped mid-tag, while gpt-oss-120b
   // finished the page in a third of the output tokens — which also leaves room
-  // for an edit inside the same per-minute budget. See docs/DEBUGGING.md.
+  // for an edit inside the same per-minute budget. See docs/04-debugging-log.md.
   groq: "openai/gpt-oss-120b",
   openai: "gpt-4o-mini",
 };

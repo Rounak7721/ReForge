@@ -39,8 +39,8 @@ Suggested allocation for 3:00 —
 | 0:00–0:20 | What it is + the landing page |
 | 0:20–1:00 | Live demo: URL in → analysis → Build My Product → one chat refinement |
 | 1:00–1:30 | Architecture: 3-call pipeline, swappable LLM layer, Supabase + RLS |
-| 1:30–2:20 | **How Claude Code built it** — plan mode, the review gate, a real prompt from `docs/PROMPTS.md` |
-| 2:20–2:45 | One debugging story from `docs/DEBUGGING.md` |
+| 1:30–2:20 | **How Claude Code built it** — plan mode, the review gate, a real prompt from `docs/03-prompt-log.md` |
+| 2:20–2:45 | One debugging story from `docs/04-debugging-log.md` |
 | 2:45–3:00 | What's next (name the un-built bonuses) |
 
 Do the demo on the **deployed URL**, not localhost.
@@ -63,7 +63,7 @@ Nine required sections — all named explicitly in the PDF:
 
 "Known limitations" is a gift — state the free-tier RPM ceiling, the text-only analysis fallback, and the un-built bonuses. Naming your own constraints reads as engineering judgment, not as excuses.
 
-Note: this maps onto our planned `docs/ARCHITECTURE.md`. Keep one canonical source and have the root `README.md` carry these nine sections directly — the graders will look at the repo root, not at `docs/`.
+Note: this maps onto our planned `internal/notes/ARCHITECTURE.md`. Keep one canonical source and have the root `README.md` carry these nine sections directly — the graders will look at the repo root, not at `docs/`.
 
 ---
 
@@ -78,7 +78,7 @@ Note: this maps onto our planned `docs/ARCHITECTURE.md`. Keep one canonical sour
 
 The fourth is the one people skip and the one that demonstrates judgment. "The AI produced X, I rejected Y because Z" is worth more than a prompt that worked first try.
 
-Lives in `docs/PROMPTS.md`. **Append as you go** — you cannot reconstruct "why I phrased it that way" three days later.
+Lives in `docs/03-prompt-log.md`. **Append as you go** — you cannot reconstruct "why I phrased it that way" three days later.
 
 ---
 
@@ -96,7 +96,7 @@ We literally start from a blank folder — capture the phases as they happen.
 - [ ] **At least 2 examples** where AI-generated code failed
 - [ ] Each in the format: **Problem → AI prompt → attempted solution → debugging → final solution**
 
-Lives in `docs/DEBUGGING.md`. Log failures the moment they happen. Likely candidates given this stack: malformed LLM JSON, a 429 storm from the chat box, an RLS policy blocking a legitimate read, or the service-role client leaking into a client bundle.
+Lives in `docs/04-debugging-log.md`. Log failures the moment they happen. Likely candidates given this stack: malformed LLM JSON, a 429 storm from the chat box, an RLS policy blocking a legitimate read, or the service-role client leaking into a client bundle.
 
 ---
 
@@ -107,6 +107,6 @@ Lives in `docs/DEBUGGING.md`. Log failures the moment they happen. Likely candid
 - [ ] No secret in the client bundle
 - [ ] Fresh-user sign-up tested in incognito
 - [ ] README's nine sections complete
-- [ ] `docs/PROMPTS.md` has 5–10 entries with all four parts each
-- [ ] `docs/DEBUGGING.md` has ≥2 full trails
+- [ ] `docs/03-prompt-log.md` has 5–10 entries with all four parts each
+- [ ] `docs/04-debugging-log.md` has ≥2 full trails
 - [ ] Video ≤3 minutes, recorded against production, all eight beats covered

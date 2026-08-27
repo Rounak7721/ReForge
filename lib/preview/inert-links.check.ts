@@ -44,7 +44,7 @@ assert.ok(out.includes('class="cta"'), "other attributes on the anchor survive")
 
 // `withSrcdocBase`. Measured on production: WITHOUT this tag a click on
 // `href="#target"` inside the frame navigated to /login; WITH it the frame
-// scrolled to 468 and kept its document. See docs/DEBUGGING.md entry 12.
+// scrolled to 468 and kept its document. See docs/04-debugging-log.md entry 12.
 const based = withSrcdocBase('<!doctype html><html><head><title>x</title></head><body></body></html>');
 assert.ok(
   based.includes('<head><base href="about:srcdoc">'),

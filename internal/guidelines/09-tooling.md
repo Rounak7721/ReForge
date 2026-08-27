@@ -13,13 +13,13 @@ Current state audited from `~/.claude/settings.json` and `~/.claude.json`.
 | Server | Status | Why it's necessary |
 |---|---|---|
 | **context7** | ✅ enabled (plugin) | Next.js 15 App Router, `supabase-js` v2, and `@google/genai` all have APIs that changed recently. Recalling signatures from memory is the single most likely source of wasted debugging time. Non-negotiable for this stack. |
-| **playwright** | ✅ enabled (plugin) | QA phase only — drive the **deployed** app to verify flows, and generate real material for `docs/DEBUGGING.md`. Also covers bonus #7 (Automated QA) nearly for free. |
+| **playwright** | ✅ enabled (plugin) | QA phase only — drive the **deployed** app to verify flows, and generate real material for `docs/04-debugging-log.md`. Also covers bonus #7 (Automated QA) nearly for free. |
 
 ### Added — configured and verified
 
 | Server | Status | Why |
 |---|---|---|
-| **supabase** | ✅ configured in `.mcp.json` | Schema, migrations, RLS policies and seeding are a meaningful slice of Phases 1–4. Doing this through the MCP rather than the dashboard keeps DB changes in the transcript, which feeds `docs/PROMPTS.md`. |
+| **supabase** | ✅ configured in `.mcp.json` | Schema, migrations, RLS policies and seeding are a meaningful slice of Phases 1–4. Doing this through the MCP rather than the dashboard keeps DB changes in the transcript, which feeds `docs/03-prompt-log.md`. |
 
 Config: `@supabase/mcp-server-supabase` pinned to `--project-ref=zqyahkyigokbxmufpxpj`, token supplied as `${SUPABASE_ACCESS_TOKEN}` from the shell env — **never inline the token in `.mcp.json`**, which is committed. Verified working: 20 tools, authenticates, project schema currently empty.
 
@@ -59,9 +59,9 @@ These automate rituals that are otherwise easy to skip under deadline pressure, 
 
 | Skill | Purpose | Invoked |
 |---|---|---|
-| **`prompt-log`** | Append a prompt to `docs/PROMPTS.md`: fix typos, then answer all four required questions inline. Enforces the "nothing left for later manual review" rule. | Automatically when a prompt proves notable; or `/prompt-log` |
-| **`debug-log`** | Append a failure to `docs/DEBUGGING.md` in Problem → Prompt → Attempt → Debug → Fix format, **before** fixing it. | Automatically the moment AI-generated code fails; or `/debug-log` |
-| **`wrap-up`** | End-of-session ritual: checklist → logs → architecture → `HANDOFF.md` → commit. | When the user says to wrap up; or `/wrap-up` |
+| **`prompt-log`** | Append a prompt to `docs/03-prompt-log.md`: fix typos, then answer all four required questions inline. Enforces the "nothing left for later manual review" rule. | Automatically when a prompt proves notable; or `/prompt-log` |
+| **`debug-log`** | Append a failure to `docs/04-debugging-log.md` in Problem → Prompt → Attempt → Debug → Fix format, **before** fixing it. | Automatically the moment AI-generated code fails; or `/debug-log` |
+| **`wrap-up`** | End-of-session ritual: checklist → logs → architecture → `internal/notes/HANDOFF.md` → commit. | When the user says to wrap up; or `/wrap-up` |
 | **`deploy`** | Preflight, env-var verification, and a production smoke test walked as a brand-new user in incognito. | Before any deploy; or `/deploy` |
 
 ---

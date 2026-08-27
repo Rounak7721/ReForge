@@ -180,7 +180,7 @@ export function AnalyzeForm() {
 
       {/* `hidden`, never unmounted. An early return here would destroy the
           three uncontrolled inputs' DOM nodes and with them everything the
-          user typed — see docs/DEBUGGING.md entry 5. */}
+          user typed — see docs/04-debugging-log.md entry 5. */}
       <div hidden={pending}>
         <form
           ref={formRef}

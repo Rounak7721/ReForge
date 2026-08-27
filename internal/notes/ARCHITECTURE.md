@@ -16,7 +16,7 @@ README as the graded summary.
 | Runtime LLM | `gemini-3.1-flash-lite`, free tier, via a swappable `lib/llm` layer |
 | Hosting | Vercel Hobby, auto-deploy on push to `main` |
 
-Rationale for each is in `project_guidelines/03-tech-stack.md`. Two choices were
+Rationale for each is in `internal/guidelines/03-tech-stack.md`. Two choices were
 made against the obvious default and are worth restating:
 
 - **Route Handlers over Server Actions.** Supabase's own Next.js examples use
@@ -120,7 +120,7 @@ next request, so `redirectPreservingCookies()` copies them across.
 **`mailer_autoconfirm` is on** (confirmation email disabled). Not cosmetic: with
 confirmation enabled every signup sends an email, and the free tier's built-in
 mailer allows only a handful per hour — after which signup fails project-wide
-with `over_email_send_rate_limit`. See `docs/DEBUGGING.md` entry 3.
+with `over_email_send_rate_limit`. See `docs/04-debugging-log.md` entry 3.
 
 ## API routes
 
@@ -155,7 +155,7 @@ without string-matching the message.
 substrings — messages are not an API contract. Unmapped errors log server-side
 with their code and status before returning a generic message, so the next
 unknown case is diagnosable from logs. An earlier substring-matching version
-turned a clear 400 into an opaque 502; see `docs/DEBUGGING.md` entry 3.
+turned a clear 400 into an opaque 502; see `docs/04-debugging-log.md` entry 3.
 
 ### Redirect safety
 
@@ -201,7 +201,7 @@ stress. All three scored 100%, so nesting was never the reliability risk it was
 assumed to be. Nested JSON won on two secondary grounds: Gemini enforces
 `responseJsonSchema` on the wire and has no equivalent for XML, and
 `pages[].sections[]` is already the shape a visual preview or code generator
-needs. See `docs/PROMPTS.md` entry 3.
+needs. See `docs/03-prompt-log.md` entry 3.
 
 Array minimums are `1`, not `3`. The schema is shared with the Editor, and
 "remove the pricing page" is a first-class instruction — a `min(3)` on `pages`

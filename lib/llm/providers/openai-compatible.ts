@@ -22,7 +22,7 @@ import type { LLMProvider, LLMProviderName, StructuredRequest } from "@/lib/llm/
  * Deliberately `fetch` rather than the `openai` SDK. The endpoint is documented
  * and stable, the request is twenty lines, and every dependency with an install
  * script is a live risk in this repo — `pnpm-workspace.yaml`'s `allowBuilds`
- * has broken `pnpm install` here twice (docs/DEBUGGING.md 4 and its addendum).
+ * has broken `pnpm install` here twice (docs/04-debugging-log.md 4 and its addendum).
  * A dependency that buys nothing is not worth that.
  */
 
@@ -182,7 +182,7 @@ export function createOpenAICompatibleProvider(
             temperature: request.temperature ?? 0.4,
             // The gpt-oss family are REASONING models, and reasoning tokens are
             // billed against `max_completion_tokens` — the same trap Gemini set
-            // with `thinkingLevel` (docs/DEBUGGING.md entry 2), in a different
+            // with `thinkingLevel` (docs/04-debugging-log.md entry 2), in a different
             // vendor's clothing.
             //
             // Measured: without this, an edit spent its budget thinking and the

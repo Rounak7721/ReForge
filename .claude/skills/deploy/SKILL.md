@@ -28,7 +28,7 @@ pnpm build    # green
 
 Every var in `.env.example` must exist in the Vercel project **before** deploying — a missing one fails at runtime, not at build, which means it looks fine until the grader clicks something.
 
-Current set (see `project_guidelines/03-tech-stack.md`):
+Current set (see `internal/guidelines/03-tech-stack.md`):
 
 ```
 LLM_PROVIDER                        # gemini
@@ -75,6 +75,6 @@ The grader will hit them.
 
 ## After deploying
 
-- [ ] Record the production URL in `HANDOFF.md`
-- [ ] Tick the relevant boxes in `project_guidelines/08-mvp-checklist.md` — only now do they count as verified
+- [ ] Record the production URL in `internal/notes/HANDOFF.md`
+- [ ] Tick the relevant boxes in `internal/guidelines/08-mvp-checklist.md` — only now do they count as verified
 - [ ] Consider seeding a demo account with one pre-analyzed project, as insurance against quota exhaustion during grading

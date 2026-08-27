@@ -20,14 +20,14 @@ Goal: a public URL exists before any feature does. Deployment is 10 points; get 
 - [x] `pnpm dlx shadcn@latest init` — Radix base, `nova` preset; button/input/textarea/card/label/sonner/skeleton added
 - [x] `tsconfig` strict verified (+ `noUncheckedIndexedAccess`); `pnpm lint` + `pnpm build` green
 - [x] `.env.example` created with every var from `03-tech-stack.md`
-- [x] `docs/PROMPTS.md`, `docs/DEBUGGING.md`, `docs/ARCHITECTURE.md` scaffolded
+- [x] `docs/03-prompt-log.md`, `docs/04-debugging-log.md`, `internal/notes/ARCHITECTURE.md` scaffolded
 
 **Deploy** — **[OUR DECISION, 2026-08-25]** GitHub → Vercel CI/CD from the start, so every push to `main` auto-deploys and later phases are verified on the real URL rather than only on localhost. Fallback if Vercel fails: OCI free tier behind a Cloudflare Tunnel on `reforge.rounak.co`.
 - [x] GitHub repo `Rounak7721/ReForge` pushed
 - [x] Vercel project linked to the GitHub repo (auto-deploy on push to `main`)
 - [x] Env vars set in Vercel (all of `.env.example`) — verified on production: `lib/env.ts` parses at module load, so a missing var would 500 the route; it returned a proper zod error instead
 - [x] Placeholder page deployed and publicly reachable — https://reforge-blond-two.vercel.app/ (HTTP 200, correct title)
-- [x] Production URL recorded in `HANDOFF.md`
+- [x] Production URL recorded in `internal/notes/HANDOFF.md`
 
 ---
 
@@ -216,11 +216,11 @@ These are 35 of 100 points. See `06-deliverables.md`. Written continuously, fina
 
 - [x] Root `README.md` with all 9 required sections — verified 2026-08-26; the
   stale "light theme only" limitation was corrected after the redesign
-- [x] `docs/PROMPTS.md` — **8** entries, each with all 4 required parts
-- [x] `docs/DEBUGGING.md` — **11** full Problem→Prompt→Attempt→Debug→Fix trails
-- [x] `docs/ARCHITECTURE.md` current — includes the Design system section
+- [x] `docs/03-prompt-log.md` — **8** entries, each with all 4 required parts
+- [x] `docs/04-debugging-log.md` — **11** full Problem→Prompt→Attempt→Debug→Fix trails
+- [x] `internal/notes/ARCHITECTURE.md` current — includes the Design system section
 - [x] AI development process narrative (blank folder → deployed) —
-      `docs/PROCESS.md`, written 2026-08-27 from the real commit timeline
+      `docs/01-ai-development-process.md`, written 2026-08-27 from the real commit timeline
 - [x] Clean commit history, pushed to GitHub — 29 commits, no secrets
 - [x] Vercel connected to GitHub for CI/CD auto-deploy — verified by asset-hash
       comparison, not by a 200 (middleware makes any /dashboard path answer 307)
@@ -251,7 +251,7 @@ edit, download, and reopen-from-DB with zero `/api/` calls.
       it repaints live when a refinement changes the concept on another tab.
       Nav links inside the frame scroll the document instead of navigating it —
       `<base href="about:srcdoc">`, without which even a `#fragment` walks the
-      frame to `/login`. See `docs/DEBUGGING.md` entry 12
+      frame to `/login`. See `docs/04-debugging-log.md` entry 12
 - [x] **#1 Screenshot analysis** — microlink PNG attached to the analyzer call
       that was already happening, so vision costs **no extra quota**. Adds a
       "Visual impression" cell (style / layout density / colour). Degrades
@@ -277,7 +277,7 @@ edit, download, and reopen-from-DB with zero `/api/` calls.
 - **[-] Multi-agent workflow (Research → Product → UI → QA)** — cut for cost/rate-limit reasons. Five chained calls per user action against a ~10–15 RPM free tier is not viable, and it adds no *required* capability. Documented as future scope: a natural LangGraph fit, where each agent is a graph node with typed state and the orchestration/retry/fan-out is handled by the framework rather than hand-rolled. Say this in the README's "Known limitations" and in the video's "what I'd build next" beat — a reasoned cut is a product-thinking signal, an unexplained gap is not.
 - **[-] Iterative code-level AI development** — was cut as depending on code
   generation + live preview. **Both are now planned** (bonus phases 2 and 1
-  respectively), so this is back in scope. See `HANDOFF.md`.
+  respectively), so this is back in scope. See `internal/notes/HANDOFF.md`.
 
 ## Reordering rule
 

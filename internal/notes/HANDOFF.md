@@ -41,7 +41,7 @@ Confirmed by running the same probe against a worktree at `a2c9dc5` — the last
 commit of the previous session — where it fails identically.
 
 **Commit `0e595d8` fixes it.** Until it is pushed, the deployed app cannot
-build a product or refine one. Full write-up: `docs/DEBUGGING.md` entry 9.
+build a product or refine one. Full write-up: `docs/04-debugging-log.md` entry 9.
 
 ### 3. Add three Vercel env vars, or code generation falls back to Gemini
 
@@ -163,7 +163,7 @@ scaffolding rather than proof.
 1. **`git push origin main`** — ships the production fix and all three bonuses.
 2. **Add the three Vercel env vars** (§3).
 3. **Re-verify on production**, then tick the `[~]` boxes in
-   `project_guidelines/08-mvp-checklist.md`. Nothing there is ticked `[x]` yet
+   `internal/guidelines/08-mvp-checklist.md`. Nothing there is ticked `[x]` yet
    because none of it has been seen on the deployed URL.
    - build + refine work again (the §2 fix)
    - Preview tab: template renders, page switcher, source toggle
@@ -300,6 +300,6 @@ Supabase and the real model APIs:
 ## Session wrap-up ritual
 
 Run the **`wrap-up`** skill. In order: `08-mvp-checklist.md` (tick only what is
-verified on the deployed URL) → `docs/PROMPTS.md` and `docs/DEBUGGING.md` →
-`docs/ARCHITECTURE.md` and `README.md` → **this file** (rewrite, don't append) →
+verified on the deployed URL) → `docs/03-prompt-log.md` and `docs/04-debugging-log.md` →
+`internal/notes/ARCHITECTURE.md` and `README.md` → **this file** (rewrite, don't append) →
 commit and push.

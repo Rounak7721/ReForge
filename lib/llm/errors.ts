@@ -50,7 +50,7 @@ export class LLMRateLimitError extends LLMError {
  * array when thinking consumes the entire token budget; `finishReason` is what
  * makes that diagnosable rather than a mystery 500.
  *
- * See docs/DEBUGGING.md entry 2.
+ * See docs/04-debugging-log.md entry 2.
  */
 export class LLMEmptyResponseError extends LLMError {
   readonly code = "empty_response" as const;

@@ -86,7 +86,7 @@ zod.
 ## Two traps this layer exists to absorb
 
 Both were reproduced against the live API before any of this was written. Full
-trail in `docs/DEBUGGING.md` entry 2.
+trail in `docs/04-debugging-log.md` entry 2.
 
 **1. `maxOutputTokens` caps thinking + output *combined*.** The project's cost
 rule says keep the budget lean. Taken literally on a Gemini 3.x model, the model

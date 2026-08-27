@@ -1,6 +1,6 @@
 # Project Guidelines
 
-A condensed, point-wise working reference distilled from `project_reference/AI FS Engineer Technical Task.pdf` (10 pages). Build against these docs instead of re-reading the PDF.
+A condensed, point-wise working reference distilled from `internal/brief/AI FS Engineer Technical Task.pdf` (10 pages). Build against these docs instead of re-reading the PDF.
 
 Everything here is faithful to the PDF. Our own choices — decisions the brief leaves open, or constraints stricter than it requires — are marked **[OUR DECISION]** so the line between "required" and "chosen" never blurs.
 
@@ -18,7 +18,7 @@ Everything here is faithful to the PDF. Our own choices — decisions the brief 
 
 ## The three things most likely to be forgotten
 
-1. **35 of 100 points are process documentation** — the prompt log, the debugging log, and the video. Write `docs/PROMPTS.md` and `docs/DEBUGGING.md` continuously; they cannot be reconstructed convincingly at the end. See [07](07-scoring-map.md).
+1. **35 of 100 points are process documentation** — the prompt log, the debugging log, and the video. Write `docs/03-prompt-log.md` and `docs/04-debugging-log.md` continuously; they cannot be reconstructed convincingly at the end. See [07](07-scoring-map.md).
 2. **Deploy early.** Deployment is worth 10 points and the grader must be able to use the app without touching our dev environment. A public URL on day one beats a perfect localhost.
 3. **The free-tier rate limit is a product constraint, not just an ops one.** Cache in Postgres, cap output tokens, serialize chat requests, and handle 429s as a first-class UI state. The grader will run our quota down. See [03](03-tech-stack.md).
 

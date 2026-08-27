@@ -21,7 +21,7 @@ export const metadata: Metadata = {
  * 1. **No new dependency.** Every package with an install script has to be
  *    declared in `pnpm-workspace.yaml`'s `allowBuilds` or `pnpm install` exits
  *    1 and silently breaks lint, build and the deploy — that has bitten this
- *    project twice (`docs/DEBUGGING.md` 4). A PDF library is a large addition
+ *    project twice (`docs/04-debugging-log.md` 4). A PDF library is a large addition
  *    to dodge for a single button.
  * 2. **Better output.** The browser's print engine hyphenates, kerns, breaks
  *    pages on real box boundaries and embeds the same webfonts the app uses.

@@ -58,7 +58,7 @@ The free tier is the binding constraint on the whole design.
 - **Set `maxOutputTokens` on every call.** Keep prompts lean.
 - **~10–15 RPM ceiling.** Debounce the chat-edit box, serialize requests, and handle 429s with a friendly "rate limited, retrying" state — never a crash. The grader will hit this.
 - **Validate every LLM response with zod.** Models return malformed JSON. An unvalidated `JSON.parse` is the most likely runtime failure in this app.
-- **`maxOutputTokens` caps thinking + output combined.** Verified 2026-08-25 against the live API: Gemini 3.x Flash reasons before answering, and a lean budget can be spent entirely on thinking — the call returns **HTTP 200 with `content: {}` and no `parts` array**, so the standard `candidates[0].content.parts[0].text` accessor *throws* rather than returning undefined. Mitigations, all in `lib/llm`: pin `thinkingConfig: { thinkingLevel: "low" }`, enforce a floor on `maxOutputTokens`, and treat a missing `parts` as a typed error carrying `finishReason`. Full trail in `docs/DEBUGGING.md` entry 2.
+- **`maxOutputTokens` caps thinking + output combined.** Verified 2026-08-25 against the live API: Gemini 3.x Flash reasons before answering, and a lean budget can be spent entirely on thinking — the call returns **HTTP 200 with `content: {}` and no `parts` array**, so the standard `candidates[0].content.parts[0].text` accessor *throws* rather than returning undefined. Mitigations, all in `lib/llm`: pin `thinkingConfig: { thinkingLevel: "low" }`, enforce a floor on `maxOutputTokens`, and treat a missing `parts` as a typed error carrying `finishReason`. Full trail in `docs/04-debugging-log.md` entry 2.
 
 ## Environment variables
 

@@ -188,7 +188,7 @@ export function createGeminiProvider(apiKey: string, model: string): LLMProvider
             // Not a portable "disable thinking" switch — flash-lite still emits
             // ~100 thought tokens with this set, the inverse of 3.6-flash. The
             // real protection is the token floor in generate.ts.
-            // See docs/DEBUGGING.md entry 2.
+            // See docs/04-debugging-log.md entry 2.
             thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
             abortSignal: timeout,
           },
@@ -218,7 +218,7 @@ export function createGeminiProvider(apiKey: string, model: string): LLMProvider
       // Never index into `parts` blind. On MAX_TOKENS Gemini returns HTTP 200
       // with `content: {}` and no `parts` array at all, so the SDK-example
       // accessor `parts[0].text` throws a TypeError rather than yielding
-      // undefined. docs/DEBUGGING.md entry 2.
+      // undefined. docs/04-debugging-log.md entry 2.
       const candidate = response.candidates?.[0];
       const parts = candidate?.content?.parts;
       if (parts === undefined || parts.length === 0) {

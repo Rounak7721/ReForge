@@ -2,17 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Read `HANDOFF.md` first
+## Read `internal/notes/HANDOFF.md` first
 
-**Every new session starts by reading `HANDOFF.md`.** It carries current status, the next actions, decisions already made, and open questions. It is maintained at the end of every session and is the fastest path back to full context.
+**Every new session starts by reading `internal/notes/HANDOFF.md`.** It carries current status, the next actions, decisions already made, and open questions. It is maintained at the end of every session and is the fastest path back to full context.
 
-Then check `project_guidelines/08-mvp-checklist.md` for what is actually built. Phases 0 and 1 are done: the app is scaffolded and deployed, and Supabase schema, RLS and auth are in place. `lib/llm/` and `lib/prompts/` are still empty. Do not assume any code path in this document exists; check first.
+Then check `internal/guidelines/08-mvp-checklist.md` for what is actually built. Phases 0 and 1 are done: the app is scaffolded and deployed, and Supabase schema, RLS and auth are in place. `lib/llm/` and `lib/prompts/` are still empty. Do not assume any code path in this document exists; check first.
 
 ## Source of truth for requirements
 
-The assignment PDF is at `project_reference/AI FS Engineer Technical Task.pdf`. **Do not re-read it** — it is fully distilled into `project_guidelines/`, which is the working reference:
+The assignment PDF is at `internal/brief/AI FS Engineer Technical Task.pdf`. **Do not re-read it** — it is fully distilled into `internal/guidelines/`, which is the working reference:
 
-- `project_guidelines/README.md` — index and the three easiest things to forget
+- `internal/guidelines/README.md` — index and the three easiest things to forget
 - `01-assignment-brief.md` — objective, the challenge, time limit, the live-change final test
 - `02-functional-requirements.md` — the 7 required areas as literal gradeable checklists
 - `03-tech-stack.md` — stack, cost rules, env vars, bootstrap commands
@@ -38,14 +38,14 @@ This is a 48–72h brief being executed in ~24h. Optimize for a working, demoabl
 - **Review gate.** After a phase, run the `code-review` skill on your own diff and surface its findings before approval.
 - **Ask before irreversible actions.** Never run a DB migration, `git push`, `vercel deploy`, delete files, or rotate secrets without asking first in that message.
 - **Suggest, don't assume.** For real decisions (schema shape, auth flow, library choice), present 2 options with a one-line recommendation. For trivial ones, just do it and mention it.
-- **Log as you go.** Append to `docs/PROMPTS.md` and `docs/DEBUGGING.md` in the same turn the material appears — see "Documentation is Claude's job" below. Never batch this to the end.
+- **Log as you go.** Append to `docs/03-prompt-log.md` and `docs/04-debugging-log.md` in the same turn the material appears — see "Documentation is Claude's job" below. Never batch this to the end.
 - **Token discipline.** Prefer Context7 for library APIs over recalling signatures. Keep files small and modular. Don't re-read the whole repo when a targeted read will do.
 
 ## Stack & hard constraints
 
 - **Framework:** Next.js 15 (App Router), TypeScript strict, Tailwind, shadcn/ui.
 - **DB + Auth:** Supabase (Postgres + Supabase Auth) — one service for both. Row Level Security on.
-- **Runtime LLM:** `gemini-3.1-flash-lite`, **free tier**, via `@google/genai`. Do not use Anthropic or OpenAI at runtime — cost constraint. Chosen on **daily quota**: the 3.x Flash models allow 20 requests/day, which is 3 complete demos; flash-lite allows 500. Verified 2026-08-25; `gemini-2.5-flash` is 404 for new keys and `*-latest` aliases are unstable. Table in `project_guidelines/03-tech-stack.md`.
+- **Runtime LLM:** `gemini-3.1-flash-lite`, **free tier**, via `@google/genai`. Do not use Anthropic or OpenAI at runtime — cost constraint. Chosen on **daily quota**: the 3.x Flash models allow 20 requests/day, which is 3 complete demos; flash-lite allows 500. Verified 2026-08-25; `gemini-2.5-flash` is 404 for new keys and `*-latest` aliases are unstable. Table in `internal/guidelines/03-tech-stack.md`.
 - **Screenshots (bonus only):** microlink.io free tier. Do not self-host Chromium on serverless.
 - **Hosting:** Vercel Hobby (free).
 - **Zero recurring cost is a requirement.** If a choice adds cost, stop and ask.
@@ -53,7 +53,7 @@ This is a 48–72h brief being executed in ~24h. Optimize for a working, demoabl
 ### Cost rules (enforce in code)
 
 - Cache every analysis/build result in Postgres. Reopening a saved project must render from the DB and **never** re-call Gemini.
-- Set `maxOutputTokens` on every Gemini call. Keep prompts lean — **but note it caps thinking + output combined.** Too lean and the model spends the whole budget reasoning and returns HTTP 200 with `content: {}` and no `parts` array, which makes the usual `parts[0].text` accessor throw. `lib/llm` pins `thinkingLevel: "low"`, enforces a token floor, and raises a typed error on missing `parts`. See `docs/DEBUGGING.md` entry 2.
+- Set `maxOutputTokens` on every Gemini call. Keep prompts lean — **but note it caps thinking + output combined.** Too lean and the model spends the whole budget reasoning and returns HTTP 200 with `content: {}` and no `parts` array, which makes the usual `parts[0].text` accessor throw. `lib/llm` pins `thinkingLevel: "low"`, enforces a token floor, and raises a typed error on missing `parts`. See `docs/04-debugging-log.md` entry 2.
 - **Free tier is 15 RPM and 500 requests/DAY** (measured, not assumed). The daily cap is the real constraint: one complete demo is 6 calls. Debounce the chat-edit box and serialize requests; handle 429 as two distinct states — per-minute (retrying works) and **per-day (retrying never works, say so honestly)**.
 - **Seed a demo account with a pre-analyzed project.** With a hard daily ceiling shared with the grader, this is required insurance, not a nice-to-have.
 
@@ -77,8 +77,13 @@ lib/
   supabase/               # browser.ts, server.ts
   prompts/                # analyzer.ts, builder.ts, editor.ts
 components/
-docs/
-  PROMPTS.md  DEBUGGING.md  ARCHITECTURE.md
+docs/                     # the four REQUIRED process documents, ASD-STE100
+  01-ai-development-process.md
+  02-ai-tools-and-workflow.md
+  03-prompt-log.md
+  04-debugging-log.md
+internal/                 # working material, NOT a deliverable
+  brief/  guidelines/  notes/
 ```
 
 ### LLM provider layer — the model is swappable (hard rule)
@@ -131,7 +136,7 @@ There is no test suite and none is planned for the MVP. Verification is `pnpm bu
 
 ## Tooling
 
-Full rationale in `project_guidelines/09-tooling.md`. Summary:
+Full rationale in `internal/guidelines/09-tooling.md`. Summary:
 
 - **context7** — pull current Next.js 15 / supabase-js / Gemini SDK docs before writing against an API. Default to this instead of recalling signatures.
 - **playwright** — QA phase only; drive the deployed app.
@@ -143,9 +148,9 @@ Full rationale in `project_guidelines/09-tooling.md`. Summary:
 
 ## Documentation is Claude's job, not a later chore
 
-35 of 100 points are process documentation (`project_guidelines/07-scoring-map.md`). These logs are maintained **by you, continuously** — the user does not write them and should never have to review them for cleanup.
+35 of 100 points are process documentation (`internal/guidelines/07-scoring-map.md`). These logs are maintained **by you, continuously** — the user does not write them and should never have to review them for cleanup.
 
-### `docs/PROMPTS.md`
+### `docs/03-prompt-log.md`
 
 Use the **`prompt-log`** skill. When a prompt in this session is worth keeping — it unblocked something, shaped the architecture, or its failure taught something — append it immediately, in the same turn. At append time:
 
@@ -155,13 +160,17 @@ Use the **`prompt-log`** skill. When a prompt in this session is worth keeping �
 
 Target 5–10 entries by submission. Quality over count.
 
-### `docs/DEBUGGING.md`
+### `docs/04-debugging-log.md`
 
 Use the **`debug-log`** skill. Log every real failure **at the moment it happens, before fixing it**, in Problem → AI prompt → Attempted solution → Debugging → Final solution format. Minimum 2 by submission; the brief calls this out as "important" and it's worth 10 points. A bug fixed silently is a lost point.
 
 ### Keep current as you go
 
-`docs/ARCHITECTURE.md` and the root `README.md` (nine required sections) track reality, not intentions.
+The root `README.md` carries the nine required sections and is **canonical**.
+`internal/notes/ARCHITECTURE.md` is a superseded record — do not update it; where the two disagree, the README wins.
+
+**`docs/` is a closed set.** It holds only the four topics the brief names. Do not add a fifth file there — working material goes in `internal/notes/`.
+Every file in `docs/` and the root `README.md` is written in **ASD-STE100 Simplified Technical English** with Mermaid diagrams: short sentences, active voice, one idea per sentence, no idioms or metaphors, one term per concept. Match that register when you edit them.
 
 ## Git
 
@@ -176,10 +185,10 @@ Maintain a proper history from the start.
 
 Use the **`wrap-up`** skill. When the user says to wrap up, update everything relevant and hand off — in this order:
 
-1. `project_guidelines/08-mvp-checklist.md` — tick only what is done **and verified on the deployed URL**
-2. `docs/PROMPTS.md` and `docs/DEBUGGING.md` — append anything from the session not yet logged
-3. `docs/ARCHITECTURE.md` / `README.md` — reflect real structure
-4. **`HANDOFF.md`** — status, next actions, new decisions, new open questions. This is what the next session reads first, so write it for someone with no memory of this conversation.
+1. `internal/guidelines/08-mvp-checklist.md` — tick only what is done **and verified on the deployed URL**
+2. `docs/03-prompt-log.md` and `docs/04-debugging-log.md` — append anything from the session not yet logged
+3. root `README.md` — reflect real structure (nine sections, STE)
+4. **`internal/notes/HANDOFF.md`** — status, next actions, new decisions, new open questions. This is what the next session reads first, so write it for someone with no memory of this conversation.
 5. Commit.
 
 ## Definition of done (per feature)
@@ -192,7 +201,9 @@ Use the **`wrap-up`** skill. When the user says to wrap up, update everything re
 
 ## Graded deliverables — keep current, don't leave to the end
 
-- `docs/PROMPTS.md` — 5–10 best prompts, each with: what you asked, why phrased that way, what it produced, what you changed.
-- `docs/DEBUGGING.md` — ≥2 real failures with the full Problem→Prompt→Attempt→Debug→Fix trail.
-- `docs/ARCHITECTURE.md` — stack, data model, API routes, models used, deploy process, limitations.
+- `docs/03-prompt-log.md` — 5–10 best prompts, each with: what you asked, why phrased that way, what it produced, what you changed.
+- `docs/04-debugging-log.md` — ≥2 real failures with the full Problem→Prompt→Attempt→Debug→Fix trail.
+- root `README.md` — stack, data model, API routes, models used, deploy process, limitations (the nine required sections).
+- `docs/01-ai-development-process.md` — blank folder to deployed product.
+- `docs/02-ai-tools-and-workflow.md` — the skills, MCP servers and gates used, and what was rejected.
 - Public Vercel URL + clean GitHub repo + a 2–3 min demo video.

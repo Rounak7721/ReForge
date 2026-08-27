@@ -15,7 +15,7 @@ import type { Analysis } from "@/lib/prompts/analyzer";
  * get a *good first draft*.
  *
  * The six fields below are the six bullets in
- * `project_guidelines/02-functional-requirements.md` §3, one for one.
+ * `internal/guidelines/02-functional-requirements.md` §3, one for one.
  *
  * **This shape was chosen by measurement, not preference.** Three candidate wire
  * formats (nested JSON / XML / flat JSON with string sections) were run head to
@@ -24,7 +24,7 @@ import type { Analysis } from "@/lib/prompts/analyzer";
  * risk it was assumed to be. Nested JSON won on two secondary grounds: Gemini
  * enforces `responseJsonSchema` on the wire (XML has no equivalent), and
  * `sections[]` is already the shape a visual preview or a code generator needs.
- * See `docs/PROMPTS.md` entry 3.
+ * See `docs/03-prompt-log.md` entry 3.
  *
  * **Extending this is additive.** `concept` is a `jsonb` column, so new optional
  * fields need no migration. Add them as `.optional()` here first so existing
