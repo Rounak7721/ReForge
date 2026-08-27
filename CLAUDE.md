@@ -61,7 +61,9 @@ This is a 48–72h brief being executed in ~24h. Optimize for a working, demoabl
 
 Next.js App Router. UI in Server Components where possible; interactive bits are Client Components. **Data mutations go through Route Handlers under `app/api/*`, called from the client** — use this pattern throughout rather than mixing in Server Actions.
 
-All LLM calls are server-side only; the Gemini key never reaches the browser. Supabase has two clients: browser (anon key, RLS-guarded) and server (service role, server-only). **Never import the service-role client into a Client Component.**
+All LLM calls are server-side only; the model key never reaches the browser. Supabase has three server-side clients: `server.ts` (anon key + cookies, acts as the signed-in user, RLS-guarded), `middleware.ts` (session refresh), and `admin.ts` (service role, `import "server-only"`). **Never import the service-role client into a Client Component.**
+
+There is deliberately **no browser client.** Every mutation goes through a Route Handler, so nothing client-side needs Supabase — which is also why `NEXT_PUBLIC_*` never reaches the client bundle. If you add one, that changes: the anon key ships to the browser, and `docs/`/`Dockerfile` claims about the bundle need updating with it.
 
 ### Target directory shape
 
@@ -74,7 +76,7 @@ app/
   api/refine/route.ts     # POST projectId + instruction -> updated concept JSON
 lib/
   llm/                    # provider abstraction (see below)
-  supabase/               # browser.ts, server.ts
+  supabase/               # server.ts, middleware.ts, admin.ts
   prompts/                # analyzer.ts, builder.ts, editor.ts
 components/
 docs/                     # the four REQUIRED process documents, ASD-STE100
