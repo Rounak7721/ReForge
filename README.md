@@ -635,10 +635,16 @@ first reads it. A missing variable builds correctly and then fails at runtime.
 
 ### Domain
 
-The production domain is **`reforge.rounak.co`**. It is a Cloudflare-managed
-record that points at the Vercel deployment, added in Vercel as a custom domain.
-The generated `*.vercel.app` URL continues to serve the same deployment, thus
-it stays usable as a fallback.
+The production domain is **`reforge.rounak.co`**, live since 2026-08-27.
+
+`rounak.co` uses Cloudflare nameservers. The `reforge` record is a CNAME to the
+target that Vercel issued, set to **DNS-only** — the grey cloud, not the orange
+one. Cloudflare must not proxy this record: the orange cloud blocks the
+certificate that Vercel issues, and it needs SSL/TLS mode Full (strict) even
+after that. Vercel terminates TLS with a Let's Encrypt certificate.
+
+The generated `*.vercel.app` URL serves the same deployment, thus it stays
+usable as a fallback.
 
 Both hostnames must be present in the Supabase Auth redirect allow-list.
 Otherwise a sign-in that starts on one hostname fails on the other.

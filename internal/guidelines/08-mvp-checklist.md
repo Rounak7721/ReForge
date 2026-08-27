@@ -27,6 +27,7 @@ Goal: a public URL exists before any feature does. Deployment is 10 points; get 
 - [x] Vercel project linked to the GitHub repo (auto-deploy on push to `main`)
 - [x] Env vars set in Vercel (all of `.env.example`) — verified on production: `lib/env.ts` parses at module load, so a missing var would 500 the route; it returned a proper zod error instead
 - [x] Placeholder page deployed and publicly reachable — https://reforge-blond-two.vercel.app/ (HTTP 200, correct title)
+- [x] Custom domain live — https://reforge.rounak.co (2026-08-27). Cloudflare DNS-only CNAME to Vercel, Let's Encrypt certificate, both origins in the Supabase Auth redirect allow-list
 - [x] Production URL recorded in `internal/notes/HANDOFF.md`
 
 ---

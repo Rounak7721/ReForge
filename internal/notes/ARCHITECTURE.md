@@ -268,7 +268,10 @@ Two measured constraints the LLM layer must handle:
 GitHub → Vercel CI/CD. Push to `main` auto-deploys; there is no manual `vercel`
 invocation in the normal loop.
 
-Production: https://reforge-blond-two.vercel.app/
+Production: https://reforge.rounak.co (custom domain, live 2026-08-27).
+Fallback: https://reforge-blond-two.vercel.app/
+
+> Superseded document. The root README is canonical.
 
 Env vars are being added to Vercel as each is first used. **Anything reading a
 var builds fine and fails at runtime until that var exists in Vercel** — check
