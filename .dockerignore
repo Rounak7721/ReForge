@@ -1,0 +1,37 @@
+# Everything the build does not read. Each entry that stays is a layer-cache
+# invalidation waiting to happen: editing a document must not rebuild the app.
+.git
+.gitignore
+node_modules
+.next
+out
+build
+dist
+
+# Secrets never enter the image. Compose passes them at build and run time.
+.env
+.env.*
+!.env.example
+
+# Documentation and working material.
+docs
+internal
+README.md
+CLAUDE.md
+Makefile
+*.md
+
+# Agent and editor state.
+.claude
+.agents
+.skill-archive
+.playwright-mcp
+.vscode
+.mcp.json
+skills-lock.json
+
+# Local build artefacts.
+tsconfig.tsbuildinfo
+npm-debug.log*
+Dockerfile
+compose.yaml

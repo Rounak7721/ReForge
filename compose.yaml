@@ -1,0 +1,50 @@
+# Reforge — one service.
+#
+# There is no database here on purpose. The app uses a HOSTED Supabase project
+# for Postgres and auth, and hosted APIs for the models. To run the datastore
+# locally you would need the whole Supabase stack (GoTrue, PostgREST, Realtime,
+# Kong), which is a separate undertaking; `supabase start` from the Supabase CLI
+# already does it properly. See README, "Run it with Docker".
+#
+# Compose reads .env twice, for two different jobs:
+#   1. ${...} substitution below  -> build args, baked into the client bundle
+#   2. env_file                   -> runtime process env inside the container
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        # Required at BUILD time, for two measured reasons: Next.js compiles
+        # NEXT_PUBLIC_* to literal strings, and lib/env.ts validates them at
+        # module load during prerender. The `:?` form stops compose immediately
+        # rather than after a long build that would fail at the end. Changing
+        # either value needs `make docker-build`, not `make docker-restart`.
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?set NEXT_PUBLIC_SUPABASE_URL in .env}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?set NEXT_PUBLIC_SUPABASE_ANON_KEY in .env}
+    image: reforge:local
+    # Server-only values: the service-role key and the model keys. These are read
+    # lazily inside server code, thus they stay out of every image layer and a
+    # change needs only `make docker-restart`.
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-3000}:3000"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    # The app writes nothing to disk. A read-only root filesystem costs nothing
+    # and removes a whole class of surprise.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true

@@ -303,6 +303,58 @@ has already broken production one time:
 | `openai-compatible.check.ts` | Schema translation for the OpenAI wire format |
 | `gemini.check.ts` | The schema sanitiser that keeps `/api/build` working |
 
+### Run it with Docker
+
+The repository ships a `Dockerfile`, a `compose.yaml` and a `Makefile`.
+
+```bash
+make env            # creates .env from .env.example
+# fill in .env, then:
+make docker-up      # builds, starts, and waits for the healthcheck
+```
+
+The application is then on `http://localhost:3000`. `make docker-logs` follows
+the logs, and `make docker-down` stops it.
+
+**There is no database in the image and none in compose.** The application uses
+a hosted Supabase project for Postgres and authentication, and hosted APIs for
+the models. Bring your own Supabase project and put its keys in `.env`. To run
+the datastore locally as well, use `supabase start` from the Supabase CLI, which
+starts the full stack correctly. This repository does not try to reproduce it.
+
+The image is 322 MB. It runs as the unprivileged `node` user, on a read-only
+root filesystem with `no-new-privileges`, and it holds only the standalone
+server, the static assets and `public/`.
+
+#### One rule to remember
+
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are **build-time**
+values. Next.js compiles them to literal strings, and `lib/env.ts` validates
+them when the module loads.
+
+| You changed | You need |
+|---|---|
+| `NEXT_PUBLIC_*` | `make docker-build` |
+| Any other variable | `make docker-restart` |
+
+Compose reads `.env` for both jobs, thus you keep one file. If a public variable
+is empty, compose stops immediately and names it, instead of failing at the end
+of a long build.
+
+### Make targets
+
+`make` on its own lists every target.
+
+| Target | Action |
+|---|---|
+| `make verify` | lint, then types, then the self-checks, then the build |
+| `make dev` | The development server |
+| `make seed` | Reset the demo account. Zero model calls |
+| `make docker-up` | Build, start, and wait for the healthcheck |
+| `make docker-restart` | Restart after a server-only variable change |
+| `make docker-logs` | Follow the logs |
+| `make nuke` | Remove build output, `node_modules` and the image |
+
 ### Database setup
 
 The migrations are in `supabase/migrations/`. Apply them in filename order. To
