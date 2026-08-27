@@ -43,9 +43,15 @@ That overlap is the only reason the required beats fit.
 - [ ] Theme: **dark**. The ember accent reads better, and the dark-mode page edit
       lands harder against a dark shell
 - [ ] Close every other tab. A stray tab title is the cheapest way to look sloppy
-- [ ] **Do a full dry run first.** It costs 5 model calls out of 500 and it tells
-      you whether the built concept contains a `/pricing` page, which decides
-      your first refinement — see below
+- [ ] **Do a full dry run first**, signing up as **`dryrun@reforge.app`**, not
+      as the recording address. Signup fails on an address that already exists,
+      so rehearsing with the real one guarantees an "email taken" error on
+      camera. It costs 5 model calls out of 500, and it tells you whether the
+      built concept contains a `/pricing` page — which decides your first
+      refinement, see below
+- [ ] After the dry run, confirm `newuser@reforge.app` is still free: try to log
+      in with it at `/login`. It must fail with "That email and password
+      combination isn't right"
 - [ ] Check the Groq minute budget: leave **40 seconds** between "Build starter
       site" and the page edit. Both in one minute exceeds 8000 tokens/minute and
       the UI says "Slow down a moment". You will cut the gap anyway
@@ -250,9 +256,11 @@ touched, thus there is nothing to restore.
 
 1. **Upload, then replace `YOUTUBE_ID` in the README** — in **both** places, the
    thumbnail URL and the watch URL. They must carry the same id.
-2. **Decide what to do with `newuser@reforge.app`.** Leaving it is harmless.
-   Deleting it keeps the database to the one demo account plus your own, which
-   is what the architecture notes describe.
+2. **Clean up the two recording accounts.** `dryrun@reforge.app` from the
+   rehearsal and `newuser@reforge.app` from the take. Leaving them is harmless,
+   but deleting them returns the database to the one demo account plus your own,
+   which is what the architecture notes describe. Ask Claude — there is a script
+   that enumerates first and proves the cascade ran.
 3. **Check the demo account still opens** at `https://reforge.rounak.co` with
    the README credentials, in a fresh incognito window.
 
