@@ -784,7 +784,7 @@ flowchart TB
 | [01 — AI Development Process](docs/01-ai-development-process.md) | How the project went from an empty folder to a deployed product |
 | [02 — AI Tools and Workflow](docs/02-ai-tools-and-workflow.md) | Each Claude Code skill, MCP server and gate, and what was rejected |
 | [03 — Prompt Log](docs/03-prompt-log.md) | Five human prompts, each with the four required answers |
-| [04 — Debugging Log](docs/04-debugging-log.md) | Twelve real failures with the full Problem → Prompt → Attempt → Debug → Fix trail |
+| [04 — Debugging Log](docs/04-debugging-log.md) | Thirteen real failures with the full Problem → Prompt → Attempt → Debug → Fix trail |
 
 ### Working material — [`internal/`](internal/)
 

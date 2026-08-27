@@ -1,8 +1,14 @@
 # Architecture
 
-Working notes. The submission-facing version lives in the root `README.md` with
-all nine sections the brief requires — keep this as the detailed source and the
-README as the graded summary.
+> **Superseded. Kept for the record only.**
+>
+> The root [`README.md`](../../README.md) is canonical. It carries all nine
+> sections the brief requires and is the file that is maintained. Where this
+> document and the README disagree, the README is right.
+>
+> This was the detailed source until 2026-08-27, when the repository was
+> restructured and the nine sections were consolidated into the README. Two
+> canonical descriptions of one architecture drift apart, so there is now one.
 
 ## Stack
 

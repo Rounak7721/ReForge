@@ -217,15 +217,22 @@ These are 35 of 100 points. See `06-deliverables.md`. Written continuously, fina
 
 - [x] Root `README.md` with all 9 required sections — verified 2026-08-26; the
   stale "light theme only" limitation was corrected after the redesign
-- [x] `docs/03-prompt-log.md` — **8** entries, each with all 4 required parts
-- [x] `docs/04-debugging-log.md` — **11** full Problem→Prompt→Attempt→Debug→Fix trails
+- [x] `docs/03-prompt-log.md` — **5** entries, each with all 4 required parts.
+      Cut from 10 on 2026-08-27: four were Claude's own slash commands and
+      reasoning, not the human's prompts. Five real ones beat ten with impostors
+- [x] `docs/04-debugging-log.md` — **12** full Problem→Prompt→Attempt→Debug→Fix trails
 - [x] `internal/notes/ARCHITECTURE.md` current — includes the Design system section
 - [x] AI development process narrative (blank folder → deployed) —
       `docs/01-ai-development-process.md`, written 2026-08-27 from the real commit timeline
-- [x] Clean commit history, pushed to GitHub — 29 commits, no secrets
+- [x] Clean commit history, pushed to GitHub — 60 commits, no secrets
 - [x] Vercel connected to GitHub for CI/CD auto-deploy — verified by asset-hash
       comparison, not by a 200 (middleware makes any /dashboard path answer 307)
-- [ ] Video ≤3 min, recorded against **production**, all 8 beats
+- [ ] Video ≤3 min, recorded against **production**, all 7 beats.
+      Script, diagrams and input values are ready — `internal/notes/video-script.md`
+      and `internal/notes/video-diagrams.md`. **This is the only outstanding deliverable**
+- [x] Repo restructured for a reader — `docs/` holds only the four topics the
+      brief names, working material moved to `internal/`, all documents rewritten
+      in ASD-STE100 with 23 verified Mermaid diagrams (2026-08-27)
 - [x] Every box in `02-functional-requirements.md` verified — **42/42** on the
       deployed URL, audited 2026-08-26
 
@@ -275,7 +282,22 @@ edit, download, and reopen-from-DB with zero `/api/` calls.
 
 ## Explicitly cut from MVP
 
-- **[-] Multi-agent workflow (Research → Product → UI → QA)** — cut for cost/rate-limit reasons. Five chained calls per user action against a ~10–15 RPM free tier is not viable, and it adds no *required* capability. Documented as future scope: a natural LangGraph fit, where each agent is a graph node with typed state and the orchestration/retry/fan-out is handled by the framework rather than hand-rolled. Say this in the README's "Known limitations" and in the video's "what I'd build next" beat — a reasoned cut is a product-thinking signal, an unexplained gap is not.
+- **[-] Multi-agent workflow (Research → Product → UI → Coding → QA)** —
+  **deferred to a paid tier, not abandoned.** Reframed 2026-08-27, and the
+  reasoning was reordered because the original put the weakest argument first.
+
+  1. **Latency.** Build is ~35s for one call, so a five-stage chain is two and a
+     half to three minutes per click. Iteration is the whole point of this
+     product; a three-minute feedback loop is a worse product, not a deeper one.
+  2. **Reliability compounds.** One call has one zod validation and one stricter
+     retry. Five chained calls give five failure points, and a failure at stage
+     four discards stages one to three unless each checkpoints separately.
+  3. **Cost.** Least interesting of the three.
+
+  Slower, costlier and more thorough describes a **paid tier**, not a default —
+  it is where a free plan converts. Shipped as the Studio tier on the landing
+  page, in the README's Known limitations, and as the video's closing beat.
+  LangGraph supplies the orchestration and checkpointing.
 - **[-] Iterative code-level AI development** — was cut as depending on code
   generation + live preview. **Both are now planned** (bonus phases 2 and 1
   respectively), so this is back in scope. See `internal/notes/HANDOFF.md`.
