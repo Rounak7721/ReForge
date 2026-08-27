@@ -16,8 +16,10 @@ listening to you. A still diagram is legible in one glance, which frees the
 whole beat for the narration. It also makes the slides cut cleanly against the
 dark app footage.
 
-Mermaid source for all five is in `video-diagrams.md`. Two of them already exist
-in the repo docs; render them at mermaid.live rather than redrawing.
+Mermaid source for all five is in `video-diagrams.md`, which is now the
+canonical home for every diagram in the project — the same blocks appear in
+`README.md`, `docs/01`, `docs/02` and `docs/04`. Edit them there, then copy
+outward. Render at mermaid.live; do not redraw.
 
 ---
 

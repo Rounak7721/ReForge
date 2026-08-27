@@ -13,23 +13,32 @@ Written in ASD-STE100 Simplified Technical English.
 The work follows one loop for each phase. The loop does not change.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':40,'rankSpacing':50,'padding':10}}}%%
 flowchart LR
-    A["Read the<br/>requirement checklist"] --> B["Plan the phase<br/>Claude Code plan mode"]
+    A["Requirement<br/>checklist"] --> B(["Plan"])
     B --> C{"Human<br/>approves?"}
-    C -- No --> B
-    C -- Yes --> D["Write the code"]
-    D --> E["Run the review gate<br/>code-review skill"]
-    E --> F{"Findings<br/>accepted?"}
-    F -- Yes --> D
-    F -- No --> G["Run lint, build,<br/>types and self-checks"]
-    G --> H["Deploy to Vercel"]
-    H --> I["Verify on the<br/>production URL"]
-    I --> J["Tick the checklist<br/>Commit"]
+    C -->|no| B
+    C -->|yes| D(["Write the code"])
+    D --> E(["Review its own diff"])
+    E --> F{"Real<br/>defect?"}
+    F -->|"yes · two thirds"| D
+    F -->|"no · one third<br/>rejected"| G(["lint · types · checks · build"])
+    G --> H(["Deploy"])
+    H --> I{{"Verify on production"}}
+    I --> J["Tick · commit"]
     J --> A
 
-    style C fill:#fde68a,stroke:#b45309,color:#000
-    style F fill:#fde68a,stroke:#b45309,color:#000
-    style I fill:#bbf7d0,stroke:#15803d,color:#000
+    FOUND["Found by the gate:<br/>SSRF through a redirect<br/>open redirect at login<br/>discarded auth cookies"]
+    E -.-> FOUND
+
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:1.5px,color:#7f1d1d
+    class B,D,E,G,H core
+    class C,F gate
+    class I good
+    class FOUND bad
 ```
 
 Two rules control this loop:
@@ -70,20 +79,35 @@ forgets the rule. An agent that reads the rule each turn obeys the rule.
 ## 3. The phases
 
 ```mermaid
-timeline
-    title Reforge build order
-    section Day 1 - 25 Aug
-        17:18 Phase 0 : Scaffold Next.js and shadcn : Probe the live model API : Pin the model on quota
-        21:23 Phase 1 : Supabase schema : Row Level Security from migration 0001 : Auth conventions fixed
-    section Day 2 - 26 Aug
-        11:46 Phase 2-3 : Provider layer BEFORE the first model call : Analyzer, Builder, Editor
-        13:55 Phase 5-6 : Landing page : Seeded demo account : Security hardening
-        14:47 Redesign : AI UI audit : Dual-theme design system : Hand-authored logo
-    section Day 3 - 27 Aug
-        00:54 Bonus 1 : Concept preview, zero model calls
-        01:20 Bonus 2 : Screenshot analysis, no extra quota
-        02:04 Bonus 3 : Code generation on a second vendor
-        12:00 Cleanup : Production verification : Documentation
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':45,'rankSpacing':55,'padding':10}}}%%
+flowchart LR
+    subgraph D1["Day 1 · 25 Aug"]
+        direction TB
+        P0(["Phase 0 · Scaffold<br/><small>probe the live API<br/>pin the model on quota</small>"])
+        P1(["Phase 1 · Data and auth<br/><small>RLS in migration 0001</small>"])
+        P0 --> P1
+    end
+    subgraph D2["Day 2 · 26 Aug"]
+        direction TB
+        P2(["Phase 2-3 · The pipeline<br/><small>provider layer BEFORE<br/>the first model call</small>"])
+        P3(["Phase 5-6 · Landing, demo seed,<br/>hardening"])
+        P4(["Redesign<br/><small>AI interface audit</small>"])
+        P2 --> P3 --> P4
+    end
+    subgraph D3["Day 3 · 27 Aug"]
+        direction TB
+        B1(["Bonus · Preview<br/><small>zero model calls</small>"])
+        B2(["Bonus · Screenshot<br/><small>no extra quota</small>"])
+        B3(["Bonus · Code generation<br/><small>second vendor</small>"])
+        B4(["Rate limits · docs · domain"])
+        B1 --> B2 --> B3 --> B4
+    end
+    D1 ==> D2 ==> D3
+
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    class P0,P1,P2,P3,P4 core
+    class B1,B2,B3,B4 good
 ```
 
 ### Phase 0 — Scaffold and constraints

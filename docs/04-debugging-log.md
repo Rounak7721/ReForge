@@ -1005,6 +1005,38 @@ tokens **and** the requested output limit are both charged against one bucket of
 700-token prompt is an immediate 413. Budgets now come from measured need, and
 413 maps to a rate-limit error. It is a rate limit with a different status code.
 
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':30,'rankSpacing':45,'padding':10}}}%%
+flowchart TB
+    R{{"Response from the model"}}
+
+    subgraph SIG["Every signal available"]
+        direction LR
+        S1["HTTP 200"]
+        S2["Valid JSON"]
+        S3["Matches the schema"]
+        S4["finish_reason: stop"]
+    end
+
+    R --> SIG
+    SIG --> OK(["SUCCESS"])
+    OK --> BAD["The document ends mid-attribute<br/>at exactly 10,240 characters"]
+    BAD --> WHY{"10 x 1024.<br/>Models do not stop on<br/>power-of-two boundaries."}
+    WHY -->|"buffers do"| CAUSE["The vendor's JSON decoder caps a string<br/>and closes the object around the stump"]
+    CAUSE --> FIX(["Assert the CLOSING condition:<br/>the document must end in &lt;/html&gt;"])
+
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:2px,color:#7f1d1d
+    classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2.5px,color:#1c1917
+    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    class OK good
+    class BAD,CAUSE bad
+    class WHY gate
+    class FIX core
+    class R ext
+```
+
 **(b) The 10240 is a platform limit, not a model choice.** Three models on the
 same tier with the same prompt:
 

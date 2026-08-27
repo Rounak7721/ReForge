@@ -1,78 +1,108 @@
-# Video diagrams — Mermaid source
+# Diagrams — Mermaid source
 
-Five diagrams, one per narrated beat. Paste each block into
-**https://mermaid.live**, then export PNG at 2x and drop it on the timeline.
+The canonical diagrams for this project. The same blocks appear in `README.md`,
+`docs/01` and `docs/02`; this file is where they are edited and where the shared
+style lives.
 
-**Do not screen-record the repo for these.** Scrolling a markdown file is the
-weakest visual available: the text is too small to read at video speed, and the
-viewer spends the whole beat trying to read instead of listening. A single
-diagram that stays still for twenty seconds reads instantly.
+Paste any block into **https://mermaid.live**, then export PNG at 2x for the
+video. GitHub renders them in place.
 
-Diagrams 1 and 2 already exist in `README.md` and `docs/01`. They are repeated
-here so every asset for the video is in one place, and so you can render them
-without the surrounding page.
-
-Colours match the app's ember accent, so the slides and the product look like
-one thing.
+**Do not screen-record a markdown file for the video.** Scrolled text is
+unreadable at video speed, and the viewer spends the beat squinting instead of
+listening. A still diagram is legible in one glance.
 
 ---
 
-## Beat 3 — Architecture (1:07–1:31)
+## The shared style
+
+Every diagram opens with the same `init` block, so they read as one system:
+
+- `curve: 'linear'` — **straight lines, no bezier curves.** This is the single
+  biggest change; the default curves make a technical diagram look hand-waved.
+- Shapes carry meaning, and are used consistently:
+
+| Shape | Syntax | Means |
+|---|---|---|
+| Rounded | `([text])` | A process or a step |
+| Rectangle | `[text]` | A component or a file |
+| Cylinder | `[(text)]` | A datastore |
+| Diamond | `{text}` | A decision |
+| Hexagon | `{{text}}` | An external service |
+| Doubled | `[[text]]` | A subsystem with internals |
+
+- Four colour classes, matched to the app's ember accent: `core` (ours),
+  `data` (persistence), `ext` (someone else's), `gate` (a decision), `bad`
+  (a failure), `good` (a verified state).
+
+---
+
+## 1 · Architecture
+
+Video beat 3 · also in `README.md`.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':45,'rankSpacing':55,'padding':10}}}%%
 flowchart TB
-    U["Browser"]
-    MW["middleware.ts<br/>session refresh · guards /dashboard"]
+    U(["Browser"])
+    MW["middleware.ts<br/><small>session refresh · route guard</small>"]
 
-    subgraph RH["Route Handlers — every mutation, no server actions"]
-        AN["/api/analyze"]
-        BU["/api/build"]
-        RE["/api/refine"]
-        GE["/api/generate"]
+    subgraph RH["Route Handlers — every mutation"]
+        direction LR
+        AN(["/api/analyze"])
+        BU(["/api/build"])
+        RE(["/api/refine"])
+        GE(["/api/generate"])
     end
 
     subgraph LLM["lib/llm — the only place a vendor SDK exists"]
-        REG["registry.ts<br/>selected by env var"]
-        G["gemini"]
-        O["openai-compatible<br/>OpenAI · Groq"]
+        direction LR
+        REG[["registry.ts<br/><small>chosen by env var</small>"]]
+        PG1["gemini.ts"]
+        PG2["openai-compatible.ts"]
     end
 
-    PG[("Postgres<br/>Row Level Security")]
-    GEM["Gemini API"]
-    GRQ["Groq API"]
-    SHOT["microlink<br/>screenshot"]
+    DB[("Postgres<br/><small>Row Level Security</small>")]
+    GEM{{"Gemini API"}}
+    GRQ{{"Groq API"}}
+    SHOT{{"microlink"}}
 
-    U -->|fetch| MW --> RH
-    AN --> SHOT
-    AN & BU & RE & GE --> REG
-    REG --> G --> GEM
-    REG --> O --> GRQ
-    RH --> PG
-    PG -->|cached result<br/>no model call| U
+    U -->|fetch| MW
+    MW --> RH
+    AN -.screenshot.-> SHOT
+    RH --> REG
+    REG --> PG1 --> GEM
+    REG --> PG2 --> GRQ
+    RH --> DB
+    DB -->|"cached · no model call"| U
 
-    style LLM fill:#fde8d7,stroke:#c2410c,color:#000
-    style PG fill:#dcfce7,stroke:#15803d,color:#000
-    style RH fill:#e0e7ff,stroke:#4338ca,color:#000
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef data fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    class REG,PG1,PG2 core
+    class DB data
+    class GEM,GRQ,SHOT ext
 ```
-
-**Say this over it:** the key is `lib/llm` sitting between features and vendors,
-and RLS sitting under everything.
 
 ---
 
-## Beat 4 — AI tools used (1:31–1:50)
+## 2 · AI tools used
+
+Video beat 4 · also in `docs/02`.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':40,'rankSpacing':70,'padding':10}}}%%
 flowchart LR
-    CC["Claude Code<br/>Opus 5"]
+    CC(["Claude Code · Opus 5"])
 
     subgraph MCP["MCP servers"]
-        C7["context7<br/>current library docs"]
-        SB["supabase<br/>schema · RLS · seed"]
-        PW["playwright<br/>drives the deployed app"]
+        direction TB
+        C7{{"context7<br/><small>current library docs</small>"}}
+        SB{{"supabase<br/><small>schema · RLS · seed</small>"}}
+        PW{{"playwright<br/><small>drives production</small>"}}
     end
 
     subgraph SK["Skills committed to the repo"]
+        direction TB
         PL["prompt-log"]
         DL["debug-log"]
         DP["deploy"]
@@ -80,117 +110,139 @@ flowchart LR
     end
 
     subgraph NO["Considered and cut"]
+        direction TB
         NA["subagents"]
         NF["LangChain"]
     end
 
     CC --> MCP
     CC --> SK
-    CC -.rejected.-> NO
+    CC -.->|rejected| NO
 
-    style SK fill:#fde8d7,stroke:#c2410c,color:#000
-    style NO fill:#fee2e2,stroke:#b91c1c,color:#000
-    style MCP fill:#e0e7ff,stroke:#4338ca,color:#000
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:1.5px,color:#7f1d1d
+    class CC,PL,DL,DP,WU core
+    class C7,SB,PW ext
+    class NA,NF bad
 ```
 
 ---
 
-## Beat 5 — How Claude Code was used (1:50–2:20)
+## 3 · How Claude Code was used
+
+Video beat 5 · also in `docs/01` and `docs/02`.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':40,'rankSpacing':50,'padding':10}}}%%
 flowchart LR
-    A["Requirement<br/>checklist"] --> B["Plan"]
+    A["Requirement<br/>checklist"] --> B(["Plan"])
     B --> C{"Human<br/>approves?"}
-    C -- no --> B
-    C -- yes --> D["Write the code"]
-    D --> E["Review its own diff"]
-    E --> F{"Real defect?"}
-    F -- "yes · 2 of 3" --> D
-    F -- "no · 1 of 3<br/>rejected" --> G["lint · types · checks · build"]
-    G --> H["Deploy"]
-    H --> I["Verify on production"]
+    C -->|no| B
+    C -->|yes| D(["Write the code"])
+    D --> E(["Review its own diff"])
+    E --> F{"Real<br/>defect?"}
+    F -->|"yes · two thirds"| D
+    F -->|"no · one third<br/>rejected"| G(["lint · types · checks · build"])
+    G --> H(["Deploy"])
+    H --> I{{"Verify on production"}}
     I --> J["Tick · commit"]
+    J --> A
 
-    FOUND["Found by the gate:<br/>SSRF via redirect<br/>open redirect at login<br/>discarded auth cookies"]
+    FOUND["Found by the gate:<br/>SSRF through a redirect<br/>open redirect at login<br/>discarded auth cookies"]
     E -.-> FOUND
 
-    style C fill:#fef3c7,stroke:#b45309,color:#000
-    style F fill:#fef3c7,stroke:#b45309,color:#000
-    style FOUND fill:#fee2e2,stroke:#b91c1c,color:#000
-    style I fill:#dcfce7,stroke:#15803d,color:#000
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:1.5px,color:#7f1d1d
+    class B,D,E,G,H core
+    class C,F gate
+    class I good
+    class FOUND bad
 ```
 
 ---
 
-## Beat 6 — The debugging example (2:20–2:40)
+## 4 · The debugging example
 
-Entry 10: the generated page that passed every check and was broken.
+Video beat 6 · also in `docs/04`, entry 10.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':30,'rankSpacing':45,'padding':10}}}%%
 flowchart TB
-    R["Response from the model"]
-    R --> S1["HTTP 200"]
-    R --> S2["Valid JSON"]
-    R --> S3["Matches the zod schema"]
-    R --> S4["finish_reason: stop"]
-    S1 & S2 & S3 & S4 --> OK["Every signal says SUCCESS"]
-    OK --> BAD["The document ends mid-attribute<br/>at exactly 10,240 characters"]
-    BAD --> WHY["10 x 1024.<br/>Models do not stop on<br/>power-of-two boundaries.<br/>Buffers do."]
-    WHY --> CAUSE["The vendor's JSON decoder caps a<br/>string value and closes the object<br/>cleanly around the stump"]
-    CAUSE --> FIX["Assert the CLOSING condition:<br/>the document must end in &lt;/html&gt;"]
+    R{{"Response from the model"}}
 
-    style OK fill:#dcfce7,stroke:#15803d,color:#000
-    style BAD fill:#fee2e2,stroke:#b91c1c,color:#000
-    style FIX fill:#fde8d7,stroke:#c2410c,color:#000
-```
-
-**The beat lands on the last box.** For anything a model generates in one pass,
-every other signal will tell you it worked.
-
----
-
-## Beat 7 — What comes next (2:40–2:58)
-
-```mermaid
-flowchart LR
-    subgraph NOW["Today — free tier"]
-        direction TB
-        N1["Analyzer"] --> N2["Builder"] --> N3["Editor"]
-        N4["3 calls · about 35s each"]
+    subgraph SIG["Every signal available"]
+        direction LR
+        S1["HTTP 200"]
+        S2["Valid JSON"]
+        S3["Matches the schema"]
+        S4["finish_reason: stop"]
     end
 
-    subgraph PRO["Pro tier — deep analysis"]
-        direction TB
-        A1["Research"] --> A2["Product"] --> A3["UI"] --> A4["Coding"] --> A5["QA"]
-        A6["5 calls · about 3 min<br/>LangGraph checkpoints each stage"]
+    R --> SIG
+    SIG --> OK(["SUCCESS"])
+    OK --> BAD["The document ends mid-attribute<br/>at exactly 10,240 characters"]
+    BAD --> WHY{"10 x 1024.<br/>Models do not stop on<br/>power-of-two boundaries."}
+    WHY -->|"buffers do"| CAUSE["The vendor's JSON decoder caps a string<br/>and closes the object around the stump"]
+    CAUSE --> FIX(["Assert the CLOSING condition:<br/>the document must end in &lt;/html&gt;"])
+
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:2px,color:#7f1d1d
+    classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2.5px,color:#1c1917
+    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    class OK good
+    class BAD,CAUSE bad
+    class WHY gate
+    class FIX core
+    class R ext
+```
+
+---
+
+## 5 · What comes next
+
+Video beat 7 · also in `README.md`.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':30,'rankSpacing':45,'padding':10}}}%%
+flowchart TB
+    subgraph NOW["Today · free tier — 3 calls, about 35s each"]
+        direction LR
+        N1(["Analyzer"]) --> N2(["Builder"]) --> N3(["Editor"])
+    end
+
+    subgraph PRO["Pro tier · deep analysis — 5 calls, about 3 minutes"]
+        direction LR
+        A1(["Research"]) --> A2(["Product"]) --> A3(["UI"]) --> A4(["Coding"]) --> A5(["QA"])
     end
 
     subgraph ALSO["Also next"]
-        direction TB
-        F1["Competitive teardown<br/>3 URLs, one synthesis"]
-        F2["Scaffold a real repo,<br/>not one HTML file"]
+        direction LR
+        F1["Competitive teardown<br/><small>3 URLs, one synthesis</small>"]
+        F2["Scaffold a real repo<br/><small>not one HTML file</small>"]
     end
 
-    NOW ==>|"opt in when you want<br/>thorough over instant"| PRO
+    NOW ==>|"opt in when you want thorough over instant"| PRO
+    PRO -.->|"LangGraph checkpoints each stage,<br/>so a failure at stage four<br/>does not discard one to three"| PRO
     NOW --> ALSO
 
-    style NOW fill:#dcfce7,stroke:#15803d,color:#000
-    style PRO fill:#fde8d7,stroke:#c2410c,color:#000
-    style ALSO fill:#e0e7ff,stroke:#4338ca,color:#000
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    class N1,N2,N3 good
+    class A1,A2,A3,A4,A5 core
+    class F1,F2 ext
 ```
-
-**Why this is the closing image.** It shows the cut was a tier boundary rather
-than a dead end, it gives the latency number that justifies it, and it names two
-features that extend what already works instead of inventing a new product.
 
 ---
 
-## Rendering notes
+## Rendering for the video
 
 - **2x export.** A 1x PNG looks soft at 1080p.
-- **Light background.** The slides sit between screen-recorded segments of a
-  dark app; alternating keeps the beats visually separate.
-- **One diagram per beat, held still.** No build-on animation. The voice is
-  doing the sequencing, and a diagram that assembles itself competes with it.
-- **Check the smallest text on a phone** before you commit to a render. If a
-  label is unreadable there, cut the label rather than shrinking the diagram.
+- **One diagram per beat, held still.** No build-on animation — the voice does
+  the sequencing, and a diagram that assembles itself competes with it.
+- **Check the smallest label on a phone** before committing to a render. If it
+  is unreadable there, cut the label rather than shrinking the diagram.

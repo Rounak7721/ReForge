@@ -10,44 +10,41 @@ Written in ASD-STE100 Simplified Technical English.
 ## 1. The tool stack
 
 ```mermaid
-flowchart TB
-    subgraph AGENT["Claude Code — Opus 5"]
-        PM["Plan mode<br/>Approve before code"]
-        MEM["CLAUDE.md<br/>Read on each turn"]
-    end
-
-    subgraph SKILLS["Skills"]
-        direction LR
-        subgraph BUILT["Built in"]
-            CR["code-review"]
-            SR["security-review"]
-            FD["frontend-design"]
-            RUN["run"]
-        end
-        subgraph MADE["Written for this project"]
-            PL["prompt-log"]
-            DL["debug-log"]
-            DEP["deploy"]
-            WU["wrap-up"]
-        end
-        subgraph INST["Installed"]
-            WDG["web-design-guidelines<br/>vercel-labs"]
-        end
-    end
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':40,'rankSpacing':70,'padding':10}}}%%
+flowchart LR
+    CC(["Claude Code · Opus 5"])
 
     subgraph MCP["MCP servers"]
-        C7["context7<br/>Current library docs"]
-        PW["playwright<br/>Drive the deployed app"]
-        SB["supabase<br/>Schema, RLS, seed"]
+        direction TB
+        C7{{"context7<br/><small>current library docs</small>"}}
+        SB{{"supabase<br/><small>schema · RLS · seed</small>"}}
+        PW{{"playwright<br/><small>drives production</small>"}}
     end
 
-    AGENT --> SKILLS
-    AGENT --> MCP
-    SKILLS --> REPO["The repository"]
-    MCP --> REPO
+    subgraph SK["Skills committed to the repo"]
+        direction TB
+        PL["prompt-log"]
+        DL["debug-log"]
+        DP["deploy"]
+        WU["wrap-up"]
+    end
 
-    style MADE fill:#dbeafe,stroke:#1d4ed8,color:#000
-    style AGENT fill:#fef3c7,stroke:#b45309,color:#000
+    subgraph NO["Considered and cut"]
+        direction TB
+        NA["subagents"]
+        NF["LangChain"]
+    end
+
+    CC --> MCP
+    CC --> SK
+    CC -.->|rejected| NO
+
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:1.5px,color:#7f1d1d
+    class CC,PL,DL,DP,WU core
+    class C7,SB,PW ext
+    class NA,NF bad
 ```
 
 ---

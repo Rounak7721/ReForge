@@ -88,49 +88,46 @@ Server Components where possible. Interactive parts are Client Components.
 the client.** There is one pattern. There are no Server Actions.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':45,'rankSpacing':55,'padding':10}}}%%
 flowchart TB
-    subgraph BROWSER["Browser"]
-        UI["Server Components<br/>+ Client Components"]
-        FRAME["Sandboxed iframe<br/>allow-scripts, NO allow-same-origin"]
+    U(["Browser"])
+    MW["middleware.ts<br/><small>session refresh · route guard</small>"]
+
+    subgraph RH["Route Handlers — every mutation"]
+        direction LR
+        AN(["/api/analyze"])
+        BU(["/api/build"])
+        RE(["/api/refine"])
+        GE(["/api/generate"])
     end
 
-    MW["middleware.ts<br/>Refresh the session<br/>Guard /dashboard/*"]
-
-    subgraph SERVER["Server — Route Handlers"]
-        AN["/api/analyze"]
-        BU["/api/build"]
-        RE["/api/refine"]
-        GE["/api/generate"]
-        AU["/api/auth/*"]
+    subgraph LLM["lib/llm — the only place a vendor SDK exists"]
+        direction LR
+        REG[["registry.ts<br/><small>chosen by env var</small>"]]
+        PG1["gemini.ts"]
+        PG2["openai-compatible.ts"]
     end
 
-    subgraph LLM["lib/llm — provider layer"]
-        REG["registry.ts"]
-        GEM["providers/gemini.ts"]
-        OAC["providers/openai-compatible.ts<br/>OpenAI + Groq"]
-    end
+    DB[("Postgres<br/><small>Row Level Security</small>")]
+    GEM{{"Gemini API"}}
+    GRQ{{"Groq API"}}
+    SHOT{{"microlink"}}
 
-    subgraph DATA["Supabase"]
-        PG[("Postgres<br/>RLS on")]
-        AUTH["Supabase Auth"]
-    end
+    U -->|fetch| MW
+    MW --> RH
+    AN -.screenshot.-> SHOT
+    RH --> REG
+    REG --> PG1 --> GEM
+    REG --> PG2 --> GRQ
+    RH --> DB
+    DB -->|"cached · no model call"| U
 
-    EXT1["Google Gemini API"]
-    EXT2["Groq API"]
-    EXT3["microlink.io<br/>screenshot"]
-
-    UI -->|fetch| MW --> SERVER
-    AN --> EXT3
-    AN & BU & RE & GE --> REG
-    REG --> GEM --> EXT1
-    REG --> OAC --> EXT2
-    SERVER --> PG
-    AU --> AUTH
-    PG -->|cached result| UI
-    UI -->|one HTML string| FRAME
-
-    style LLM fill:#dbeafe,stroke:#1d4ed8,color:#000
-    style FRAME fill:#fef3c7,stroke:#b45309,color:#000
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef data fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    class REG,PG1,PG2 core
+    class DB data
+    class GEM,GRQ,SHOT ext
 ```
 
 Two boundaries are enforced by the build, not only intended:
@@ -731,6 +728,37 @@ Otherwise a sign-in that starts on one hostname fails on the other.
   The design is not the blocker. Each agent is a node with typed state on the
   edges, and LangGraph supplies the orchestration, the retries and the
   checkpointing that make a partial failure recoverable instead of total.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':30,'rankSpacing':45,'padding':10}}}%%
+flowchart TB
+    subgraph NOW["Today · free tier — 3 calls, about 35s each"]
+        direction LR
+        N1(["Analyzer"]) --> N2(["Builder"]) --> N3(["Editor"])
+    end
+
+    subgraph PRO["Pro tier · deep analysis — 5 calls, about 3 minutes"]
+        direction LR
+        A1(["Research"]) --> A2(["Product"]) --> A3(["UI"]) --> A4(["Coding"]) --> A5(["QA"])
+    end
+
+    subgraph ALSO["Also next"]
+        direction LR
+        F1["Competitive teardown<br/><small>3 URLs, one synthesis</small>"]
+        F2["Scaffold a real repo<br/><small>not one HTML file</small>"]
+    end
+
+    NOW ==>|"opt in when you want thorough over instant"| PRO
+    PRO -.->|"LangGraph checkpoints each stage,<br/>so a failure at stage four<br/>does not discard one to three"| PRO
+    NOW --> ALSO
+
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    class N1,N2,N3 good
+    class A1,A2,A3,A4,A5 core
+    class F1,F2 ext
+```
 
 ---
 
