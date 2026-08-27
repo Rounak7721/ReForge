@@ -121,147 +121,190 @@ this speed; a palette flip is unmistakable.
 
 ---
 
-## The script
+## Required beat coverage
 
-Times are cumulative. **On screen** is what the viewer sees after editing.
-**Say** is the voice track.
+The brief names seven things the video must show. This is the map.
 
-### 0:00–0:12 · What it is
+| # | Required beat | When | Visual |
+|---|---|---|---|
+| 1 | What you built | 0:00–0:14 | Landing page |
+| 2 | How it works | 0:14–1:14 | The whole live flow |
+| 3 | **Architecture** | 1:14–1:38 | The README diagram |
+| 4 | **AI tools used** | 1:38–1:57 | `docs/02`, the skills directory |
+| 5 | **How you used Claude** | 1:57–2:27 | `CLAUDE.md`, git log, a review finding |
+| 6 | One debugging example | 2:27–2:49 | Debugging log, entry 12 |
+| 7 | What you would build next | 2:49–2:58 | Known limitations |
 
-**On screen:** landing page, slow scroll past the hero panel.
+Beats 3, 4 and 5 were the thin ones. Architecture had no segment at all, and
+"AI tools" and "how you used Claude" are two different questions that were
+sharing one block. They now hold 73 seconds between them, because that is where
+the marks are: AI-agent usage is 20 points, the video itself is 5.
 
-> **Say:** "This is Reforge. You give it a product you admire and a description
-> of what you want to build. It reads the site, takes the product apart, and
-> drafts your own product concept — which you then argue with in plain English."
+The demo flow is compressed to match. Sign-up, login and logout belong to the
+5-point database-and-auth category, which the deployed URL and the README
+already prove. They appear. They are not dwelt on.
 
-### 0:12–0:22 · Sign up
+### The narration is timed, not just written
 
-**On screen:** Sign up, type the email and password, submit, land on the empty
-dashboard.
+**439 spoken words — about 2:40 of speech inside a 2:58 video.** The remaining
+18 seconds are pauses. You cannot talk continuously for three minutes and stay
+listenable, and every beat below is allotted its measured need plus ten per
+cent.
 
-> **Say:** "New account, no email confirmation step. Supabase Auth, with row
-> level security on every table from the first migration."
+Do not add sentences. The first draft of this script ran 634 words, which is
+4:14 of speech and unreadable in the runtime. If you want to say more somewhere,
+take the words from somewhere else.
 
-> A brand-new account with an empty dashboard. The `demo@reforge.app` account in
-> the README is separate and already holds a finished project, for reviewers who
-> arrive after the daily quota is spent.
-
-### 0:22–0:34 · The input
-
-**On screen:** New project. Type the three fields. Hover "Analyze this product".
-
-> **Say:** "Three inputs: a reference site, what you want to build, and who it
-> is for. One model call."
-
-### 0:34–0:52 · Teardown
-
-**On screen:** *cut the 35-second wait.* Teardown appears. Scroll through the
-seven fields. **Pause on Visual impression.**
-
-> **Say:** "It fetches the page, strips it to text, and sends it to Gemini with a
-> screenshot attached to the same call — so vision costs no extra quota. Seven
-> fields. This last one is read from the screenshot: it picked up the gradient
-> and the purple call-to-action."
-
-### 0:52–1:08 · Build
-
-**On screen:** "Your product" tab. Build My Product. *Cut the wait.* Concept
-appears — scroll the features, navigation, page structure, palette.
-
-> **Say:** "Build turns the teardown into a concept: a name, features,
-> navigation, every page and its sections, and a UI direction. Strict JSON,
-> validated with zod, cached in Postgres."
-
-### 1:08–1:24 · Refine, and the diff
-
-**On screen:** type refinement 1 into the command bar. *Cut the wait.* The diff
-panel appears. **Hold on it.**
-
-> **Say:** "Refinement is not a chat transcript. The instruction edits the
-> concept object, and you get a diff — what was added, removed and changed. The
-> editor returns the whole object, not a patch, so undo is just the previous
-> row."
-
-### 1:24–1:38 · Preview
-
-**On screen:** Preview tab. Template render. Click through the page switcher.
-
-> **Say:** "The concept renders as an actual page. This costs nothing — it is a
-> pure function over data already in the database, so it works with the daily
-> quota fully spent."
-
-### 1:38–1:58 · Real code, and an edit
-
-**On screen:** Build starter site. *Cut the wait.* The page appears. **Click one
-nav link so it scrolls.** Then type refinement 2. *Cut the wait.* The page goes
-dark.
-
-> **Say:** "Or generate the real thing — one self-contained HTML page, on a
-> second provider so it cannot exhaust the quota the analysis needs. Then change
-> it in plain English."
-
-### 1:58–2:08 · Take it with you
-
-**On screen:** Download (HTML) — show the file land. Then Download PDF — show the
-paper-styled export page, Ctrl+P, and the Save-as-PDF preview. Close the dialog.
-
-> **Say:** "Download the page, or export the whole concept as a brief."
-
-### 2:08–2:16 · It persists, then out
-
-**On screen:** back to the dashboard, reopen the project — it renders instantly.
-Then log out.
-
-> **Say:** "Reopening a saved project renders from Postgres and never calls a
-> model again. That is a cost rule enforced in code, not a preference."
-
-### 2:16–2:38 · How it was built ← **the highest-scoring 22 seconds**
-
-**On screen:** split or cut to: the repo tree, then `docs/02-ai-tools-and-workflow.md`,
-then a `code-review` finding in the terminal.
-
-> **Say:** "All of this was built with Claude Code, under a written working
-> agreement it reads every turn: plan before building, one phase at a time, and
-> an AI code review on its own diff after each phase — which found a real SSRF,
-> an open redirect, and a middleware bug that discarded rotated auth cookies. I
-> rejected about a third of what it found. The gate produces candidates; a
-> person still decides."
-
-### 2:38–2:50 · The debugging beat
-
-**On screen:** `docs/04-debugging-log.md`, scrolled to entry 12.
-
-> **Say:** "The best example is in the debugging log. Clicking a nav link in the
-> generated site logged you out — a srcdoc iframe inherits its parent's base
-> URL, so the link walked into the app's own routes. I fixed it, verified it,
-> and reported it fixed. My check read the iframe's `src` attribute, which a
-> srcdoc navigation never sets — so it could not fail. Reading `location.href`
-> from inside the frame showed it was still broken."
-
-### 2:50–2:58 · What's next
-
-**On screen:** README "Known limitations".
-
-> **Say:** "Next: Google sign-in, a Postgres-backed rate limiter, and the
-> five-agent pipeline — which is cut on cost, not design. The limitations are
-> all written down. Thanks for watching."
+**Let the screen carry what the screen can carry.** Nothing below narrates a
+click you can already see.
 
 ---
 
-## After you record
+## The script
 
-The recording account is a throwaway. The published demo account was never
-touched, thus there is nothing to restore.
+**On screen** is what the viewer sees after editing. **Say** is the voice track.
 
-1. **Upload, then replace `YOUTUBE_ID` in the README** — in **both** places, the
-   thumbnail URL and the watch URL. They must carry the same id.
-2. **Clean up the recording accounts** — `newuser@`, and `take2@`/`take3@` if
-   you needed them. Leaving them is harmless, but deleting them returns the
-   database to the one demo account plus your own, which is what the
-   architecture notes describe. Ask Claude; there is a script that enumerates
-   first and proves the cascade ran.
-3. **Check the demo account still opens** at `https://reforge.rounak.co` with
-   the README credentials, in a fresh incognito window.
+### BEAT 1 · 0:00–0:14 · What you built
+
+**On screen:** landing page, slow scroll past the hero panel.
+
+> **Say:** "This is Reforge. Point it at a product you admire, say what you want
+> to build instead, and it drafts your own product concept — which you then argue
+> with in plain English."
+
+---
+
+### BEAT 2 · 0:14–1:14 · How it works
+
+#### 0:14–0:18 · Sign up
+
+**On screen:** sign up, submit, empty dashboard.
+
+> **Say:** "Supabase Auth, row level security on every table."
+
+#### 0:18–0:23 · The input
+
+**On screen:** New project, type the three fields, click Analyze.
+
+> **Say:** "A reference site, what you want to build, and who it's for."
+
+#### 0:23–0:37 · Teardown
+
+**On screen:** *cut the 35-second wait.* Scroll the seven fields. **Hold on
+Visual impression.**
+
+> **Say:** "Page text goes to Gemini with a screenshot on the same call, so
+> vision costs nothing extra. This field is read from that screenshot — it caught
+> the gradient and the purple button."
+
+#### 0:37–0:44 · Build
+
+**On screen:** Build My Product. *Cut the wait.* Scroll the concept.
+
+> **Say:** "Name, features, navigation, every page, a UI direction. Strict JSON,
+> validated with zod, cached in Postgres."
+
+#### 0:44–0:57 · Refine, and the diff
+
+**On screen:** type refinement 1. *Cut the wait.* **Hold on the diff panel.**
+
+> **Say:** "Not a chat transcript. The instruction edits the concept object, and
+> you get a diff. It returns the whole object, not a patch — so undo is the
+> previous row."
+
+#### 0:57–1:01 · Preview
+
+**On screen:** Preview tab, template render, one page switch.
+
+> **Say:** "The concept renders as a real page. Zero model calls."
+
+#### 1:01–1:09 · Real code
+
+**On screen:** Build starter site. *Cut the wait.* Click a nav link so it
+scrolls. Refinement 2. *Cut the wait.* The page goes dark.
+
+> **Say:** "Or generate the real thing, on a second provider — so it can't
+> exhaust the quota analysis needs."
+
+#### 1:09–1:14 · Downloads, persistence, out
+
+**On screen:** download the HTML, the PDF export, Ctrl+P — **two seconds** —
+then reopen the project, then log out.
+
+> **Say:** "Download it, export the brief. Reopening never calls a model again."
+
+---
+
+### BEAT 3 · 1:14–1:38 · Architecture
+
+**On screen:** the README on GitHub, the rendered request-pipeline diagram. Let
+it sit for eight seconds. Then the ER diagram.
+
+> **Say:** "One Next.js app on Vercel. Every mutation goes through a route
+> handler, every model call is server side, and row level security enforces
+> ownership — not the middleware. All model calls go through one provider layer,
+> so changing vendor is an environment variable. That's how code generation runs
+> on Groq while the pipeline stays on Gemini."
+
+---
+
+### BEAT 4 · 1:38–1:57 · AI tools used
+
+**On screen:** `docs/02-ai-tools-and-workflow.md`, then `.claude/skills/`.
+
+> **Say:** "Claude Code, with three MCP servers: Context7 for current docs,
+> Supabase for schema, Playwright to drive the deployed app. Four skills live in
+> the repo — two of them force these logs to be written as things happen. No
+> subagents, no framework. Both cut deliberately."
+
+---
+
+### BEAT 5 · 1:57–2:27 · How you used Claude ← **the highest-scoring 30 seconds**
+
+**On screen:** `CLAUDE.md` scrolled to the working agreement, then
+`git log --oneline`, then a `code-review` finding in the terminal.
+
+> **Say:** "It works under a written agreement it re-reads every turn. Plan
+> before building. One phase at a time. Ask before anything irreversible. After
+> every phase it reviews its own diff — which found a real SSRF, an open
+> redirect in the login flow, and a middleware bug that threw away rotated auth
+> cookies. I rejected about a third of what it found. The gate produces
+> candidates. A person still decides."
+
+---
+
+### BEAT 6 · 2:27–2:49 · One debugging example
+
+**On screen:** `docs/04-debugging-log.md`, entry 12.
+
+> **Say:** "Clicking a nav link in the generated site logged you out — a srcdoc
+> iframe inherits its parent's base URL. I fixed it, and reported it fixed. But
+> my check read an attribute that navigation never sets. It couldn't fail. The
+> fix was one tag. The lesson was about the check."
+
+---
+
+### BEAT 7 · 2:49–2:58 · What you would build next
+
+**On screen:** README, Known limitations.
+
+> **Say:** "Next: Google sign-in, a real rate limiter, and the five-agent
+> pipeline — cut on cost, not design. Every limitation is written down."
+
+---
+
+## If you run over 3:00
+
+Cut in this order. Each line is the least valuable remaining second.
+
+1. **The print dialog** — one frame. It is proof, not content
+2. **The page switcher** — drop it, the template render already made the point
+3. **The logout** — reopening already proved persistence
+4. **The landing scroll** — 12 seconds to 7
+5. **Speed the demo footage** to 1.25x under the beat 2 narration
+
+Do **not** cut beats 3 to 6. Those are the ones the brief names and the rubric
+pays for.
 
 ---
 
