@@ -5,6 +5,12 @@ description: Append a notable prompt to docs/03-prompt-log.md with all four requ
 
 # prompt-log
 
+**Only log prompts the HUMAN wrote.** Your own slash-command invocations and
+your own reasoning are not prompts for this log — they are process, and they
+belong in `docs/01-ai-development-process.md` or `docs/02-ai-tools-and-workflow.md`.
+Five real human prompts beat ten padded with your own. If you are unsure whose
+prompt it was, it was yours: do not log it.
+
 `docs/03-prompt-log.md` is a graded deliverable (part of the 20-point AI-agent-usage category — the largest on the rubric). The brief asks for **5–10 best prompts**, each answering four specific questions.
 
 **This log is Claude's job.** The user never edits it and should never have to review it for cleanup. That means every entry is complete and clean at the moment it's written — no placeholders, no "fill in later".

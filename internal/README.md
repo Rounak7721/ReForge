@@ -81,7 +81,7 @@ the root README is correct.**
 
 | Deliverable | Location |
 |---|---|
-| Live product | https://reforge-blond-two.vercel.app/ |
+| Live product | https://reforge.rounak.co |
 | Technical README, nine sections | [`README.md`](../README.md) |
 | AI development process | [`docs/01-ai-development-process.md`](../docs/01-ai-development-process.md) |
 | AI tools used | [`docs/02-ai-tools-and-workflow.md`](../docs/02-ai-tools-and-workflow.md) |

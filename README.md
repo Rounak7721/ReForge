@@ -4,7 +4,37 @@ Point Reforge at any product's website. It reads what the product does, who it
 serves and where it is weak. It then generates your own product concept, which
 you change in plain English.
 
-**Live:** https://reforge-blond-two.vercel.app/
+**Live:** **https://reforge.rounak.co** · fallback: https://reforge-blond-two.vercel.app/
+
+## Demo video
+
+<!-- PLACEHOLDER — replace YOUTUBE_ID in BOTH links below with the real id
+     after upload. The thumbnail URL and the watch URL must carry the same id. -->
+
+[![Reforge — 3 minute demo](https://img.youtube.com/vi/YOUTUBE_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=YOUTUBE_ID)
+
+*Click to play. Approximately 3 minutes: what it is, a live teardown, the
+concept, a plain-English refinement, the generated starter site, and the
+architecture.*
+
+<details>
+<summary>Embedded player, for renderers that permit HTML</summary>
+
+<!-- GitHub removes iframes from README files, thus the thumbnail above is the
+     link that works there. This block renders on a documentation site or in a
+     local markdown preview. -->
+
+<iframe
+  width="720"
+  height="405"
+  src="https://www.youtube.com/embed/YOUTUBE_ID"
+  title="Reforge — 3 minute demo"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen>
+</iframe>
+
+</details>
 
 This document is written in ASD-STE100 Simplified Technical English.
 
@@ -551,6 +581,16 @@ Work happens on phase branches such as `phase-1/db-auth` and fast-forwards into
 An environment variable must exist in Vercel **before** the deployment that
 first reads it. A missing variable builds correctly and then fails at runtime.
 
+### Domain
+
+The production domain is **`reforge.rounak.co`**. It is a Cloudflare-managed
+record that points at the Vercel deployment, added in Vercel as a custom domain.
+The generated `*.vercel.app` URL continues to serve the same deployment, thus
+it stays usable as a fallback.
+
+Both hostnames must be present in the Supabase Auth redirect allow-list.
+Otherwise a sign-in that starts on one hostname fails on the other.
+
 ---
 
 ## Known limitations
@@ -618,7 +658,7 @@ first reads it. A missing variable builds correctly and then fails at runtime.
 |---|---|
 | [01 — AI Development Process](docs/01-ai-development-process.md) | How the project went from an empty folder to a deployed product |
 | [02 — AI Tools and Workflow](docs/02-ai-tools-and-workflow.md) | Each Claude Code skill, MCP server and gate, and what was rejected |
-| [03 — Prompt Log](docs/03-prompt-log.md) | Ten prompts, each with the four required answers |
+| [03 — Prompt Log](docs/03-prompt-log.md) | Five human prompts, each with the four required answers |
 | [04 — Debugging Log](docs/04-debugging-log.md) | Twelve real failures with the full Problem → Prompt → Attempt → Debug → Fix trail |
 
 ### Working material — [`internal/`](internal/)

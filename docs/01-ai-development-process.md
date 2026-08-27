@@ -134,7 +134,7 @@ calls. The calls compared three formats across four tasks:
 | Flat JSON | 100% | 100% | 100% | 100% |
 
 All three formats scored 100%. The belief that deep nesting is a risk was
-wrong. Nested JSON won on two smaller grounds. Entry 3 of the prompt log gives
+wrong. Nested JSON won on two smaller grounds. Entry 2 of the prompt log gives
 the full result.
 
 One schema decision is not obvious. **Array minimums are 1, not 3.**
