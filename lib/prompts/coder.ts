@@ -68,6 +68,7 @@ const RUNTIME_RULES = [
   "No external files, no build step, no frameworks, no CDN scripts. Google Fonts via a <link> is the only external resource allowed.",
   "NEVER use localStorage, sessionStorage, cookies, or IndexedDB. The page runs in a sandboxed frame with an opaque origin where touching them throws a SecurityError and kills your script. Hold state in JavaScript variables.",
   "Do not use fetch, XMLHttpRequest or WebSockets — there is no backend. Any data must be hard-coded in the page.",
+  "EVERY <a> must link to a section of THIS document: href=\"#some-id\", matching an id you actually put on that section. There is exactly one page, so a path like href=\"/pricing\" has nothing to point at — and inside the preview frame it navigates away from the page entirely. Give each nav item a real section to scroll to.",
   "The page must be responsive and must not scroll horizontally at any width.",
   // Phrased as "finish it" rather than as a character cap. A cap made the
   // model spend its budget and stop mid-tag when it ran out; asking for a
@@ -113,7 +114,7 @@ export function buildCoderPrompt(concept: Concept): { system: string; prompt: st
     "=== FEATURES (use these, with their real names and descriptions) ===",
     ...concept.features.map((f) => `- ${f.name}: ${f.description}`),
     "",
-    "=== NAVIGATION (render it; links can be anchors) ===",
+    "=== NAVIGATION (render it as a nav bar; see the link rule below) ===",
     concept.navigation.map((n) => n.label).join(" · "),
     "",
     "=== SECTIONS TO INCLUDE, IN ORDER ===",

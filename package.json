@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed:demo": "tsx --conditions=react-server --env-file=.env scripts/seed-demo.ts",
-    "check": "tsx lib/preview/render-concept.check.ts && tsx --conditions=react-server lib/llm/providers/openai-compatible.check.ts && tsx --conditions=react-server lib/llm/providers/gemini.check.ts"
+    "check": "tsx lib/preview/render-concept.check.ts && tsx lib/preview/inert-links.check.ts && tsx --conditions=react-server lib/llm/providers/openai-compatible.check.ts && tsx --conditions=react-server lib/llm/providers/gemini.check.ts"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",

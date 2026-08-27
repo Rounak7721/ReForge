@@ -10,6 +10,7 @@ import { Download, Spark } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ApiError, ApiErrorCode } from "@/lib/api/errors";
+import { inertLinks } from "@/lib/preview/inert-links";
 import { renderConceptPage } from "@/lib/preview/render-concept";
 
 /**
@@ -72,6 +73,16 @@ export function PreviewPanel({
     [concept, pageIndex],
   );
 
+  // `inertLinks` because a srcdoc document inherits the parent's base URL, so
+  // an `<a href="/collections">` in the generated page navigates the FRAME to
+  // the app's own route and lands on the login screen. Applied here rather than
+  // before storing, so the DB keeps the model's real output and pages generated
+  // before the fix are repaired on read. See lib/preview/inert-links.ts.
+  const safeGenerated = useMemo(
+    () => (generated === null ? null : inertLinks(generated)),
+    [generated],
+  );
+
   if (concept === null) {
     return (
       <Reveal>
@@ -117,7 +128,8 @@ export function PreviewPanel({
     }
   }
 
-  const showing = source === "generated" && generated !== null ? generated : templateHtml;
+  const showing =
+    source === "generated" && safeGenerated !== null ? safeGenerated : templateHtml;
 
   function download() {
     // A Blob and an object URL, not a data: URI — a full page exceeds what some

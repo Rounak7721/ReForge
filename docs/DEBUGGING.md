@@ -1183,3 +1183,129 @@ browser. The self-check was written to protect the escaping and hex-guard logic
 and it caught something entirely unrelated — a syntax error in a documentation
 comment. A test that only ever catches what it was written for is not earning
 much.
+
+---
+
+## 12. The generated site's own navbar logged the demo out
+
+**Phase:** Bonus #3/#6 — code generation · **Date:** 2026-08-27
+
+### Problem
+
+"Build starter site" produced a good-looking coffee-shop landing page in the
+preview frame. Clicking anything in its navbar — Home, Collections, About —
+replaced the page inside the frame with **Reforge's own login screen**.
+
+Expected: the nav scrolls the page, or does nothing. Actual: the demo appears to
+log itself out, inside its own preview, in the middle of the headline feature.
+
+No error. Nothing in the console, nothing in the Vercel logs, no failed request.
+The generated HTML was valid and complete, `</html>` and all. Every automated
+check the feature has — the zod schema, the closing-tag refine, `pnpm check`,
+lint, build — passed, and still passes on the broken page. This is a bug with no
+error text at all, which is why it survived a full local regression walk: that
+walk generated a page, edited it and downloaded it, and never *clicked a link
+inside it*.
+
+### AI prompt
+
+The instruction that produced it, from `lib/prompts/coder.ts`:
+
+> === NAVIGATION (render it; links can be anchors) ===
+> Home · Collections · Our Story · Journal
+
+### Attempted solution
+
+The model rendered exactly what a frontend engineer would render from that brief:
+
+```html
+<nav>
+  <a href="/">Home</a>
+  <a href="/collections">Collections</a>
+  <a href="/our-story">Our Story</a>
+</nav>
+```
+
+This is correct HTML and correct instinct — those are the real paths, they came
+from `concept.navigation`, and "links can be anchors" reads as permission to use
+`<a>` elements. It was never read as "use in-page `#fragment` targets", which is
+what it was written to mean. The prompt was ambiguous and the model resolved the
+ambiguity the ordinary way.
+
+### Debugging
+
+**First hypothesis: the sandbox is leaking.** A frame reaching the app's login
+route looked like the isolation had failed, which would have been serious —
+`allow-scripts` without `allow-same-origin` is the whole security story for this
+feature. Checked `PreviewFrame`: both flags exactly as documented, no
+`allow-same-origin`, nothing had touched it. Ruled out.
+
+**Second hypothesis: `allow-top-navigation`.** If the frame could navigate the
+top-level window, a link could hijack the tab. But the app's chrome was still
+visible around the login screen — the tab had not moved, only the frame's
+content had. And the sandbox does not grant that flag anyway. Ruled out, and it
+turned out to be the useful wrong turn: it forced the question of *which*
+document was navigating, and the answer was the frame navigating **itself**.
+A frame is always permitted to do that. **No sandbox flag can prevent it** —
+there is no `allow-*` token to withhold. So the sandbox was never going to be
+the fix, and any further time spent there was wasted.
+
+**Third question: navigate to *where*, exactly?** `href="/collections"` is a
+root-relative URL, so it resolves against the document's base URL. The
+generated page has no `<base>`, and the document was loaded from `srcdoc` — and
+**a `srcdoc` document inherits the base URL of its parent**. The parent is the
+Reforge app. So `/collections` resolved to `https://reforge…/collections`, a
+route that does not exist, whose middleware redirects an unmatched path to
+`/login`. The frame dutifully loaded it. Everything behaved exactly as
+specified; the specification was the bug.
+
+Confirmed by reading the generated HTML out of the DB and checking the hrefs —
+paths, not fragments, on every nav item.
+
+**What the earlier verification missed**, worth naming: the local regression
+walk covered generate → edit → download. It never clicked a link *inside* the
+frame. The preview was treated as an image to look at rather than a page to use.
+Same shape as the two verification failures in the previous handoff — the check
+tested what was convenient to test.
+
+**One more thing fell out of it:** the download had the same defect. A
+single-page site whose nav points at `/collections` is broken the moment it is
+opened as a local file too. The bug was never really about the iframe.
+
+### Final solution
+
+Two changes, because the prompt is an instruction and not a guarantee:
+
+**1. Say it unambiguously** (`lib/prompts/coder.ts`). "links can be anchors"
+became a hard rule that names the mechanism and the reason:
+
+> EVERY `<a>` must link to a section of THIS document: `href="#some-id"`,
+> matching an id you actually put on that section. There is exactly one page, so
+> a path like `href="/pricing"` has nothing to point at — and inside the preview
+> frame it navigates away from the page entirely.
+
+This is the real fix. In-page fragment links are genuinely functional on a
+one-page site, so the nav now *works* rather than merely failing safely.
+
+**2. A guard on the way to the frame** (`lib/preview/inert-links.ts`). Any `<a>`
+whose `href` is not a `#fragment` is rewritten to `href="#"`. Fragment links
+survive untouched, and so does the Google Fonts `<link>` — the rewrite matches
+`<a>` tags only, which the self-check pins in both directions.
+
+The guard exists because a prompt rule constrains the *next* generation and does
+nothing for pages already sitting in Postgres — including the seeded demo site,
+the one thing that is supposed to work without live quota. Applying it on read
+rather than before storing means the DB keeps the model's real output, the
+download matches what is on screen, and every previously generated page is
+repaired the moment it is opened.
+
+`lib/preview/inert-links.check.ts` runs in `pnpm check` and asserts both
+directions: paths and absolute URLs go inert, `#features` and the font `<link>`
+do not.
+
+**The underlying lesson:** `srcdoc` inheriting the parent's base URL turns a
+relative link inside sandboxed content into a link into *the host app*. The
+sandbox stops the frame reading the session; it does not stop the frame walking
+into the app's routes. Anything rendering untrusted HTML in a `srcdoc` frame
+needs to neutralise hrefs as well as set sandbox flags — the second is much
+better known than the first.
