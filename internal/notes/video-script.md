@@ -43,15 +43,12 @@ That overlap is the only reason the required beats fit.
 - [ ] Theme: **dark**. The ember accent reads better, and the dark-mode page edit
       lands harder against a dark shell
 - [ ] Close every other tab. A stray tab title is the cheapest way to look sloppy
-- [ ] **Do a full dry run first**, signing up as **`dryrun@reforge.app`**, not
-      as the recording address. Signup fails on an address that already exists,
-      so rehearsing with the real one guarantees an "email taken" error on
-      camera. It costs 5 model calls out of 500, and it tells you whether the
-      built concept contains a `/pricing` page — which decides your first
-      refinement, see below
-- [ ] After the dry run, confirm `newuser@reforge.app` is still free: try to log
-      in with it at `/login`. It must fail with "That email and password
-      combination isn't right"
+- [ ] **Read the script aloud once with a timer**, without recording. No model
+      calls, and it is the only rehearsal you need for pacing
+- [ ] **Know your spare addresses.** Signup fails on an address that already
+      exists, so a take that dies *after* the signup beat burns that address.
+      Take them in order: `newuser@reforge.app`, then `take2@reforge.app`, then
+      `take3@reforge.app`. All three are confirmed free
 - [ ] Check the Groq minute budget: leave **40 seconds** between "Build starter
       site" and the page edit. Both in one minute exceeds 8000 tokens/minute and
       the UI says "Slow down a moment". You will cut the gap anyway
@@ -97,19 +94,21 @@ lands on a visually distinctive site.
 
 ### Refinement 1 — the concept
 
-Use the brief's own example **if your dry run produced a `/pricing` page**:
-
-```
-Remove the pricing page.
-```
-
-Otherwise use this, which always lands because it is additive:
-
 ```
 Add a recurring retainer plan and make the tone more premium.
 ```
 
-Decide this during the dry run. Do not find out on camera.
+**Use this one.** It is additive, so it lands on any draft the builder produces.
+
+The brief's own example is *"Remove the pricing page."* — but removal only works
+if the concept happens to contain a pricing page, and the builder does not emit
+one reliably. With no rehearsal you will not know until the concept is on
+screen. If you glance at the page list and a `/pricing` page **is** there, you
+may swap to the removal instead; it is the stronger beat, because deletions read
+clearly in the diff panel. Do not gamble the take on it.
+
+Either way the diff panel proves the point: an instruction in English changed a
+typed object, and you can see exactly what moved.
 
 ### Refinement 2 — the generated page
 
@@ -256,11 +255,11 @@ touched, thus there is nothing to restore.
 
 1. **Upload, then replace `YOUTUBE_ID` in the README** — in **both** places, the
    thumbnail URL and the watch URL. They must carry the same id.
-2. **Clean up the two recording accounts.** `dryrun@reforge.app` from the
-   rehearsal and `newuser@reforge.app` from the take. Leaving them is harmless,
-   but deleting them returns the database to the one demo account plus your own,
-   which is what the architecture notes describe. Ask Claude — there is a script
-   that enumerates first and proves the cascade ran.
+2. **Clean up the recording accounts** — `newuser@`, and `take2@`/`take3@` if
+   you needed them. Leaving them is harmless, but deleting them returns the
+   database to the one demo account plus your own, which is what the
+   architecture notes describe. Ask Claude; there is a script that enumerates
+   first and proves the cascade ran.
 3. **Check the demo account still opens** at `https://reforge.rounak.co` with
    the README credentials, in a fresh incognito window.
 
@@ -308,3 +307,9 @@ without cutting your own sentence in half.
 **Practical:** read the script aloud once with a timer before recording. If you
 are over 3:00, cut from 0:22–0:34 (the input beat) — the values are readable on
 screen and do not need narration.
+
+**Going in without a rehearsal** puts more weight on the edit than on the take.
+Record the screen in one long pass and keep rolling through any fumble; a bad
+thirty seconds is a cut, not a retake, as long as the signup succeeded. The only
+failure that forces a genuine restart is a failed signup, and that is what the
+spare addresses are for.
