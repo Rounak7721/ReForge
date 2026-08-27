@@ -8,7 +8,7 @@
  */
 import assert from "node:assert/strict";
 
-import { inertLinks } from "./inert-links";
+import { inertLinks, withSrcdocBase } from "./inert-links";
 
 const out = inertLinks(`<!doctype html>
 <html><head>
@@ -41,5 +41,28 @@ assert.ok(
 assert.ok(out.includes("<a>No href at all</a>"), "an anchor with no href is left alone");
 assert.equal((out.match(/href="#"/g) ?? []).length, 4, "exactly the four off-page links are inert");
 assert.ok(out.includes('class="cta"'), "other attributes on the anchor survive");
+
+// `withSrcdocBase`. Measured on production: WITHOUT this tag a click on
+// `href="#target"` inside the frame navigated to /login; WITH it the frame
+// scrolled to 468 and kept its document. See docs/DEBUGGING.md entry 12.
+const based = withSrcdocBase('<!doctype html><html><head><title>x</title></head><body></body></html>');
+assert.ok(
+  based.includes('<head><base href="about:srcdoc">'),
+  "the base tag goes first in <head>, before anything that could resolve a URL",
+);
+assert.ok(based.includes("<title>x</title>"), "the rest of the head survives");
+
+assert.ok(
+  withSrcdocBase('<html><head base-like="no"><base href="/x"></head></html>').includes('href="/x"'),
+  "an existing <base> is left alone rather than silently overridden",
+);
+assert.ok(
+  withSrcdocBase("<p>no head at all</p>").startsWith('<base href="about:srcdoc">'),
+  "a fragment with no <head> still gets a base rather than being dropped",
+);
+assert.ok(
+  !inertLinks('<a href="#features">f</a>').includes('href="#"'),
+  "inertLinks still leaves fragments for the base tag to make work",
+);
 
 console.log("inert-links: all checks passed");

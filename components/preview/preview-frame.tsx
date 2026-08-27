@@ -1,5 +1,7 @@
 "use client";
 
+import { withSrcdocBase } from "@/lib/preview/inert-links";
+
 /**
  * Renders an HTML document string in an isolated frame.
  *
@@ -23,6 +25,14 @@
  *
  * `allow-scripts` is granted because generated pages legitimately contain
  * interactive JS, and the template render is inert either way.
+ *
+ * ## Why the document gets a `<base>` tag on the way in
+ *
+ * A srcdoc document inherits the PARENT's base URL, so even an in-page
+ * `href="#features"` resolves to a URL on the app's own origin and navigates
+ * the frame there — in this app, straight to `/login`. `withSrcdocBase` points
+ * the base at `about:srcdoc` so fragments resolve to the document itself and
+ * scroll. Frame-only: the download must not carry it.
  */
 export function PreviewFrame({ html, title }: { html: string; title: string }) {
   return (
@@ -48,7 +58,7 @@ export function PreviewFrame({ html, title }: { html: string; title: string }) {
         // in-place mutation this is here to prevent.
         key={html}
         title={title}
-        srcDoc={html}
+        srcDoc={withSrcdocBase(html)}
         sandbox="allow-scripts"
         // Referrer and any credentialed subresource request are pointless for a
         // srcdoc document and are worth denying explicitly.

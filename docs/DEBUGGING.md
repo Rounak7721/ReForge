@@ -1272,40 +1272,83 @@ tested what was convenient to test.
 single-page site whose nav points at `/collections` is broken the moment it is
 opened as a local file too. The bug was never really about the iframe.
 
+### The fix that was not a fix
+
+The first fix was the prompt: replace "links can be anchors" with a hard rule
+that every `<a>` must be `href="#some-id"` pointing at a section of this
+document. Plus `inertLinks`, rewriting any non-fragment href to `#` on the way
+to the frame, for the pages already in Postgres.
+
+Deployed it. Verified it — or rather, wrote a check that said what I hoped:
+
+```js
+const f = document.querySelector('iframe');
+return { frameHasNotNavigated: !f.getAttribute('src') };  // true. "Fixed."
+```
+
+That assertion is meaningless. A `srcdoc` frame that navigates **never sets the
+`src` attribute**, so the check returns `true` whether the frame stayed put or
+walked to the login page. It could not fail. Reading from *inside* the frame
+instead:
+
+```
+location.href → https://reforge…/login?next=%2Fdashboard%2F726d…#gifting
+document.title → "Log in · Reforge"
+```
+
+Still broken, with the fix deployed. Exactly the trap the last two handoffs
+warned about: **verification code gets no review and is trusted precisely when
+it says what you hoped to hear.** Third occurrence, and this one shipped a wrong
+claim to the user before the real check caught it.
+
+The reason it was still broken is the non-obvious half of the bug. A srcdoc
+document's own URL is `about:srcdoc`, but its *base* URL is the parent's. So
+`#gifting` resolves against the parent — `https://reforge…/dashboard/…#gifting`
+— which is a **different document**, so the browser navigates instead of
+scrolling. Fragment links were never safe here. The prompt fix had changed the
+hrefs from one kind of navigation to another kind of navigation.
+
+### Measuring instead of guessing
+
+Rather than reason about it a third time, three candidate frames were built on
+the live page, sandboxed identically, and each link clicked for real:
+
+| | after clicking `#target` | scrollY | document intact |
+|---|---|---|---|
+| **A** plain srcdoc | `…/login?next=…#target` | 0 | ✗ |
+| **B** `<base href="about:srcdoc">` | `about:srcdoc#target` | 468 | ✓ |
+| **C** JS click interceptor | `about:srcdoc` | 468 | ✓ |
+
+A reproduces the bug with a fragment link, which is the proof the prompt fix
+alone was never going to work. B and C both fix it.
+
 ### Final solution
 
-Two changes, because the prompt is an instruction and not a guarantee:
+**B**, one tag: `withSrcdocBase` inserts `<base href="about:srcdoc">` at the top
+of `<head>` in `PreviewFrame`. Fragments then resolve to `about:srcdoc#gifting`
+— the same document — so the browser scrolls. C works identically and was
+tested alongside; the tag wins because it needs no `allow-scripts` and no
+injected script, and it cannot be broken by a page's own JS error.
 
-**1. Say it unambiguously** (`lib/prompts/coder.ts`). "links can be anchors"
-became a hard rule that names the mechanism and the reason:
+The base tag is **frame-only**. A downloaded standalone file has a real `file:`
+URL where fragments already work, and `about:srcdoc` would break them there.
 
-> EVERY `<a>` must link to a section of THIS document: `href="#some-id"`,
-> matching an id you actually put on that section. There is exactly one page, so
-> a path like `href="/pricing"` has nothing to point at — and inside the preview
-> frame it navigates away from the page entirely.
+The other two changes stay, because they are doing different jobs:
 
-This is the real fix. In-page fragment links are genuinely functional on a
-one-page site, so the nav now *works* rather than merely failing safely.
+- **The prompt rule** makes the nav genuinely functional. Fragments that point
+  at real section ids give the user a working nav, not just a safe one — and
+  they are correct in the download too, where the base tag is absent.
+- **`inertLinks`** still handles off-page hrefs. `<base>` does not neutralise a
+  `/collections`, and pages generated before the prompt rule still contain
+  them. It also protects the download, which the base tag deliberately doesn't
+  touch.
 
-**2. A guard on the way to the frame** (`lib/preview/inert-links.ts`). Any `<a>`
-whose `href` is not a `#fragment` is rewritten to `href="#"`. Fragment links
-survive untouched, and so does the Google Fonts `<link>` — the rewrite matches
-`<a>` tags only, which the self-check pins in both directions.
+Verified on production against a freshly generated site: six nav links, every
+one a fragment resolving to an id that exists on the page, and clicking one
+scrolls the frame instead of navigating it.
 
-The guard exists because a prompt rule constrains the *next* generation and does
-nothing for pages already sitting in Postgres — including the seeded demo site,
-the one thing that is supposed to work without live quota. Applying it on read
-rather than before storing means the DB keeps the model's real output, the
-download matches what is on screen, and every previously generated page is
-repaired the moment it is opened.
-
-`lib/preview/inert-links.check.ts` runs in `pnpm check` and asserts both
-directions: paths and absolute URLs go inert, `#features` and the font `<link>`
-do not.
-
-**The underlying lesson:** `srcdoc` inheriting the parent's base URL turns a
-relative link inside sandboxed content into a link into *the host app*. The
-sandbox stops the frame reading the session; it does not stop the frame walking
-into the app's routes. Anything rendering untrusted HTML in a `srcdoc` frame
-needs to neutralise hrefs as well as set sandbox flags — the second is much
-better known than the first.
+**The underlying lesson** is not really about `srcdoc`. It is that "the frame
+didn't navigate" and "the attribute I read didn't change" are different claims,
+and only one of them was measured. The fix for that is not more care — it is
+asserting on state the failure would actually move: the frame's own
+`location.href`, read from inside.
