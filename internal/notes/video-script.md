@@ -5,6 +5,22 @@ deployed app on 2026-08-27.
 
 ---
 
+## Two tracks: a demo, then diagrams
+
+Beats 1 and 2 are the product, screen-recorded. **Beats 3 to 7 are diagrams with
+voice over them** — no repo, no scrolling, no terminal.
+
+The reason is bluntly practical. Markdown scrolled on camera is unreadable at
+video speed, and the viewer spends the beat squinting at text instead of
+listening to you. A still diagram is legible in one glance, which frees the
+whole beat for the narration. It also makes the slides cut cleanly against the
+dark app footage.
+
+Mermaid source for all five is in `video-diagrams.md`. Two of them already exist
+in the repo docs; render them at mermaid.live rather than redrawing.
+
+---
+
 ## The one thing that decides whether this works
 
 **The model calls take longer than the whole video.** Measured on production:
@@ -128,12 +144,15 @@ The brief names seven things the video must show. This is the map.
 | # | Required beat | When | Visual |
 |---|---|---|---|
 | 1 | What you built | 0:00–0:14 | Landing page |
-| 2 | How it works | 0:14–1:07 | The whole live flow |
-| 3 | **Architecture** | 1:07–1:31 | The README diagram |
-| 4 | **AI tools used** | 1:31–1:50 | `docs/02`, the skills directory |
-| 5 | **How you used Claude** | 1:50–2:20 | `CLAUDE.md`, git log, a review finding |
-| 6 | One debugging example | 2:20–2:40 | Debugging log, entry 12 |
-| 7 | **What you would build next** | 2:40–2:58 | Known limitations |
+| 2 | How it works | 0:14–1:05 | **Screen recording** — the live flow |
+| 3 | **Architecture** | 1:05–1:28 | Diagram |
+| 4 | **AI tools used** | 1:28–1:47 | Diagram |
+| 5 | **How you used Claude** | 1:47–2:16 | Diagram |
+| 6 | One debugging example | 2:16–2:39 | Diagram |
+| 7 | **What you would build next** | 2:39–2:58 | Diagram |
+
+Beats 1 and 2 are recorded from the product. Beats 3 to 7 are still diagrams
+with voice over them — source in `video-diagrams.md`.
 
 Sub-beat times inside beat 2 are soft. The narration runs continuously over
 continuous footage there, so only the beat total is a real constraint.
@@ -149,7 +168,7 @@ already prove. They appear. They are not dwelt on.
 
 ### The narration is timed, not just written
 
-**456 spoken words — about 2:46 of speech inside a 2:58 video.** The remaining
+**469 spoken words — about 2:51 of speech inside a 2:58 video.** The remaining
 10 seconds are pauses, and beat 7 now carries real content rather than a list. You cannot talk continuously for three minutes and stay
 listenable, and every beat below is allotted its measured need plus ten per
 cent.
@@ -177,7 +196,7 @@ click you can already see.
 
 ---
 
-### BEAT 2 · 0:14–1:07 · How it works
+### BEAT 2 · 0:14–1:05 · How it works
 
 #### 0:14–0:17 · Sign up
 
@@ -185,13 +204,13 @@ click you can already see.
 
 > **Say:** "Supabase Auth, row level security on every table."
 
-#### 0:17–0:20 · The input
+#### 0:17–0:21 · The input
 
 **On screen:** New project, type the three fields, click Analyze.
 
 > **Say:** "A reference site, what to build, who it's for."
 
-#### 0:20–0:33 · Teardown
+#### 0:21–0:33 · Teardown
 
 **On screen:** *cut the 35-second wait.* Scroll the seven fields. **Hold on
 Visual impression.**
@@ -207,7 +226,7 @@ Visual impression.**
 > **Say:** "Name, features, navigation, pages, a UI direction. Strict JSON,
 > zod-validated, cached in Postgres."
 
-#### 0:39–0:52 · Refine, and the diff
+#### 0:39–0:51 · Refine, and the diff
 
 **On screen:** type refinement 1. *Cut the wait.* **Hold on the diff panel.**
 
@@ -215,13 +234,13 @@ Visual impression.**
 > you get a diff. It returns the whole object, not a patch — so undo is the
 > previous row."
 
-#### 0:52–0:56 · Preview
+#### 0:51–0:55 · Preview
 
 **On screen:** Preview tab, template render, one page switch.
 
 > **Say:** "The concept renders as a real page. Zero model calls."
 
-#### 0:56–1:03 · Real code
+#### 0:55–1:01 · Real code
 
 **On screen:** Build starter site. *Cut the wait.* Click a nav link so it
 scrolls. Refinement 2. *Cut the wait.* The page goes dark.
@@ -229,7 +248,7 @@ scrolls. Refinement 2. *Cut the wait.* The page goes dark.
 > **Say:** "Or generate the real thing, on a second provider — so it can't
 > exhaust the quota analysis needs."
 
-#### 1:03–1:07 · Downloads, persistence, out
+#### 1:01–1:05 · Downloads, persistence, out
 
 **On screen:** download the HTML, the PDF export, Ctrl+P — **two seconds** —
 then reopen the project, then log out.
@@ -238,10 +257,10 @@ then reopen the project, then log out.
 
 ---
 
-### BEAT 3 · 1:07–1:31 · Architecture
+### BEAT 3 · 1:05–1:28 · Architecture
 
-**On screen:** the README on GitHub, the rendered request-pipeline diagram. Let
-it sit for eight seconds. Then the ER diagram.
+**On screen:** the architecture diagram from `video-diagrams.md`, held still for
+the whole beat.
 
 > **Say:** "One Next.js app on Vercel. Every mutation goes through a route
 > handler, every model call is server side, and row level security enforces
@@ -251,9 +270,10 @@ it sit for eight seconds. Then the ER diagram.
 
 ---
 
-### BEAT 4 · 1:31–1:50 · AI tools used
+### BEAT 4 · 1:28–1:47 · AI tools used
 
-**On screen:** `docs/02-ai-tools-and-workflow.md`, then `.claude/skills/`.
+**On screen:** the AI-tools diagram. The three cut items are on it deliberately
+— name them out loud when you reach that box.
 
 > **Say:** "Claude Code, with three MCP servers: Context7 for current docs,
 > Supabase for schema, Playwright to drive the deployed app. Four skills live in
@@ -262,10 +282,10 @@ it sit for eight seconds. Then the ER diagram.
 
 ---
 
-### BEAT 5 · 1:50–2:20 · How you used Claude ← **the highest-scoring 30 seconds**
+### BEAT 5 · 1:47–2:16 · How you used Claude ← **the highest-scoring 30 seconds**
 
-**On screen:** `CLAUDE.md` scrolled to the working agreement, then
-`git log --oneline`, then a `code-review` finding in the terminal.
+**On screen:** the review-loop diagram. It carries the three findings in a red
+box; land on that box as you say them.
 
 > **Say:** "It works under a written agreement it re-reads every turn. Plan
 > before building. One phase at a time. Ask before anything irreversible. After
@@ -276,25 +296,28 @@ it sit for eight seconds. Then the ER diagram.
 
 ---
 
-### BEAT 6 · 2:20–2:40 · One debugging example
+### BEAT 6 · 2:16–2:39 · One debugging example
 
-**On screen:** `docs/04-debugging-log.md`, entry 12.
+**On screen:** the truncation diagram. Hold on the final box.
 
-> **Say:** "Clicking a nav link in the generated site logged you out — a srcdoc
-> iframe inherits its parent's base URL. I fixed it, and reported it fixed. But
-> my check read an attribute that navigation never sets. It couldn't fail. The
-> fix was one tag. The lesson was about the check."
+> **Say:** "The page generator returned two hundred — valid JSON, schema-valid,
+> finish reason 'stop'. And a document cut off mid-tag at exactly 10,240
+> characters. Ten times 1024. Models don't stop on power-of-two boundaries;
+> buffers do. The vendor's decoder had truncated the string and closed the
+> object around it. Every signal said success. Now the schema requires the
+> closing tag."
 
 ---
 
-### BEAT 7 · 2:40–2:58 · What you would build next
+### BEAT 7 · 2:39–2:58 · What you would build next
 
-**On screen:** README, Known limitations.
+**On screen:** the "what comes next" diagram — today's three calls beside the
+five-agent pro tier, plus the two extensions.
 
 > **Say:** "The obvious next build is the five-agent pipeline — which I've built
-> elsewhere. I skipped it here because five chained calls is nearly three minutes
-> per click, and iteration is the point. That's a pro tier: slower, deeper, paid
-> for. LangGraph handles the checkpointing."
+> elsewhere. Five chained calls is nearly three minutes per click, so it's a pro
+> tier rather than the default. After that: competitive teardowns across several
+> URLs, and scaffolding a real repo instead of one HTML file."
 
 ---
 
@@ -305,8 +328,12 @@ Cut in this order. Each line is the least valuable remaining second.
 1. **The print dialog** — one frame. It is proof, not content
 2. **The page switcher** — drop it, the template render already made the point
 3. **The logout** — reopening already proved persistence
-4. **The landing scroll** — 12 seconds to 7
+4. **The landing scroll** — 14 seconds to 8
 5. **Speed the demo footage** to 1.25x under the beat 2 narration
+
+Only 7 seconds of the runtime is pause, which is tight. If the read feels
+rushed, take it out of beat 2 rather than a diagram beat: the demo footage can
+run under silence and still make sense, and a diagram held in silence cannot.
 
 Do **not** cut beats 3 to 6. Those are the ones the brief names and the rubric
 pays for.
