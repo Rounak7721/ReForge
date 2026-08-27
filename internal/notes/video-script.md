@@ -128,12 +128,15 @@ The brief names seven things the video must show. This is the map.
 | # | Required beat | When | Visual |
 |---|---|---|---|
 | 1 | What you built | 0:00–0:14 | Landing page |
-| 2 | How it works | 0:14–1:14 | The whole live flow |
-| 3 | **Architecture** | 1:14–1:38 | The README diagram |
-| 4 | **AI tools used** | 1:38–1:57 | `docs/02`, the skills directory |
-| 5 | **How you used Claude** | 1:57–2:27 | `CLAUDE.md`, git log, a review finding |
-| 6 | One debugging example | 2:27–2:49 | Debugging log, entry 12 |
-| 7 | What you would build next | 2:49–2:58 | Known limitations |
+| 2 | How it works | 0:14–1:07 | The whole live flow |
+| 3 | **Architecture** | 1:07–1:31 | The README diagram |
+| 4 | **AI tools used** | 1:31–1:50 | `docs/02`, the skills directory |
+| 5 | **How you used Claude** | 1:50–2:20 | `CLAUDE.md`, git log, a review finding |
+| 6 | One debugging example | 2:20–2:40 | Debugging log, entry 12 |
+| 7 | **What you would build next** | 2:40–2:58 | Known limitations |
+
+Sub-beat times inside beat 2 are soft. The narration runs continuously over
+continuous footage there, so only the beat total is a real constraint.
 
 Beats 3, 4 and 5 were the thin ones. Architecture had no segment at all, and
 "AI tools" and "how you used Claude" are two different questions that were
@@ -146,8 +149,8 @@ already prove. They appear. They are not dwelt on.
 
 ### The narration is timed, not just written
 
-**439 spoken words — about 2:40 of speech inside a 2:58 video.** The remaining
-18 seconds are pauses. You cannot talk continuously for three minutes and stay
+**456 spoken words — about 2:46 of speech inside a 2:58 video.** The remaining
+10 seconds are pauses, and beat 7 now carries real content rather than a list. You cannot talk continuously for three minutes and stay
 listenable, and every beat below is allotted its measured need plus ten per
 cent.
 
@@ -174,51 +177,51 @@ click you can already see.
 
 ---
 
-### BEAT 2 · 0:14–1:14 · How it works
+### BEAT 2 · 0:14–1:07 · How it works
 
-#### 0:14–0:18 · Sign up
+#### 0:14–0:17 · Sign up
 
 **On screen:** sign up, submit, empty dashboard.
 
 > **Say:** "Supabase Auth, row level security on every table."
 
-#### 0:18–0:23 · The input
+#### 0:17–0:20 · The input
 
 **On screen:** New project, type the three fields, click Analyze.
 
-> **Say:** "A reference site, what you want to build, and who it's for."
+> **Say:** "A reference site, what to build, who it's for."
 
-#### 0:23–0:37 · Teardown
+#### 0:20–0:33 · Teardown
 
 **On screen:** *cut the 35-second wait.* Scroll the seven fields. **Hold on
 Visual impression.**
 
 > **Say:** "Page text goes to Gemini with a screenshot on the same call, so
-> vision costs nothing extra. This field is read from that screenshot — it caught
+> vision costs nothing extra. This field is read from the screenshot — it caught
 > the gradient and the purple button."
 
-#### 0:37–0:44 · Build
+#### 0:33–0:39 · Build
 
 **On screen:** Build My Product. *Cut the wait.* Scroll the concept.
 
-> **Say:** "Name, features, navigation, every page, a UI direction. Strict JSON,
-> validated with zod, cached in Postgres."
+> **Say:** "Name, features, navigation, pages, a UI direction. Strict JSON,
+> zod-validated, cached in Postgres."
 
-#### 0:44–0:57 · Refine, and the diff
+#### 0:39–0:52 · Refine, and the diff
 
 **On screen:** type refinement 1. *Cut the wait.* **Hold on the diff panel.**
 
-> **Say:** "Not a chat transcript. The instruction edits the concept object, and
+> **Say:** "Not a chat transcript. The instruction edits the concept object and
 > you get a diff. It returns the whole object, not a patch — so undo is the
 > previous row."
 
-#### 0:57–1:01 · Preview
+#### 0:52–0:56 · Preview
 
 **On screen:** Preview tab, template render, one page switch.
 
 > **Say:** "The concept renders as a real page. Zero model calls."
 
-#### 1:01–1:09 · Real code
+#### 0:56–1:03 · Real code
 
 **On screen:** Build starter site. *Cut the wait.* Click a nav link so it
 scrolls. Refinement 2. *Cut the wait.* The page goes dark.
@@ -226,16 +229,16 @@ scrolls. Refinement 2. *Cut the wait.* The page goes dark.
 > **Say:** "Or generate the real thing, on a second provider — so it can't
 > exhaust the quota analysis needs."
 
-#### 1:09–1:14 · Downloads, persistence, out
+#### 1:03–1:07 · Downloads, persistence, out
 
 **On screen:** download the HTML, the PDF export, Ctrl+P — **two seconds** —
 then reopen the project, then log out.
 
-> **Say:** "Download it, export the brief. Reopening never calls a model again."
+> **Say:** "Download it, export the brief. Reopening never calls a model."
 
 ---
 
-### BEAT 3 · 1:14–1:38 · Architecture
+### BEAT 3 · 1:07–1:31 · Architecture
 
 **On screen:** the README on GitHub, the rendered request-pipeline diagram. Let
 it sit for eight seconds. Then the ER diagram.
@@ -248,7 +251,7 @@ it sit for eight seconds. Then the ER diagram.
 
 ---
 
-### BEAT 4 · 1:38–1:57 · AI tools used
+### BEAT 4 · 1:31–1:50 · AI tools used
 
 **On screen:** `docs/02-ai-tools-and-workflow.md`, then `.claude/skills/`.
 
@@ -259,7 +262,7 @@ it sit for eight seconds. Then the ER diagram.
 
 ---
 
-### BEAT 5 · 1:57–2:27 · How you used Claude ← **the highest-scoring 30 seconds**
+### BEAT 5 · 1:50–2:20 · How you used Claude ← **the highest-scoring 30 seconds**
 
 **On screen:** `CLAUDE.md` scrolled to the working agreement, then
 `git log --oneline`, then a `code-review` finding in the terminal.
@@ -273,7 +276,7 @@ it sit for eight seconds. Then the ER diagram.
 
 ---
 
-### BEAT 6 · 2:27–2:49 · One debugging example
+### BEAT 6 · 2:20–2:40 · One debugging example
 
 **On screen:** `docs/04-debugging-log.md`, entry 12.
 
@@ -284,12 +287,14 @@ it sit for eight seconds. Then the ER diagram.
 
 ---
 
-### BEAT 7 · 2:49–2:58 · What you would build next
+### BEAT 7 · 2:40–2:58 · What you would build next
 
 **On screen:** README, Known limitations.
 
-> **Say:** "Next: Google sign-in, a real rate limiter, and the five-agent
-> pipeline — cut on cost, not design. Every limitation is written down."
+> **Say:** "The obvious next build is the five-agent pipeline — which I've built
+> elsewhere. I skipped it here because five chained calls is nearly three minutes
+> per click, and iteration is the point. That's a pro tier: slower, deeper, paid
+> for. LangGraph handles the checkpointing."
 
 ---
 

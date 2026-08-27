@@ -700,11 +700,25 @@ Otherwise a sign-in that starts on one hostname fails on the other.
 - **There is no automated test suite.** Verification is lint, type check,
   `pnpm check`, a build, Playwright walkthroughs and direct SQL assertions
   against RLS.
-- **The multi-agent workflow (Research, Product, UI, Coding, QA) is cut.** Five
-  chained calls for each user action against a limit of 500 each day is not
-  viable, and it adds no **required** capability. The 3-call pipeline already
-  satisfies each functional requirement. LangGraph is a natural fit, with each
-  agent as a node and typed state on the edges. Cost blocks it, not design.
+- **The multi-agent workflow is deferred to a paid tier, not abandoned.** A
+  Research, Product, UI, Coding and QA chain is five sequential model calls for
+  one click. Build already takes about 35 seconds, thus the chain takes **two
+  and a half to three minutes** — and iteration is the whole point of this
+  product. A three-minute feedback loop is a worse product, not a deeper one.
+
+  Reliability compounds the same way. One call has one zod validation and one
+  stricter retry. Five chained calls give five failure points, where a failure
+  at stage four discards the work of stages one to three unless each stage
+  checkpoints separately.
+
+  That combination — slower, costlier, more thorough — describes a **paid tier**
+  rather than a default. Deep analysis is where a free plan converts: the user
+  chooses thoroughness and accepts the wait, and the extra compute is paid for
+  rather than absorbed.
+
+  The design is not the blocker. Each agent is a node with typed state on the
+  edges, and LangGraph supplies the orchestration, the retries and the
+  checkpointing that make a partial failure recoverable instead of total.
 
 ---
 
