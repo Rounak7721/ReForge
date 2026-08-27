@@ -26,6 +26,7 @@ Written in ASD-STE100 Simplified Technical English.
 | 5 | "Make it look like v0, Lovable, Replit" | Name the reference, do not describe the style |
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 flowchart LR
     P1["1<br/>Scope"] --> P2["2<br/>Measure"] --> P3["3<br/>Order"] --> P4["4<br/>Delegate"] --> P5["5<br/>Reference"]
     P1 -.- L1["Before code"]

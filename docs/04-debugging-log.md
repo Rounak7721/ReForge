@@ -18,6 +18,7 @@ Ten of the twelve failures passed each automatic gate. This is the most
 important fact in this document.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 flowchart TD
     START["A defect exists"] --> Q1{"Does it change<br/>the types?"}
     Q1 -- Yes --> CAUGHT["tsc finds it"]
@@ -1006,35 +1007,38 @@ tokens **and** the requested output limit are both charged against one bucket of
 413 maps to a rate-limit error. It is a rate limit with a different status code.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':30,'rankSpacing':45,'padding':10}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4'},'flowchart':{'curve':'linear','nodeSpacing':30,'rankSpacing':45,'padding':10,'htmlLabels':true}}}%%
 flowchart TB
     R{{"Response from the model"}}
 
     subgraph SIG["Every signal available"]
         direction LR
-        S1["HTTP 200"]
-        S2["Valid JSON"]
-        S3["Matches the schema"]
-        S4["finish_reason: stop"]
+        S1["HTTP 200"] ~~~ S2["Valid JSON"] ~~~ S3["Matches the schema"] ~~~ S4["finish_reason: stop"]
     end
 
-    R --> SIG
-    SIG --> OK(["SUCCESS"])
-    OK --> BAD["The document ends mid-attribute<br/>at exactly 10,240 characters"]
-    BAD --> WHY{"10 x 1024.<br/>Models do not stop on<br/>power-of-two boundaries."}
-    WHY -->|"buffers do"| CAUSE["The vendor's JSON decoder caps a string<br/>and closes the object around the stump"]
-    CAUSE --> FIX(["Assert the CLOSING condition:<br/>the document must end in &lt;/html&gt;"])
+    OK(["SUCCESS"])
+    BAD["The document ends mid-attribute at exactly 10,240 characters<br/><small>10 x 1024 — models do not stop on power-of-two boundaries. Buffers do.</small>"]
+    CAUSE["The vendor's JSON decoder caps a string<br/>and closes the object around the stump"]
+    FIX(["Assert the CLOSING condition:<br/>the document must end in &lt;/html&gt;"])
 
-    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
-    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:2px,color:#7f1d1d
+    R --> SIG
+    SIG --> OK
+    OK --> BAD
+    BAD --> CAUSE
+    CAUSE --> FIX
+
+
+
+    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
+    classDef data fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef ext fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,color:#0f172a
     classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
-    classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2.5px,color:#1c1917
-    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:2px,color:#7f1d1d
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    class R,S1,S2,S3,S4 ext
     class OK good
     class BAD,CAUSE bad
-    class WHY gate
     class FIX core
-    class R ext
 ```
 
 **(b) The 10240 is a platform limit, not a model choice.** Three models on the

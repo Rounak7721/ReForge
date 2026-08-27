@@ -13,29 +13,33 @@ Written in ASD-STE100 Simplified Technical English.
 The work follows one loop for each phase. The loop does not change.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':40,'rankSpacing':50,'padding':10}}}%%
-flowchart LR
-    A["Requirement<br/>checklist"] --> B(["Plan"])
-    B --> C{"Human<br/>approves?"}
-    C -->|no| B
-    C -->|yes| D(["Write the code"])
-    D --> E(["Review its own diff"])
-    E --> F{"Real<br/>defect?"}
-    F -->|"yes · two thirds"| D
-    F -->|"no · one third<br/>rejected"| G(["lint · types · checks · build"])
-    G --> H(["Deploy"])
-    H --> I{{"Verify on production"}}
-    I --> J["Tick · commit"]
-    J --> A
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4'},'flowchart':{'curve':'linear','nodeSpacing':40,'rankSpacing':50,'padding':10,'htmlLabels':true}}}%%
+flowchart TB
+    B(["Plan, from the requirement checklist"])
+    C{"Human approves?"}
+    D(["Write the code"])
+    E(["Review its own diff"])
+    F{"Real defect?"}
+    G(["lint · types · checks · build, then deploy"])
+    I{{"Verify on production, then tick and commit"}}
+    FOUND["Found by the gate: SSRF through a redirect ·<br/>open redirect at login · discarded auth cookies"]
 
-    FOUND["Found by the gate:<br/>SSRF through a redirect<br/>open redirect at login<br/>discarded auth cookies"]
-    E -.-> FOUND
+    B --> C
+    C -.->|"no"| B
+    C -->|"yes"| D
+    D --> E
+    E --> F
+    F -.->|"yes · two thirds"| D
+    F -->|"no · one third rejected"| G
+    G --> I
+    I -.->|"next phase"| B
+    E -.- FOUND
 
     classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
     classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
     classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
-    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:1.5px,color:#7f1d1d
-    class B,D,E,G,H core
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:2px,color:#7f1d1d
+    class B,D,E,G core
     class C,F gate
     class I good
     class FOUND bad
@@ -102,7 +106,7 @@ flowchart LR
         B4(["Rate limits · docs · domain"])
         B1 --> B2 --> B3 --> B4
     end
-    D1 ==> D2 ==> D3
+    D1 --> D2 --> D3
 
     classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
     classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
@@ -195,6 +199,7 @@ The team built three phases. Each phase ships on its own. The order lets the
 team stop at any boundary and still have a complete feature.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 flowchart TD
     subgraph B1["Bonus 1 — Concept preview"]
         P1["Concept object<br/>already in Postgres"] --> P2["Pure render function"]
@@ -258,6 +263,7 @@ you hope to hear.**
 This failure happened five times.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 flowchart TD
     A["A check passes"] --> B{"Do you read<br/>the verdict<br/>or the reason?"}
     B -- "Verdict only" --> C["You believe a<br/>check that cannot fail"]
@@ -343,6 +349,7 @@ The team connected GitHub to Vercel in phase 2. Each push to `main` starts a
 deployment.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 sequenceDiagram
     participant D as Developer
     participant G as GitHub main

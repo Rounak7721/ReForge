@@ -88,7 +88,7 @@ Server Components where possible. Interactive parts are Client Components.
 the client.** There is one pattern. There are no Server Actions.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':45,'rankSpacing':55,'padding':10}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4'},'flowchart':{'curve':'linear','nodeSpacing':45,'rankSpacing':55,'padding':10,'htmlLabels':true}}}%%
 flowchart TB
     U(["Browser"])
     MW["middleware.ts<br/><small>session refresh · route guard</small>"]
@@ -104,8 +104,8 @@ flowchart TB
     subgraph LLM["lib/llm — the only place a vendor SDK exists"]
         direction LR
         REG[["registry.ts<br/><small>chosen by env var</small>"]]
-        PG1["gemini.ts"]
-        PG2["openai-compatible.ts"]
+        PV1["gemini.ts"]
+        PV2["openai-compatible.ts"]
     end
 
     DB[("Postgres<br/><small>Row Level Security</small>")]
@@ -113,19 +113,24 @@ flowchart TB
     GRQ{{"Groq API"}}
     SHOT{{"microlink"}}
 
-    U -->|fetch| MW
+    U --> MW
     MW --> RH
-    AN -.screenshot.-> SHOT
     RH --> REG
-    REG --> PG1 --> GEM
-    REG --> PG2 --> GRQ
+    REG --> PV1
+    REG --> PV2
+    PV1 --> GEM
+    PV2 --> GRQ
     RH --> DB
-    DB -->|"cached · no model call"| U
+    AN -.-> SHOT
+    DB -.->|"cached · no model call"| U
 
     classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
     classDef data fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
-    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
-    class REG,PG1,PG2 core
+    classDef ext fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,color:#0f172a
+    classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:2px,color:#7f1d1d
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    class U,MW,AN,BU,RE,GE,REG,PV1,PV2 core
     class DB data
     class GEM,GRQ,SHOT ext
 ```
@@ -144,6 +149,7 @@ Four server-side calls. Each returns strict JSON that zod parses into a typed
 object.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 sequenceDiagram
     autonumber
     actor U as User
@@ -199,6 +205,7 @@ string**, thus the frame, the download and the database all hold the same
 object.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 flowchart LR
     CON["Concept object<br/>in Postgres"] --> T["renderConceptPage()<br/>pure function<br/>ZERO model calls"]
     CON --> GEN["/api/generate<br/>Groq"]
@@ -448,6 +455,7 @@ message text.
 Two tables. RLS is on for both.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 erDiagram
     AUTH_USERS ||--o{ PROJECTS : owns
     PROJECTS ||--o{ REFINEMENTS : has
@@ -524,6 +532,7 @@ Each call goes through `lib/llm`. Feature code imports only `getLLM` and
 `generateStructured`. No vendor SDK appears outside `lib/llm/providers/*`.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 flowchart LR
     subgraph FEATURE["Feature code"]
         AZ["prompts/analyzer"]
@@ -608,6 +617,7 @@ GitHub connects to Vercel. **Each push to `main` deploys automatically.** There
 is no manual `vercel` command in the normal loop.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4','actorBkg':'#fff7ed','actorBorder':'#c2410c','actorTextColor':'#1c1917','signalColor':'#57534e','signalTextColor':'#1c1917','labelBoxBkgColor':'#fafaf9','labelBoxBorderColor':'#d6d3d1','labelTextColor':'#1c1917','noteBkgColor':'#fffbeb','noteBorderColor':'#b45309','noteTextColor':'#78350f','sequenceNumberColor':'#ffffff','attributeBackgroundColorOdd':'#ffffff','attributeBackgroundColorEven':'#fafaf9'},'flowchart':{'curve':'linear','padding':10}}}%%
 flowchart LR
     A["pnpm lint<br/>tsc --noEmit<br/>pnpm check<br/>pnpm build"] --> B{"All green?"}
     B -- No --> A
@@ -730,7 +740,7 @@ Otherwise a sign-in that starts on one hostname fails on the other.
   checkpointing that make a partial failure recoverable instead of total.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px','lineColor':'#78716c','primaryTextColor':'#1c1917'},'flowchart':{'curve':'linear','nodeSpacing':30,'rankSpacing':45,'padding':10}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4'},'flowchart':{'curve':'linear','nodeSpacing':30,'rankSpacing':45,'padding':10,'htmlLabels':true}}}%%
 flowchart TB
     subgraph NOW["Today · free tier — 3 calls, about 35s each"]
         direction LR
@@ -740,6 +750,7 @@ flowchart TB
     subgraph PRO["Pro tier · deep analysis — 5 calls, about 3 minutes"]
         direction LR
         A1(["Research"]) --> A2(["Product"]) --> A3(["UI"]) --> A4(["Coding"]) --> A5(["QA"])
+        CP["LangGraph checkpoints each stage,<br/><small>so a failure at stage four does not discard one to three</small>"]
     end
 
     subgraph ALSO["Also next"]
@@ -748,16 +759,18 @@ flowchart TB
         F2["Scaffold a real repo<br/><small>not one HTML file</small>"]
     end
 
-    NOW ==>|"opt in when you want thorough over instant"| PRO
-    PRO -.->|"LangGraph checkpoints each stage,<br/>so a failure at stage four<br/>does not discard one to three"| PRO
-    NOW --> ALSO
+    NOW -->|"opt in when you want thorough over instant"| PRO
+    NOW -.-> ALSO
 
-    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
     classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
-    classDef ext fill:#f8fafc,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a
+    classDef data fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef ext fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,color:#0f172a
+    classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
+    classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:2px,color:#7f1d1d
+    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
     class N1,N2,N3 good
     class A1,A2,A3,A4,A5 core
-    class F1,F2 ext
+    class CP,F1,F2 ext
 ```
 
 ---
