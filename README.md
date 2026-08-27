@@ -293,7 +293,7 @@ pnpm build         # must pass
 There is no test framework. Verification is these four commands, a walk through
 the flows in a browser, and direct SQL assertions against the RLS policies.
 
-`pnpm check` runs four assert-based self-checks. Each one protects logic that
+`pnpm check` runs five assert-based self-checks. Each one protects logic that
 has already broken production one time:
 
 | Check | What it protects |
@@ -302,6 +302,7 @@ has already broken production one time:
 | `inert-links.check.ts` | Link neutralisation and the srcdoc base tag |
 | `openai-compatible.check.ts` | Schema translation for the OpenAI wire format |
 | `gemini.check.ts` | The schema sanitiser that keeps `/api/build` working |
+| `rate-limit.check.ts` | The per-account caps, and that a counting failure fails open |
 
 ### Run it with Docker
 
@@ -662,9 +663,20 @@ Otherwise a sign-in that starts on one hostname fails on the other.
   token bucket is the real limit. Groq also reserves the prompt tokens and the
   output limit **before** generation, thus a request that asks for more than the
   bucket holds fails immediately with a 413.
-- **There is no server-side rate limit.** The refine box allows one request in
-  flight and enforces a minimum interval. A second tab or a direct API call can
-  still spend the quota faster. A real repair needs a counter in Postgres.
+- **Rate limiting is per-account, counted from existing rows.** `/api/analyze`
+  allows 3 an hour and 10 a day. `/api/refine` allows 10 an hour and 40 a day.
+  The counts come from the `projects` and `refinements` tables, which are
+  already timestamped and already scoped by row-level security, thus there is no
+  counter table that can drift from reality. `/api/build` returns `cached: true`
+  without a model call once a concept exists, and `/api/generate` runs on Groq
+  behind its own per-minute limiter.
+
+  **The ceiling:** these are per-account windows. Somebody willing to create many
+  accounts is not stopped, and neither is a distributed attempt. What it stops is
+  the realistic case — the demo credentials published in this README, in a loop
+  — and it bounds one account to 50 Gemini calls a day, a tenth of the daily
+  allowance. A counting failure fails **open**, and logs.
+
 - **The SSRF guard resolves and then fetches. It does not pin the address.** It
   blocks private and loopback addresses in each encoding, and it validates each
   redirect step. But a hostname whose DNS answer changes between our lookup and

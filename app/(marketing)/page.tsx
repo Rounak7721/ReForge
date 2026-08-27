@@ -8,8 +8,10 @@ import { Button, ButtonIcon } from "@/components/ui/button";
 import {
   ArrowUpRight,
   Check,
+  Display,
   Fault,
   Layers,
+  Palette,
   Route,
   Scan,
   Spark,
@@ -58,6 +60,12 @@ const STEPS = [
     body: "One click turns the analysis into your product: name, features, navigation, pages, UI direction. Then change it by saying what you want.",
     Icon: Spark,
   },
+  {
+    n: "04",
+    title: "See it, then take it with you",
+    body: "The concept renders as a real page you can click through. Generate it as working HTML, change that in plain English too, and download the file.",
+    Icon: Display,
+  },
 ];
 
 /** Bento cells. `span` drives the asymmetry — deliberately not uniform. */
@@ -92,6 +100,12 @@ const CAPABILITIES = [
     Icon: Layers,
     span: "md:col-span-2",
   },
+  {
+    title: "It looks at the page, not just the words",
+    body: "A screenshot goes to the model on the same call as the text, so the teardown describes the layout, the density and the colour — not only the copy.",
+    Icon: Palette,
+    span: "md:col-span-2",
+  },
 ];
 
 const TIERS = [
@@ -112,12 +126,12 @@ const TIERS = [
     name: "Studio",
     price: "$19",
     cadence: "per month",
-    line: "For people shipping more than one thing a quarter.",
+    line: "Deeper analysis, when you want thorough over instant.",
     items: [
       "Unlimited projects",
+      "Multi-agent deep analysis",
+      "Generated starter site",
       "Refinement history",
-      "Export to Markdown",
-      "Priority generation",
     ],
     featured: true,
   },

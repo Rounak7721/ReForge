@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { apiError } from "@/lib/api/errors";
+import { ANALYZE_LIMIT, checkRateLimit } from "@/lib/api/rate-limit";
 import { fromPipelineError } from "@/lib/api/llm-error";
 import { generateStructured, getLLM } from "@/lib/llm";
 import { analysisSchema, buildAnalyzerPrompt, type Analysis } from "@/lib/prompts/analyzer";
@@ -69,6 +70,13 @@ export async function POST(request: NextRequest) {
   if (user === null) {
     return apiError("unauthorized", "Sign in to analyze a website.");
   }
+
+  // Before the network fetch and the model call, not after. This endpoint is
+  // the expensive one — it spends a Gemini request every time, with no cache to
+  // fall back on. See lib/api/rate-limit.ts for why the count comes from the
+  // `projects` table rather than a counter.
+  const limited = await checkRateLimit(supabase, ANALYZE_LIMIT, user.id);
+  if (limited !== null) return limited;
 
   try {
     // Concurrent, not sequential. Both hit the network for the same target and

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { apiError } from "@/lib/api/errors";
+import { checkRateLimit, REFINE_LIMIT } from "@/lib/api/rate-limit";
 import { fromPipelineError } from "@/lib/api/llm-error";
 import { loadProject } from "@/lib/api/project";
 import { generateStructured } from "@/lib/llm";
@@ -58,6 +59,18 @@ export async function POST(request: NextRequest) {
     return apiError("not_found", "That project doesn't exist.");
   }
   const { concept } = loaded.project;
+
+  // After ownership is proven, before the model. `loadProject` has already
+  // established the caller owns this project, so the user id is trustworthy.
+  const supabaseForLimit = await createClient();
+  const {
+    data: { user },
+  } = await supabaseForLimit.auth.getUser();
+  if (user === null) {
+    return apiError("unauthorized", "Sign in to change this product.");
+  }
+  const limited = await checkRateLimit(supabaseForLimit, REFINE_LIMIT, user.id);
+  if (limited !== null) return limited;
 
   if (concept === null) {
     return apiError("invalid_input", "Build the product before refining it.");
