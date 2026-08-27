@@ -237,25 +237,30 @@ new features appear in it.
 
 **Everything below is verified locally only.** `git push` is blocked by a
 permission gate in this environment, so none of it has been deployed. Per the
-rule at the top of this file, nothing here is ticked `[x]` — that requires the
-deployed URL. **Push, then re-verify, then tick.** See `HANDOFF.md`.
+**Verified on the deployed URL 2026-08-27 ~12:40 IST**, on a throwaway project
+built live on production (stripe.com → "Aura Coffee"): analyze with a screenshot,
+build, refine, template render, page switcher, code generation, a plain-English
+edit, download, and reopen-from-DB with zero `/api/` calls.
 
-- [~] **#2 Generate actual UI** — the concept renders as a real web page from
+- [x] **#2 Generate actual UI** — the concept renders as a real web page from
       its own copy, palette and typeface direction. Pure function of data
       already in Postgres: **zero model calls**, so it works with the daily
       quota fully spent
-- [~] **#5 Live preview** — sandboxed iframe (`allow-scripts` WITHOUT
+- [x] **#5 Live preview** — sandboxed iframe (`allow-scripts` WITHOUT
       `allow-same-origin`), page switcher across every page in the concept, and
-      it repaints live when a refinement changes the concept on another tab
-- [~] **#1 Screenshot analysis** — microlink PNG attached to the analyzer call
+      it repaints live when a refinement changes the concept on another tab.
+      Nav links inside the frame scroll the document instead of navigating it —
+      `<base href="about:srcdoc">`, without which even a `#fragment` walks the
+      frame to `/login`. See `docs/DEBUGGING.md` entry 12
+- [x] **#1 Screenshot analysis** — microlink PNG attached to the analyzer call
       that was already happening, so vision costs **no extra quota**. Adds a
       "Visual impression" cell (style / layout density / colour). Degrades
       silently to text-only when microlink is slow or rate-limits, and the
       field is omitted rather than invented
-- [~] **#3 Code generation** — a complete self-contained HTML page from the
+- [x] **#3 Code generation** — a complete self-contained HTML page from the
       concept, on Groq + `openai/gpt-oss-120b` (free tier), so it cannot
       exhaust the Gemini quota the pipeline needs. Downloadable
-- [~] **#6 Iterative AI development** — natural-language edits to the generated
+- [x] **#6 Iterative AI development** — natural-language edits to the generated
       page, through the same command bar as concept refinement
 - [x] **Provider layer proven swappable** — `gemini | openai | groq`, selected
       by env var alone. Groq and Gemini run side by side in production code;
