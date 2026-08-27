@@ -84,8 +84,9 @@ message.
 
 ## 3. Skills written for this project
 
-Four skills are in `.claude/skills/`. They are committed to the repository,
-thus they travel with the code.
+Four skills were written for this project. They are committed to the
+repository, thus they travel with the code. A fifth entry in the same folder,
+`web-design-guidelines`, is a link to a general skill. It was not written here.
 
 Each skill makes a routine automatic. Under time pressure, a person skips a
 routine. Three of these skills protect a graded deliverable.

@@ -1,6 +1,6 @@
 # Project Guidelines
 
-A condensed, point-wise working reference distilled from `internal/brief/AI FS Engineer Technical Task.pdf` (10 pages). Build against these docs instead of re-reading the PDF.
+A condensed, point-wise working reference distilled from the assignment PDF (10 pages, held outside this repository). Build against these docs instead of re-reading the PDF.
 
 Everything here is faithful to the PDF. Our own choices — decisions the brief leaves open, or constraints stricter than it requires — are marked **[OUR DECISION]** so the line between "required" and "chosen" never blurs.
 

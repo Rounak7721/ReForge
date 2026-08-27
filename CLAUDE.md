@@ -10,7 +10,7 @@ Then check `internal/guidelines/08-mvp-checklist.md` for what is actually built.
 
 ## Source of truth for requirements
 
-The assignment PDF is at `internal/brief/AI FS Engineer Technical Task.pdf`. **Do not re-read it** — it is fully distilled into `internal/guidelines/`, which is the working reference:
+The assignment PDF is **deliberately not in this repository** — it is the recruiter's document. It lives outside the repo at `~/Work/Job_Tasks/AI FS Engineer Technical Task.pdf`. **Do not re-read it** — it is fully distilled into `internal/guidelines/`, which is the working reference:
 
 - `internal/guidelines/README.md` — index and the three easiest things to forget
 - `01-assignment-brief.md` — objective, the challenge, time limit, the live-change final test

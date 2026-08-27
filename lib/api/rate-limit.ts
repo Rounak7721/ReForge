@@ -38,8 +38,13 @@ import type { createClient } from "@/lib/supabase/server";
  * These are per-user windows, not global. Someone willing to create many
  * accounts is not stopped by this, and neither is a distributed attempt. What
  * it does stop is the realistic case: one set of published credentials in a
- * loop. Bounded to 50 Gemini calls a day per account, one account cannot take
- * more than a tenth of the daily allowance.
+ * loop. Bounded to 130 Gemini calls a day per account, one account cannot take
+ * more than about a quarter of the daily allowance.
+ *
+ * The caps were raised from 3/10 and 10/40 on 2026-08-27: the analyze hourly
+ * cap of 3 was binding during a normal demo session with retakes, which is the
+ * one moment the app must not refuse a legitimate user. The floor to keep is
+ * that one account cannot spend the whole day.
  */
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -56,15 +61,15 @@ type Limit = {
 
 export const ANALYZE_LIMIT: Limit = {
   table: "projects",
-  hourly: 3,
-  daily: 10,
+  hourly: 10,
+  daily: 30,
   message: "You've analyzed a lot of sites recently. Try again in an hour.",
 };
 
 export const REFINE_LIMIT: Limit = {
   table: "refinements",
-  hourly: 10,
-  daily: 40,
+  hourly: 30,
+  daily: 100,
   message: "That's a lot of refinements in a short time. Try again in an hour.",
 };
 

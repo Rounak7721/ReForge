@@ -15,12 +15,12 @@ tracked. Do not read it to learn how the application works — the
 
 ```
 internal/
-  brief/        The original assignment PDF. The source of truth.
+  guidelines/   The distilled brief. The working source of truth.
   guidelines/   The brief, changed into gradeable checklists.
   notes/        Session handover and audits.
 ```
 
-### `brief/`
+### `guidelines/`
 
 `AI FS Engineer Technical Task.pdf` is the assignment.
 
@@ -67,7 +67,6 @@ production.
 | `notes/HANDOFF.md` | The state at the end of the last session, and the next actions |
 | `notes/ARCHITECTURE.md` | An earlier architecture document. The root README replaced it. |
 | `notes/UI-AUDIT.md` | The AI interface audit that started the redesign |
-| `notes/video-script.md` | The 2:55 demo script: shot list, exact input values, timings |
 
 `notes/HANDOFF.md` is written for a reader with no memory of the session that wrote
 it. Each session started by reading it.

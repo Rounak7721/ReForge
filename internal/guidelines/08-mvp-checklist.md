@@ -227,9 +227,12 @@ These are 35 of 100 points. See `06-deliverables.md`. Written continuously, fina
 - [x] Clean commit history, pushed to GitHub — 60 commits, no secrets
 - [x] Vercel connected to GitHub for CI/CD auto-deploy — verified by asset-hash
       comparison, not by a 200 (middleware makes any /dashboard path answer 307)
-- [ ] Video ≤3 min, recorded against **production**, all 7 beats.
-      Script, diagrams and input values are ready — `internal/notes/video-script.md`
-      and `internal/notes/video-diagrams.md`. **This is the only outstanding deliverable**
+- [x] Video recorded against **production**, all 7 beats — 4:42, published at
+      https://youtu.be/yT_LptZCr4A and linked from the README. Runs over the
+      3-minute guide by decision: the product cut was not compressed, and the
+      description carries per-beat timestamps so a reader can jump. Production
+      material (script, diagram sources, narration audio, kdenlive project)
+      lives outside this repo in `Reforge-demo-edit/`
 - [x] Repo restructured for a reader — `docs/` holds only the four topics the
       brief names, working material moved to `internal/`, all documents rewritten
       in ASD-STE100 with 23 verified Mermaid diagrams (2026-08-27)

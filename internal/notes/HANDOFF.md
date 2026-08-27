@@ -30,38 +30,32 @@ recorded deliberately rather than in a rush.
 
 ---
 
-## The one thing left to do
+## The video is done
 
-**Record the demo video.** Everything needed is written:
+Published: **https://youtu.be/yT_LptZCr4A** · 4:42 · linked from the README.
 
-- `internal/notes/video-script.md` — 7 beats, exact timings, exact input values,
-  the narration timed to 469 words / 171 seconds inside a 178-second runtime
-- `internal/notes/video-diagrams.md` — Mermaid source for the 5 slides
+All production material lives **outside this repo**, in
+`~/Work/Job_Tasks/Reforge-demo-edit/`, deliberately — a public repository does
+not need the shot list, the narration audio or the editing project:
 
-Shape: **beats 1–2 are a screen recording, beats 3–7 are still diagrams with
-voice over them.** Do not screen-record markdown files — that was the earlier
-plan and it is worse, because scrolled text is unreadable at video speed.
+| | |
+|---|---|
+| `notes/video-script.md` | shot list, per-clip narration, timings |
+| `notes/video-diagrams.md` | Mermaid source for the five slides, and the shared diagram style |
+| `render/Reforge-demo-narrated.kdenlive` | the finished timeline |
+| `speech/` + `PLACEMENT.md` | 27 narration WAVs and where each one sits |
+| `assets/` | app screenshots, logo files, YouTube copy |
+| `build_timeline.py`, `make_srt.py`, `make_music.py`, `make_thumbnail.py` | regenerate it all |
 
-Three things in the script that are easy to get wrong:
-
-1. **Record the screen silently, then lay voice over the finished cut.** The
-   five model calls total about 3 minutes of wall clock — longer than the whole
-   video. Every wait must be cut, and you cannot cut a wait that has your own
-   sentence running across it.
-2. **Sign up as `newuser@reforge.app`** (spares: `take2@`, `take3@`). Not the
-   demo account — the signup beat needs an empty dashboard. All three confirmed
-   free.
-3. **Leave 40 seconds between "Build starter site" and the page edit**, or Groq's
-   8000-tokens-per-minute budget rejects the second one.
-
-Afterwards: upload, then replace `YOUTUBE_ID` in **both** places in `README.md`
-— the thumbnail URL and the watch URL.
+The diagrams in `README.md`, `docs/01` and `docs/02` are copies of the blocks in
+`video-diagrams.md`. That file is still canonical for the shared theme and the
+shape and line-type conventions; it just no longer ships in the repo.
 
 ---
 
 ## What happened this session
 
-Twelve commits, `c0b607f` to `2b42ffd`.
+Twelve commits.
 
 ### Repository restructure
 
@@ -75,7 +69,9 @@ The root showed working material before it showed the product. Now:
 
 ### Rate limiting
 
-`/api/analyze` allows 3 an hour and 10 a day; `/api/refine` allows 10 and 40.
+`/api/analyze` allows 10 an hour and 30 a day; `/api/refine` allows 30 and 100.
+**Raised from 3/10 and 10/40 on 2026-08-27** — the analyze hourly cap of 3 was
+binding during a normal session with retakes.
 Counted from the `projects` and `refinements` tables — no counter table, because
 those rows are already timestamped and already scoped by RLS. Verified on
 production for zero quota by inserting rows directly.
@@ -98,8 +94,9 @@ read-only root filesystem. Verified running, not just building.
 ### Diagrams
 
 23 Mermaid blocks across the repo, all sharing one pinned theme and one set of
-shape and line-type conventions. `internal/notes/video-diagrams.md` is
-**canonical** — edit there, then copy outward.
+shape and line-type conventions. The canonical source is
+`Reforge-demo-edit/notes/video-diagrams.md`, **outside this repo** — edit there,
+then copy outward into `README.md`, `docs/01` and `docs/02`.
 
 ---
 

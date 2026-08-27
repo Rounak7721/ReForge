@@ -49,3 +49,8 @@ yarn-error.log*
 
 # throwaway verification scripts (kept out of the repo)
 /scripts/_scratch/
+
+# Personal tooling skills installed into this workspace, not part of the
+# project's build workflow. docs/02 documents the four skills that are.
+/.agents/skills/thumbnail/
+/.claude/skills/thumbnail/

@@ -15,25 +15,25 @@ The work follows one loop for each phase. The loop does not change.
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4'},'flowchart':{'curve':'linear','nodeSpacing':40,'rankSpacing':50,'padding':10,'htmlLabels':true}}}%%
 flowchart TB
-    B(["Plan, from the requirement checklist"])
-    C{"Human approves?"}
-    D(["Write the code"])
-    E(["Review its own diff"])
-    F{"Real defect?"}
-    G(["lint · types · checks · build, then deploy"])
-    I{{"Verify on production, then tick and commit"}}
-    FOUND["Found by the gate: SSRF through a redirect ·<br/>open redirect at login · discarded auth cookies"]
+    subgraph LOOP["The loop that every phase uses"]
+        direction LR
+        B(["Plan the phase"]) --> C{"Human<br/>approves?"}
+        C -->|"yes"| D(["Write the code"])
+        D --> E(["Review its own difference"])
+        E --> F{"Real<br/>defect?"}
+        F -->|"no · one third rejected"| G(["Lint · types · build"])
+        G --> I{{"Verify on production"}}
+        C -.->|"no"| B
+        F -.->|"yes · two thirds"| D
+        I -.->|"next phase"| B
+    end
 
-    B --> C
-    C -.->|"no"| B
-    C -->|"yes"| D
-    D --> E
-    E --> F
-    F -.->|"yes · two thirds"| D
-    F -->|"no · one third rejected"| G
-    G --> I
-    I -.->|"next phase"| B
-    E -.- FOUND
+    subgraph FOUND["What the review gate caught"]
+        direction LR
+        X1["SSRF through a redirect"] ~~~ X2["Open redirect at login"] ~~~ X3["Discarded auth cookies"]
+    end
+
+    LOOP -.-> FOUND
 
     classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
     classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
@@ -42,7 +42,7 @@ flowchart TB
     class B,D,E,G core
     class C,F gate
     class I good
-    class FOUND bad
+    class X1,X2,X3 bad
 ```
 
 Two rules control this loop:

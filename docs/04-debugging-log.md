@@ -1010,34 +1010,21 @@ tokens **and** the requested output limit are both charged against one bucket of
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','fontSize':'14px','textColor':'#1c1917','primaryTextColor':'#1c1917','secondaryTextColor':'#1c1917','tertiaryTextColor':'#1c1917','nodeTextColor':'#1c1917','titleColor':'#1c1917','lineColor':'#57534e','mainBkg':'#ffffff','nodeBorder':'#57534e','background':'#ffffff','clusterBkg':'#fafaf9','clusterBorder':'#d6d3d1','edgeLabelBackground':'#f5f5f4','primaryColor':'#ffffff','primaryBorderColor':'#57534e','secondaryColor':'#fafaf9','tertiaryColor':'#f5f5f4'},'flowchart':{'curve':'linear','nodeSpacing':30,'rankSpacing':45,'padding':10,'htmlLabels':true}}}%%
 flowchart TB
-    R{{"Response from the model"}}
-
-    subgraph SIG["Every signal available"]
+    subgraph SIG["Every signal said success"]
         direction LR
         S1["HTTP 200"] ~~~ S2["Valid JSON"] ~~~ S3["Matches the schema"] ~~~ S4["finish_reason: stop"]
     end
 
-    OK(["SUCCESS"])
-    BAD["The document ends mid-attribute at exactly 10,240 characters<br/><small>10 x 1024 — models do not stop on power-of-two boundaries. Buffers do.</small>"]
-    CAUSE["The vendor's JSON decoder caps a string<br/>and closes the object around the stump"]
-    FIX(["Assert the CLOSING condition:<br/>the document must end in &lt;/html&gt;"])
+    BAD["The page ended mid-tag"]
+    CAUSE["The SDK cut the string,<br/>then closed the JSON around it"]
+    FIX(["Assert the closing tag, not only the schema"])
 
-    R --> SIG
-    SIG --> OK
-    OK --> BAD
-    BAD --> CAUSE
-    CAUSE --> FIX
-
-
+    SIG --> BAD --> CAUSE --> FIX
 
     classDef core fill:#fff7ed,stroke:#c2410c,stroke-width:2px,color:#1c1917
-    classDef data fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
     classDef ext fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,color:#0f172a
-    classDef gate fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#78350f
     classDef bad fill:#fef2f2,stroke:#b91c1c,stroke-width:2px,color:#7f1d1d
-    classDef good fill:#f0fdf4,stroke:#15803d,stroke-width:2px,color:#14532d
-    class R,S1,S2,S3,S4 ext
-    class OK good
+    class S1,S2,S3,S4 ext
     class BAD,CAUSE bad
     class FIX core
 ```

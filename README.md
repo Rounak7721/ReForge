@@ -1,66 +1,71 @@
+<div align="center">
+
+<a href="https://youtu.be/yT_LptZCr4A">
+  <img src=".github/assets/thumbnail.png" width="760" alt="Reforge — watch the 4 minute demo">
+</a>
+
 # Reforge
 
-Point Reforge at any product's website. It reads what the product does, who it
-serves and where it is weak. It then generates your own product concept, which
-you change in plain English.
+**Take any product apart. Build yours from the pieces.**
 
-**Live:** **https://reforge.rounak.co** · fallback: https://reforge-blond-two.vercel.app/
+Paste a URL. Reforge reads the site, works out what the product does and who it
+serves, then drafts a complete product concept — which you then argue with in
+plain English until it is yours.
 
-## Demo video
+[![Live](https://img.shields.io/badge/live-reforge.rounak.co-E8734A?style=for-the-badge)](https://reforge.rounak.co)
+[![Demo video](https://img.shields.io/badge/demo-4%20min%20video-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/yT_LptZCr4A)
 
-<!-- PLACEHOLDER — replace YOUTUBE_ID in BOTH links below with the real id
-     after upload. The thumbnail URL and the watch URL must carry the same id. -->
+![Next.js](https://img.shields.io/badge/Next.js_15-000000?logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript_strict-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini_3.1_Flash_Lite-8E75B2?logo=googlegemini&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-F55036?logo=groq&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white)
+![Cost](https://img.shields.io/badge/recurring_cost-%240-2EA043)
 
-[![Reforge — 3 minute demo](https://img.youtube.com/vi/YOUTUBE_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=YOUTUBE_ID)
-
-*Click to play. Approximately 3 minutes: what it is, a live teardown, the
-concept, a plain-English refinement, the generated starter site, and the
-architecture.*
-
-<details>
-<summary>Embedded player, for renderers that permit HTML</summary>
-
-<!-- GitHub removes iframes from README files, thus the thumbnail above is the
-     link that works there. This block renders on a documentation site or in a
-     local markdown preview. -->
-
-<iframe
-  width="720"
-  height="405"
-  src="https://www.youtube.com/embed/YOUTUBE_ID"
-  title="Reforge — 3 minute demo"
-  frameborder="0"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-  allowfullscreen>
-</iframe>
-
-</details>
-
-This document is written in ASD-STE100 Simplified Technical English.
+</div>
 
 ---
 
-## Try it without an account
+## Try it in 10 seconds
 
-One account holds a finished project. Use it to see the output without spending
-the shared free-tier AI quota.
+No signup. One account already holds a finished project, so you can see the
+output without spending the shared free-tier AI quota.
 
 | | |
 |---|---|
+| **Live app** | **https://reforge.rounak.co** |
 | **Email** | `demo@reforge.app` |
 | **Password** | `reforge-demo-2026` |
 
-It opens **"Soloist"**, an issue tracker for one developer, built from a
-`linear.app` teardown. It holds all seven analysis fields, all six concept
-fields, two refinements and a generated starter site.
+It opens **"Soloist"** — an issue tracker for one developer, built from a
+`linear.app` teardown, with all seven analysis fields, all six concept fields,
+two refinements and a generated starter site.
 
-The project includes a `/pricing` page on purpose. Type *"Remove the pricing
-page."* into the refine box to see a real edit.
+It ships a `/pricing` page on purpose. Type *"Remove the pricing page."* into the
+refine box to watch a real edit happen.
 
-These credentials are public on purpose. To restore the account, run
-`pnpm seed:demo`. That command makes **zero model calls**.
+These credentials are public deliberately. `pnpm seed:demo` restores the account
+and makes **zero model calls**.
+
+<details>
+<summary>What the app actually does, in three steps</summary>
+
+1. **Analyze** — fetch the target site's text and a screenshot, and return seven
+   typed fields: what it does, who it serves, the core problem, key features,
+   the business model, suggested improvements, and an MVP feature list.
+2. **Build** — turn that analysis into a product concept: a name, a description,
+   features, navigation, a page structure and a UI direction.
+3. **Refine** — change any of it in plain English. The instruction edits the
+   concept object and returns the whole thing, so undo is the previous row.
+
+Each result is cached in Postgres. Reopening a saved project renders from the
+database and **never** calls a model again.
+
+</details>
 
 ---
+
 
 ## Contents
 
@@ -198,7 +203,9 @@ Each result is cached in Postgres. **To reopen a saved project renders from the
 database and never calls a model again.** This is both a cost rule and a product
 requirement.
 
-### The preview frame
+<details>
+<summary><b>The preview frame</b></summary>
+
 
 The concept renders as a real web page in two ways. Both produce **one HTML
 string**, thus the frame, the download and the database all hold the same
@@ -229,7 +236,11 @@ Two guards are load-bearing. Do not remove them:
   parent, thus a link goes to the application and not to the page. Entry 12 of
   the debugging log gives the measurements.
 
-### Directory shape
+</details>
+
+<details>
+<summary><b>Directory shape</b></summary>
+
 
 ```
 app/
@@ -252,6 +263,8 @@ internal/                the brief, the guidelines, the working notes
 ```
 
 ---
+
+</details>
 
 ## Tech stack
 
@@ -308,7 +321,9 @@ has already broken production one time:
 | `gemini.check.ts` | The schema sanitiser that keeps `/api/build` working |
 | `rate-limit.check.ts` | The per-account caps, and that a counting failure fails open |
 
-### Run it with Docker
+<details>
+<summary><b>Run it with Docker</b></summary>
+
 
 The repository ships a `Dockerfile`, a `compose.yaml` and a `Makefile`.
 
@@ -346,7 +361,11 @@ Compose reads `.env` for both jobs, thus you keep one file. If a public variable
 is empty, compose stops immediately and names it, instead of failing at the end
 of a long build.
 
-### Make targets
+</details>
+
+<details>
+<summary><b>Make targets</b></summary>
+
 
 `make` on its own lists every target.
 
@@ -360,7 +379,11 @@ of a long build.
 | `make docker-logs` | Follow the logs |
 | `make nuke` | Remove build output, `node_modules` and the image |
 
-### Database setup
+</details>
+
+<details>
+<summary><b>Database setup</b></summary>
+
 
 The migrations are in `supabase/migrations/`. Apply them in filename order. To
 build the schema on a new Supabase project, run the contents of each file in the
@@ -372,6 +395,8 @@ off.** Go to Authentication, then Sign In / Providers, then Email, and turn
 
 ---
 
+</details>
+
 ## Environment variables
 
 Secrets exist only in `.env`, which Git ignores, and in the Vercel environment
@@ -381,7 +406,9 @@ variables. `.env.example` stays current with each new variable.
 fails with a named error. It does not arrive as `undefined` inside a client
 constructor.
 
-### Model providers
+<details>
+<summary><b>Model providers</b></summary>
+
 
 Only the **active** provider needs a key. The others can stay empty.
 
@@ -400,7 +427,11 @@ Only the **active** provider needs a key. The others can stay empty.
 load-bearing.** If its free tier changes, code generation moves to Gemini and
 continues to work.
 
-### Supabase
+</details>
+
+<details>
+<summary><b>Supabase</b></summary>
+
 
 | Variable | Purpose |
 |---|---|
@@ -408,13 +439,19 @@ continues to work.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable key. Public by design. RLS limits it. |
 | `SUPABASE_SERVICE_ROLE_KEY` | **This key ignores RLS.** Server-only. Never add a `NEXT_PUBLIC_` prefix. |
 
-### Screenshots
+</details>
+
+<details>
+<summary><b>Screenshots</b></summary>
+
 
 | Variable | Purpose |
 |---|---|
 | `MICROLINK_API_KEY` | Optional. The code uses the anonymous tier, which needs no key. A key raises the rate limit. |
 
 ---
+
+</details>
 
 ## APIs used
 
@@ -564,13 +601,19 @@ uses `fetch` and not the `openai` SDK. A new dependency with an install script
 has broken this repository two times. Entry 4 of the debugging log gives the
 detail.
 
-### Development
+<details>
+<summary><b>Development</b></summary>
+
 
 **Claude Code (Opus 5)** wrote the application. Gemini and Groq run inside the
 product. No Anthropic API is called at runtime. See
 [`docs/02-ai-tools-and-workflow.md`](docs/02-ai-tools-and-workflow.md).
 
-### Why flash-lite, and not a Flash model
+</details>
+
+<details>
+<summary><b>Why flash-lite, and not a Flash model</b></summary>
+
 
 The team verified the model ID against the live API. It did not use memory. Two
 assumptions were wrong. `gemini-2.5-flash` returns **404, "no longer available
@@ -591,7 +634,11 @@ Quality was checked on a real analyzer workload with real marketing copy through
 the full 7-field schema. Each field was populated, the content was sensible, and
 the call took approximately 2 seconds.
 
-### Three measured traps that the provider layer handles
+</details>
+
+<details>
+<summary><b>Three measured traps that the provider layer handles</b></summary>
+
 
 1. **`maxOutputTokens` limits thinking and output together.** With a small
    budget the model spends it all on reasoning and returns HTTP 200 with
@@ -610,6 +657,8 @@ the call took approximately 2 seconds.
 Entries 2, 9 and 10 of the debugging log give full reproduction steps.
 
 ---
+
+</details>
 
 ## Deployment process
 
@@ -641,7 +690,9 @@ Work happens on phase branches such as `phase-1/db-auth` and fast-forwards into
 An environment variable must exist in Vercel **before** the deployment that
 first reads it. A missing variable builds correctly and then fails at runtime.
 
-### Domain
+<details>
+<summary><b>Domain</b></summary>
+
 
 The production domain is **`reforge.rounak.co`**, live since 2026-08-27.
 
@@ -659,6 +710,8 @@ Otherwise a sign-in that starts on one hostname fails on the other.
 
 ---
 
+</details>
+
 ## Known limitations
 
 - **The free-tier model quota is 15 requests each minute and 500 requests each
@@ -671,7 +724,7 @@ Otherwise a sign-in that starts on one hostname fails on the other.
   output limit **before** generation, thus a request that asks for more than the
   bucket holds fails immediately with a 413.
 - **Rate limiting is per-account, counted from existing rows.** `/api/analyze`
-  allows 3 an hour and 10 a day. `/api/refine` allows 10 an hour and 40 a day.
+  allows 10 an hour and 30 a day. `/api/refine` allows 30 an hour and 100 a day.
   The counts come from the `projects` and `refinements` tables, which are
   already timestamped and already scoped by row-level security, thus there is no
   counter table that can drift from reality. `/api/build` returns `cached: true`
@@ -681,14 +734,17 @@ Otherwise a sign-in that starts on one hostname fails on the other.
   **The ceiling:** these are per-account windows. Somebody willing to create many
   accounts is not stopped, and neither is a distributed attempt. What it stops is
   the realistic case — the demo credentials published in this README, in a loop
-  — and it bounds one account to 50 Gemini calls a day, a tenth of the daily
-  allowance. A counting failure fails **open**, and logs.
+  — and it bounds one account to 130 Gemini calls a day, about a quarter of the
+  daily allowance. A counting failure fails **open**, and logs.
 
 - **The SSRF guard resolves and then fetches. It does not pin the address.** It
   blocks private and loopback addresses in each encoding, and it validates each
   redirect step. But a hostname whose DNS answer changes between our lookup and
   the fetch is not caught. To close this needs a pinned-IP connection with a
   `Host` override, which `fetch` does not offer.
+<details>
+<summary><b>9 more, in full</b></summary>
+
 - **"Add a dashboard" is interpretive.** Measured on production: where no
   dashboard exists, the model changes the home page into one. It does not add a
   fifth page. This is consistent and defensible, but it is not additive. The
@@ -774,6 +830,8 @@ flowchart TB
 ```
 
 ---
+
+</details>
 
 ## Documentation
 
