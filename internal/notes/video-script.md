@@ -36,11 +36,8 @@ That overlap is the only reason the required beats fit.
 
 ## Before you record
 
-- [ ] **Do NOT run `pnpm seed:demo`.** The demo account is deleted on purpose.
-      The video creates it. Seeding first would put a finished project in the
-      dashboard that the signup beat is supposed to show empty
-- [ ] Confirm the account is still absent: signing in at `/login` with
-      `demo@reforge.app` must fail
+- [ ] `pnpm seed:demo` — the published `demo@reforge.app` account stays as it
+      is. You record on a **separate** new account, so seeding cannot interfere
 - [ ] Sign out everywhere. Record in a clean incognito window
 - [ ] Browser zoom 110%, window 1440x900, bookmarks bar hidden
 - [ ] Theme: **dark**. The ember accent reads better, and the dark-mode page edit
@@ -61,25 +58,23 @@ That overlap is the only reason the required beats fit.
 
 | Field | Value |
 |---|---|
-| Email | `demo@reforge.app` |
-| Password | `reforge-demo-2026` |
+| Email | `newuser@reforge.app` |
+| Password | `reforge-video-2026` |
 
-**Use the credentials the README already publishes.** The account was deleted on
-2026-08-27 so that the video creates it live. That gives three things at once:
+A fresh account, separate from the published `demo@reforge.app`. Two reasons:
 
-- The reviewer watches the exact account they will later log into.
-- Nothing new is exposed. That password is already public in the README, so it
-  appearing on screen costs nothing — whereas a personal address would put your
+- The signup beat needs an **empty** dashboard. The demo account has a finished
+  project in it, which would contradict the story you are telling.
+- Nothing personal reaches the screen. A plus-addressed Gmail would put your
   real inbox in the video.
-- `pnpm seed:demo` still targets this address, thus the recovery path is
-  unchanged.
 
-Verified on 2026-08-27: a real self-signup through the form with `@reforge.app`
-returns `{"signedIn":true}`. Supabase rejects some domains outright — it refuses
-`.test` — so this was tested rather than assumed. See debugging entry 3.
+Verified on 2026-08-27: a real self-signup through the deployed form with an
+`@reforge.app` address returns `{"signedIn":true}`. Supabase refuses some
+domains outright — it rejects `.test` — so this was tested, not assumed. See
+debugging entry 3.
 
 Email confirmation is off, thus signup returns a session immediately and there
-is no inbox step on camera.
+is no inbox step on camera. The address does not need a real mailbox.
 
 ### New project
 
@@ -142,8 +137,9 @@ dashboard.
 > **Say:** "New account, no email confirmation step. Supabase Auth, with row
 > level security on every table from the first migration."
 
-> These are the credentials in the README. By the end of this video the account
-> exists with a finished project in it, which is exactly what a reviewer opens.
+> A brand-new account with an empty dashboard. The `demo@reforge.app` account in
+> the README is separate and already holds a finished project, for reviewers who
+> arrive after the daily quota is spent.
 
 ### 0:22–0:34 · The input
 
@@ -247,27 +243,18 @@ then a `code-review` finding in the terminal.
 
 ---
 
-## After you record — do not skip this
+## After you record
 
-The video creates the demo account and its project live. That state is now the
-thing the README promises, thus it has to survive.
+The recording account is a throwaway. The published demo account was never
+touched, thus there is nothing to restore.
 
-1. **Leave the account alone.** Do not re-seed. `pnpm seed:demo` would replace
-   the project you just recorded with the older captured one, and the video and
-   the live site would disagree.
-2. **Capture the new state into the seed**, so the recovery path matches what
-   the video shows. Read the project row back from Postgres and write it into
-   `lib/demo/seed-data.ts` — the same pattern used to capture the generated
-   HTML. Ask Claude to do it; there is a working script for exactly this.
-3. **Verify the promise holds.** Log in at `https://reforge.rounak.co` with the
-   README credentials in a fresh incognito window and confirm the project opens
-   and renders with zero model calls.
-4. **Delete the "Being recreated" note from the README.** It sits directly under
-   the credentials table. It is true only while the account is missing, and a
-   stale caveat on a public repo reads worse than no caveat.
-
-Until step 2 is done, `pnpm seed:demo` is a destructive command for this
-project. Treat it that way.
+1. **Upload, then replace `YOUTUBE_ID` in the README** — in **both** places, the
+   thumbnail URL and the watch URL. They must carry the same id.
+2. **Decide what to do with `newuser@reforge.app`.** Leaving it is harmless.
+   Deleting it keeps the database to the one demo account plus your own, which
+   is what the architecture notes describe.
+3. **Check the demo account still opens** at `https://reforge.rounak.co` with
+   the README credentials, in a fresh incognito window.
 
 ---
 

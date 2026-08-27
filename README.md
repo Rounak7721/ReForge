@@ -50,10 +50,6 @@ the shared free-tier AI quota.
 | **Email** | `demo@reforge.app` |
 | **Password** | `reforge-demo-2026` |
 
-> **Being recreated.** This account is rebuilt live during the demo recording,
-> so it may not exist for a short window. If the login fails, sign up instead —
-> it takes one step and no email confirmation.
-
 It opens **"Soloist"**, an issue tracker for one developer, built from a
 `linear.app` teardown. It holds all seven analysis fields, all six concept
 fields, two refinements and a generated starter site.
